@@ -47,4 +47,4 @@ The dashboard is served by the FastAPI backend. See the [README](https://github.
 
 ## Author
 
-[Samuel Adegnan](https://samueladegnan.github.io/)
+[Samuel Degnan](https://samueladegnan.github.io/)
