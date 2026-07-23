@@ -1,0 +1,16 @@
+{% assign home_active = false %}
+{% if page.url == "/" or page.url == "/index.html" %}{% assign home_active = true %}{% endif %}
+
+<nav class="seeo-nav">
+  <div class="seeo-nav-brand">
+    <a href="{{ site.baseurl }}/">SEEO</a>
+  </div>
+  <ul class="seeo-nav-links">
+    <li><a href="{{ site.baseurl }}/" {% if home_active %}class="active"{% endif %}>Home</a></li>
+    <li><a href="{{ site.baseurl }}/demo/" {% if page.url == "/demo/" %}class="active"{% endif %}>Demo</a></li>
+    <li><a href="{{ site.baseurl }}/architecture/" {% if page.url == "/architecture/" %}class="active"{% endif %}>Architecture</a></li>
+    <li><a href="{{ site.baseurl }}/api/" {% if page.url == "/api/" %}class="active"{% endif %}>API</a></li>
+    <li><a href="{{ site.baseurl }}/manual-steps/" {% if page.url == "/manual-steps/" %}class="active"{% endif %}>Manual Steps</a></li>
+    <li><a href="{{ site.github.repository_url }}" target="_blank">GitHub</a></li>
+  </ul>
+</nav>

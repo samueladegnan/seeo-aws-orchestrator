@@ -2,8 +2,6 @@
 
 from fastapi import APIRouter, Depends
 
-from fastapi import Request
-
 from ..config import Settings, get_settings_dependency
 from ..models import HealthResponse
 
@@ -11,7 +9,7 @@ router = APIRouter(prefix="/health", tags=["health"])
 
 
 @router.get("", response_model=HealthResponse)
-def health_check(request: Request, settings: Settings = Depends(get_settings_dependency)) -> HealthResponse:
+def health_check(settings: Settings = Depends(get_settings_dependency)) -> HealthResponse:
     """Return a simple health status."""
     return HealthResponse(
         status="ok",

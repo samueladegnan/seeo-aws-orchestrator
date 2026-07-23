@@ -1,10 +1,8 @@
 """Environment lifecycle endpoints."""
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 
-from fastapi import Request
-
-from ..config import Settings, get_settings_dependency
+from ..config import get_settings_dependency
 from ..dependencies import require_api_key
 from ..models import (
     CreateEnvironmentRequest,
@@ -26,7 +24,6 @@ def get_aws_service(request: Request) -> AWSService:
 @router.post("", response_model=Environment, status_code=status.HTTP_201_CREATED)
 def create_environment(
     request: CreateEnvironmentRequest,
-    settings: Settings = Depends(get_settings_dependency),
     aws_service: AWSService = Depends(get_aws_service),
     _: str = Depends(require_api_key),
 ) -> Environment:

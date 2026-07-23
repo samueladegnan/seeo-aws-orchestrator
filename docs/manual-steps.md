@@ -1,3 +1,9 @@
+---
+title: Manual Steps
+layout: default
+permalink: /manual-steps/
+---
+
 # SEEO Follow-Up Manual Steps
 
 This page documents the three follow-up tracks for SEEO, what is automated in code, and what you must do manually.

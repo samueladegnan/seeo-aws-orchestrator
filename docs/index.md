@@ -1,3 +1,9 @@
+---
+title: SEEO
+layout: default
+permalink: /
+---
+
 # SEEO — Secure Ephemeral Environment Orchestrator
 
 A production-oriented, full-stack internal tool that lets teams request temporary, secure AWS environments on demand.
@@ -18,9 +24,9 @@ The dashboard is served by the FastAPI backend. See the [README](https://github.
 ## Quick Links
 
 - [Source Code](https://github.com/samueladegnan/seeo-aws-orchestrator)
-- [Architecture & Setup](https://github.com/samueladegnan/seeo-aws-orchestrator#readme)
+- [Architecture](./architecture)
 - [Manual Steps & Deployment Guide](./manual-steps)
-- [API Documentation](https://github.com/samueladegnan/seeo-aws-orchestrator/blob/main/README.md)
+- [API Documentation](./api)
 
 ## Technology Stack
 

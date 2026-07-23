@@ -4,6 +4,8 @@ A production-oriented, full-stack internal tool that lets teams request temporar
 
 > **Portfolio purpose:** SEEO demonstrates secure application development in Python with FastAPI, enterprise-grade AWS architecture, infrastructure-as-code with Terraform, secrets lifecycle management, and automated infrastructure lifecycle management.
 
+> **Project site:** [samueladegnan.github.io/seeo-aws-orchestrator](https://samueladegnan.github.io/seeo-aws-orchestrator/)
+
 ---
 
 ## Features
@@ -22,18 +24,18 @@ A production-oriented, full-stack internal tool that lets teams request temporar
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                         SEEO Backend (FastAPI)                       │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐  │
-│  │ Environments │  │    Health    │  │      TTL Service         │  │
-│  │   Router     │  │    Router    │  │  (background thread)     │  │
-│  └──────┬───────┘  └──────┬───────┘  └────────────┬─────────────┘  │
-└─────────┼────────────────┼───────────────────────┼──────────────────┘
-          │                │                       │
-          ▼                ▼                       ▼
-     ┌─────────┐     ┌──────────┐         ┌──────────────┐
-     │  EC2    │     │ DynamoDB │         │Secrets Manager│
-     │ + EBS   │     │ Environments       │ Runtime creds │
-     └─────────┘     └──────────         └──────────────┘
+│                         SEEO Backend (FastAPI)                      │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐   │
+│  │ Environments │  │    Health    │  │      TTL Service         │   │
+│  │   Router     │  │    Router    │  │  (background thread)     │   │
+│  └──────┬───────┘  └──────┬───────┘  └────────────┬─────────────┘   │
+└─────────┼─────────────────┼───────────────────────┼─────────────────┘
+          │                 │                       │
+          ▼                 ▼                       ▼
+     ┌─────────┐     ┌──────────────┐         ┌───────────────┐
+     │  EC2    │     │ DynamoDB     │         │Secrets Manager│
+     │ + EBS   │     │ Environments │         │ Runtime creds │
+     └─────────┘     └──────────────┘         └───────────────┘
 ```
 
 ### Technology Stack
@@ -41,7 +43,7 @@ A production-oriented, full-stack internal tool that lets teams request temporar
 | Layer                | Technology                                   |
 |----------------------|----------------------------------------------|
 | API / Business Logic | Python 3.11, FastAPI, Pydantic v2            |
-| Cloud Orchestration  | boto3 (EC2, EBS, Secrets Manager, DynamoDB) |
+| Cloud Orchestration  | boto3 (EC2, EBS, Secrets Manager, DynamoDB)  |
 | State Store          | DynamoDB                                     |
 | Secrets Management   | AWS Secrets Manager                          |
 | Infrastructure       | Terraform (AWS provider)                     |
@@ -161,7 +163,7 @@ curl -X POST "http://localhost:8000/environments" \
 ## Security Highlights
 
 - **No hardcoded secrets** in source code or user-data.
-- **IAM least privilege** — EC2 instance role can only read its assigned secret and update its own DynamoDB record.
+- **IAM least privilege** — EC2 instance role can only read its assigned secret.
 - **API key authentication** on all sensitive endpoints.
 - **Non-root container** in the provided Dockerfile.
 - **Encrypted secrets at rest** via AWS Secrets Manager and DynamoDB.
@@ -170,28 +172,27 @@ curl -X POST "http://localhost:8000/environments" \
 
 ## Testing
 
-Run syntax/type checks with:
+Run the test suite with:
+
+```bash
+cd backend
+python -m pytest tests/
+```
+
+For syntax checks you can also run:
 
 ```bash
 cd backend
 python -m compileall app/
 ```
 
-For unit tests (pytest suite can be added):
-
-```bash
-pytest
-```
-
 ---
 
 ## Roadmap / Next Steps
 
-- Add CI/CD pipeline for automated tests and Docker builds.
-- Implement a custom AMI build with Packer.
 - Add email/Slack notifications on environment lifecycle events.
 - Introduce cost allocation tags and daily budget reporting.
-- Add full unit/integration test coverage.
+- Expand unit/integration test coverage beyond the core orchestration flows.
 
 ---
 
