@@ -1,0 +1,8 @@
+title: SEEO
+name: SEEO
+remote_theme: pages-themes/cayman@v0.2.0
+description: "Secure Ephemeral Environment Orchestrator — a full-stack AWS automation project."
+show_downloads: true
+
+plugins:
+  - jekyll-remote-theme
