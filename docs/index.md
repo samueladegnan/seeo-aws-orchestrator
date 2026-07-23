@@ -6,6 +6,11 @@ permalink: /
 
 # SEEO — Secure Ephemeral Environment Orchestrator
 
+[![SEEO CI](https://github.com/samueladegnan/seeo-aws-orchestrator/actions/workflows/ci.yml/badge.svg)](https://github.com/samueladegnan/seeo-aws-orchestrator/actions/workflows/ci.yml)
+[![SEEO Pages](https://github.com/samueladegnan/seeo-aws-orchestrator/actions/workflows/pages.yml/badge.svg)](https://github.com/samueladegnan/seeo-aws-orchestrator/actions/workflows/pages.yml)
+[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/samueladegnan/seeo-aws-orchestrator/blob/main/LICENSE)
+
 A production-oriented, full-stack internal tool that lets teams request temporary, secure AWS environments on demand.
 
 ## What it does
