@@ -5,20 +5,16 @@ permalink: /
 ---
 
 [![SEEO CI](https://github.com/samueladegnan/seeo-aws-orchestrator/actions/workflows/ci.yml/badge.svg)](https://github.com/samueladegnan/seeo-aws-orchestrator/actions/workflows/ci.yml)
-[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)
+[![Ruby 3.3](https://img.shields.io/badge/ruby-3.3-cc0000.svg)](https://www.ruby-lang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/samueladegnan/seeo-aws-orchestrator/blob/main/LICENSE)
 
 <div class="hero" markdown="1">
 
 <p class="hero__title">Secure, self-service AWS environments in seconds</p>
 
-<p class="hero__lead">SEEO automates the deployment of secure, TTL-bound AWS infrastructure through a REST API and web dashboard. Built for teams that need temporary cloud resources without the sprawl.</p>
+<p class="hero__lead">SEEO is a production-oriented internal DevOps tool that automates the deployment of secure, TTL-bound AWS infrastructure through a REST API and web dashboard. Teams request temporary EC2 environments and every resource is automatically torn down once its TTL expires.</p>
 
 </div>
-
-## What It Is
-
-SEEO is a production-oriented, full-stack internal DevOps tool. It gives teams a self-service way to request temporary EC2 environments through a REST API or web dashboard, with every resource automatically torn down once its TTL expires.
 
 ## How It Works
 
@@ -28,7 +24,7 @@ SEEO is a production-oriented, full-stack internal DevOps tool. It gives teams a
 
 ### 1. Request
 
-A developer requests an environment through the **FastAPI backend** or the web dashboard, specifying a project name and TTL.
+A developer requests an environment through the **Rails API backend** or the web dashboard, specifying a project name and TTL.
 
 </div>
 
@@ -62,7 +58,7 @@ A background **TTL service** continuously scans for expired environments and ter
 
 - **Reduces infrastructure sprawl** by ensuring every environment has a strict expiration time.
 - **Proves secure orchestration** through least-privilege IAM roles and zero-hardcoded secrets.
-- **Demonstrates full-stack ownership** from FastAPI backend and Terraform infrastructure to a responsive vanilla-JS dashboard.
+- **Demonstrates full-stack ownership** from Rails API backend and Terraform infrastructure to a responsive vanilla-JS dashboard.
 
 ## Key Features
 
@@ -112,7 +108,7 @@ All AWS resources are defined and managed with Terraform.
 
 #### Containerized Backend
 
-FastAPI backend ships in a Docker container for consistent deployment.
+Rails API backend ships in a Docker container for consistent deployment.
 
 </div>
 
@@ -133,12 +129,12 @@ You can also run SEEO locally; see the [README](https://github.com/samueladegnan
 
 | Layer                | Technology                                   |
 |----------------------|----------------------------------------------|
-| API / Business Logic | Python 3.11, FastAPI, Pydantic v2            |
-| Cloud Orchestration  | boto3 (EC2, EBS, Secrets Manager, DynamoDB) |
+| API / Business Logic | Ruby 3.3, Ruby on Rails 7, Active Model      |
+| Cloud Orchestration  | aws-sdk-ruby (EC2, EBS, Secrets Manager, DynamoDB) |
 | State Store          | DynamoDB                                     |
 | Secrets Management   | AWS Secrets Manager                          |
 | Infrastructure       | Terraform (AWS provider)                     |
-| Dashboard            | Vanilla JS + CSS served by FastAPI/Jinja2    |
+| Dashboard            | Vanilla JS + CSS served by Rails API         |
 | Container            | Docker                                       |
 
 ## About the Author

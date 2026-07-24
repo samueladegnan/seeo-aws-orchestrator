@@ -16,4 +16,4 @@ COPY . /srv/jekyll
 
 EXPOSE 4000
 
-CMD ["jekyll", "serve", "--host", "0.0.0.0", "--watch", "--baseurl", "/seeo-aws-orchestrator"]
+CMD ["jekyll", "serve", "--host", "0.0.0.0", "--watch", "--force_polling", "--incremental"]

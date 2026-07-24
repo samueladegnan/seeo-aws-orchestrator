@@ -45,18 +45,13 @@
       margin-bottom: 1.5rem;
     }
 
-    @media (min-width: 900px) {
-      .seeo-demo__grid {
-        grid-template-columns: 320px 1fr;
-      }
-    }
-
     .seeo-demo__card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 0.75rem;
       padding: 1.5rem;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+      min-width: 0;
     }
 
     .seeo-demo__card h2 {
@@ -97,6 +92,90 @@
       outline: none;
       border-color: var(--primary);
       box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+    }
+
+    .seeo-demo__field select {
+      padding: 0.65rem 0.85rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 1rem;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.6rem center;
+      background-size: 1rem;
+      padding-right: 2rem;
+    }
+
+    .seeo-demo__details {
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      background: rgba(15, 23, 42, 0.4);
+      overflow: hidden;
+    }
+
+    .seeo-demo__summary {
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--primary);
+      list-style: none;
+      user-select: none;
+    }
+
+    .seeo-demo__summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .seeo-demo__summary::before {
+      content: "▸";
+      display: inline-block;
+      margin-right: 0.5rem;
+      transition: transform 0.2s;
+    }
+
+    .seeo-demo__details[open] > .seeo-demo__summary::before {
+      transform: rotate(90deg);
+    }
+
+    .seeo-demo__advanced {
+      padding: 0.75rem 1rem 1rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .seeo-demo__hint {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+    }
+
+    .seeo-demo__btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .seeo-demo__specs {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+      cursor: help;
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .seeo-demo__specs-icon {
+      color: var(--primary);
+      flex-shrink: 0;
     }
 
     .seeo-demo__btn {
@@ -365,7 +444,54 @@
             <label for="seeo-ttl">TTL (minutes)</label>
             <input type="number" id="seeo-ttl" min="1" max="1440" value="60" required>
           </div>
-          <button type="submit" class="seeo-demo__btn seeo-demo__btn-primary">Provision Environment</button>
+
+          <details class="seeo-demo__details">
+            <summary class="seeo-demo__summary">Advanced AWS Settings</summary>
+            <div class="seeo-demo__advanced">
+              <div class="seeo-demo__field">
+                <label for="seeo-region">AWS Region</label>
+                <select id="seeo-region">
+                  <option value="us-east-1" selected>us-east-1</option>
+                  <option value="us-west-2">us-west-2</option>
+                  <option value="eu-west-1">eu-west-1</option>
+                  <option value="ap-south-1">ap-south-1</option>
+                </select>
+              </div>
+              <div class="seeo-demo__field">
+                <label for="seeo-instance-type">Instance Type</label>
+                <select id="seeo-instance-type">
+                  <option value="t3.micro" selected>t3.micro</option>
+                  <option value="t3.small">t3.small</option>
+                  <option value="t3.medium">t3.medium</option>
+                  <option value="m6i.large">m6i.large</option>
+                </select>
+              </div>
+              <div class="seeo-demo__field">
+                <label for="seeo-key-pair">Key Pair</label>
+                <input type="text" id="seeo-key-pair" placeholder="my-key">
+              </div>
+              <div class="seeo-demo__field">
+                <label for="seeo-ami">AMI ID</label>
+                <input type="text" id="seeo-ami" placeholder="Latest Amazon Linux 2023">
+              </div>
+              <div class="seeo-demo__field">
+                <label for="seeo-subnet">Subnet ID</label>
+                <input type="text" id="seeo-subnet" placeholder="subnet-xxx">
+              </div>
+              <div class="seeo-demo__field">
+                <label for="seeo-sg">Security Group ID</label>
+                <input type="text" id="seeo-sg" placeholder="sg-xxx">
+              </div>
+              <div class="seeo-demo__field">
+                <label for="seeo-iam">IAM Instance Profile</label>
+                <input type="text" id="seeo-iam" placeholder="seeo-profile">
+              </div>
+            </div>
+          </details>
+
+          <p class="seeo-demo__hint">Each environment includes a 10&nbsp;GB gp3 EBS volume and fetches runtime credentials from AWS Secrets Manager.</p>
+
+          <button type="submit" id="seeo-submit-btn" class="seeo-demo__btn seeo-demo__btn-primary">Provision Environment</button>
         </form>
         <div id="seeo-message" class="seeo-demo__message hidden"></div>
       </section>
@@ -385,6 +511,7 @@
                 <th>ID</th>
                 <th>Project</th>
                 <th>Status</th>
+                <th>Specs</th>
                 <th>Public IP</th>
                 <th>TTL Remaining</th>
                 <th>Actions</th>
@@ -392,7 +519,7 @@
             </thead>
             <tbody id="seeo-table-body">
               <tr class="seeo-demo__empty">
-                <td colspan="6">No environments found.</td>
+                <td colspan="7">No environments found.</td>
               </tr>
             </tbody>
           </table>
@@ -435,6 +562,50 @@
           .replace(/'/g, '&#039;');
       };
 
+      const defaultConfig = () => ({
+        region: 'us-east-1',
+        instance_type: 't3.micro',
+        key_pair: '',
+        ami: '',
+        subnet: '',
+        security_group: '',
+        iam_profile: '',
+      });
+
+      const formatSpecs = (env) => {
+        const cfg = env.config || defaultConfig();
+        const ami = cfg.ami || 'Latest AL2023';
+        return `${cfg.instance_type} · ${cfg.region} · ${ami}`;
+      };
+
+      const specsTooltip = (env) => {
+        const cfg = env.config || defaultConfig();
+        const lines = [
+          `Region: ${cfg.region}`,
+          `Instance: ${cfg.instance_type}`,
+          `AMI: ${cfg.ami || 'Latest Amazon Linux 2023'}`,
+          `Key Pair: ${cfg.key_pair || '(none)'}`,
+          `Subnet: ${cfg.subnet || '(default)'}`,
+          `Security Group: ${cfg.security_group || '(default)'}`,
+          `IAM Profile: ${cfg.iam_profile || '(none)'}`,
+          'EBS: 10 GB gp3',
+        ];
+        return lines.join('\\n');
+      };
+
+      const transitionProvisioning = (env) => {
+        setTimeout(() => {
+          const idx = environments.findIndex((e) => e.id === env.id);
+          if (idx !== -1 && environments[idx].status === 'provisioning') {
+            environments[idx].status = 'ready';
+            environments[idx].public_ip = `54.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}`;
+            persistEnvironments();
+            render();
+            addLog(`Environment ${env.id.slice(0, 14)} is ready`, 'success');
+          }
+        }, 2500);
+      };
+
       const loadEnvironments = () => {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
@@ -451,6 +622,7 @@
             project_name: 'demo-api',
             status: 'ready',
             public_ip: '54.123.45.67',
+            config: defaultConfig(),
             expires_at: now + 45 * 60 * 1000,
           },
           {
@@ -458,6 +630,7 @@
             project_name: 'frontend-preview',
             status: 'provisioning',
             public_ip: '-',
+            config: { ...defaultConfig(), instance_type: 't3.small' },
             expires_at: now + 120 * 60 * 1000,
           },
         ];
@@ -465,6 +638,7 @@
 
       let environments = loadEnvironments();
       persistEnvironments();
+      environments.filter((e) => e.status === 'provisioning').forEach(transitionProvisioning);
 
       let logEntries = [];
       try {
@@ -540,7 +714,7 @@
       function render() {
         const tbody = document.getElementById('seeo-table-body');
         if (environments.length === 0) {
-          tbody.innerHTML = '<tr class="seeo-demo__empty"><td colspan="6">No environments found.</td></tr>';
+          tbody.innerHTML = '<tr class="seeo-demo__empty"><td colspan="7">No environments found.</td></tr>';
           updateStats();
           return;
         }
@@ -551,11 +725,19 @@
           const expired = remaining <= 0;
           const displayStatus = expired ? 'expired' : env.status;
           const countdownClass = expired ? 'seeo-demo__countdown seeo-demo__countdown--expired' : 'seeo-demo__countdown';
+          const specs = formatSpecs(env);
+          const tip = specsTooltip(env);
           return `
             <tr data-id="${escapeHtml(env.id)}">
               <td title="${escapeHtml(env.id)}">${escapeHtml(env.id.slice(0, 14))}...</td>
               <td>${escapeHtml(env.project_name)}</td>
               <td><span class="seeo-demo__status ${statusClass(displayStatus)}">${escapeHtml(displayStatus)}</span></td>
+              <td>
+                <span class="seeo-demo__specs" title="${escapeHtml(tip)}">
+                  <span class="seeo-demo__specs-icon">⚙</span>
+                  ${escapeHtml(specs)}
+                </span>
+              </td>
               <td>${escapeHtml(env.public_ip || '-')}</td>
               <td class="${countdownClass}" data-expires="${env.expires_at}">${formatTimeRemaining(remaining)}</td>
               <td>
@@ -597,28 +779,52 @@
         });
       }
 
+      function readConfigFromForm() {
+        return {
+          region: document.getElementById('seeo-region').value || 'us-east-1',
+          instance_type: document.getElementById('seeo-instance-type').value || 't3.micro',
+          key_pair: document.getElementById('seeo-key-pair').value.trim(),
+          ami: document.getElementById('seeo-ami').value.trim(),
+          subnet: document.getElementById('seeo-subnet').value.trim(),
+          security_group: document.getElementById('seeo-sg').value.trim(),
+          iam_profile: document.getElementById('seeo-iam').value.trim(),
+        };
+      }
+
       function requestEnvironment(event) {
         event.preventDefault();
         const projectName = document.getElementById('seeo-project-name').value.trim();
         const ttl = parseInt(document.getElementById('seeo-ttl').value, 10);
         if (!projectName) return;
 
+        const submitBtn = document.getElementById('seeo-submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Provisioning...';
+
+        const config = readConfigFromForm();
+
         const env = {
           id: 'seeo-' + Math.random().toString(36).slice(2, 10),
           project_name: projectName,
           status: 'provisioning',
           public_ip: '-',
+          config,
           expires_at: Date.now() + ttl * 60 * 1000,
         };
 
         environments.unshift(env);
         persistEnvironments();
         render();
-        addLog(`Requested environment ${env.id.slice(0, 14)} for "${projectName}"`, 'info');
+        addLog(`Provisioning ${config.instance_type} in ${config.region} for "${projectName}"`, 'info');
         showMessage('Environment requested successfully.', 'success');
-        document.getElementById('seeo-request-form').reset();
+
+        // Reset only the project name and TTL; preserve advanced settings.
+        document.getElementById('seeo-project-name').value = '';
+        document.getElementById('seeo-ttl').value = '60';
 
         setTimeout(() => {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Provision Environment';
           const idx = environments.findIndex((e) => e.id === env.id);
           if (idx !== -1 && environments[idx].status === 'provisioning') {
             environments[idx].status = 'ready';
@@ -631,21 +837,20 @@
       }
 
       function terminate(id) {
-        if (!confirm(`Terminate environment ${id}?`)) return;
-        const idx = environments.findIndex((e) => e.id === id);
-        if (idx !== -1) {
-          const env = environments[idx];
-          env.status = 'terminating';
+        const env = environments.find((e) => e.id === id);
+        if (!env) return;
+        const shortId = env.id.slice(0, 14);
+        if (!confirm(`Terminate environment "${env.project_name}" (${shortId})?`)) return;
+        env.status = 'terminating';
+        render();
+        addLog(`Terminating environment ${shortId}...`, 'info');
+        setTimeout(() => {
+          environments = environments.filter((e) => e.id !== id);
+          persistEnvironments();
           render();
-          addLog(`Terminating environment ${id.slice(0, 14)}...`, 'info');
-          setTimeout(() => {
-            environments = environments.filter((e) => e.id !== id);
-            persistEnvironments();
-            render();
-            addLog(`Environment ${id.slice(0, 14)} terminated`, 'success');
-            showMessage('Environment terminated.', 'success');
-          }, 800);
-        }
+          addLog(`Environment ${shortId} terminated`, 'success');
+          showMessage('Environment terminated.', 'success');
+        }, 800);
       }
 
       function clearExpired() {

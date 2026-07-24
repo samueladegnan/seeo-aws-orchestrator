@@ -6,16 +6,14 @@ permalink: /api/
 
 # SEEO API Documentation
 
-The SEEO backend exposes a REST API built with FastAPI.
-
-> **Interactive docs:** With the backend running, explore the API live at `http://localhost:8000/docs` (Swagger UI) or download the OpenAPI spec at `/openapi.json`.
+The SEEO backend exposes a REST API built with Ruby on Rails.
 
 ## Authentication
 
 All protected endpoints require an `X-API-Key` header.
 
 ```bash
-curl -H "X-API-Key: your-api-key" http://localhost:8000/environments
+curl -H "X-API-Key: your-api-key" http://localhost:3000/environments
 ```
 
 ## Endpoints
@@ -87,4 +85,4 @@ Terminates the EC2 instance, detaches/deletes the EBS volume, and marks the envi
 
 ## Dashboard
 
-A web dashboard is served at the root path `/` when the backend is running.
+A web dashboard can be served from the Rails backend or run as a static GitHub Pages demo.

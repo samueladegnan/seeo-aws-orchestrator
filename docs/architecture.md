@@ -9,7 +9,7 @@ mermaid: true
 
 ## High-level flow
 
-1. A developer requests an environment through the **FastAPI backend** or the web dashboard.
+1. A developer requests an environment through the **Rails API backend** or the web dashboard.
 2. The backend persists environment metadata in **DynamoDB**.
 3. The backend launches a **hardened EC2 instance** with an attached **EBS volume**.
 4. The instance uses an **IAM role** to fetch runtime credentials from **AWS Secrets Manager**.

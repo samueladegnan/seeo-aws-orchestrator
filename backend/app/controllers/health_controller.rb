@@ -1,0 +1,9 @@
+# frozen_string_literal: true
+
+class HealthController < ApplicationController
+  skip_before_action :authenticate_request!, only: [:index]
+
+  def index
+    render json: { status: "ok", version: "0.1.0" }
+  end
+end

@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - RAILS_ENV=development
+      - SEEO_API_KEY=${SEEO_API_KEY:-dev-change-me-in-production}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_PROFILE=${AWS_PROFILE:-}
+      - SEEO_ENVIRONMENTS_TABLE=${SEEO_ENVIRONMENTS_TABLE:-seeo-environments}
+      - SEEO_SECRETS_SECRET_NAME=${SEEO_SECRETS_SECRET_NAME:-seeo/runtime/credentials}
+      - SEEO_TTL_CHECK_INTERVAL_SECONDS=${SEEO_TTL_CHECK_INTERVAL_SECONDS:-60}
+      - CORS_ALLOW_ORIGINS=${CORS_ALLOW_ORIGINS:-*}
+    volumes:
+      - .:/app
+    command: bundle exec rails server -b 0.0.0.0
+
+  worker:
+    build: .
+    environment:
+      - RAILS_ENV=development
+      - SEEO_API_KEY=${SEEO_API_KEY:-dev-change-me-in-production}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_PROFILE=${AWS_PROFILE:-}
+      - SEEO_ENVIRONMENTS_TABLE=${SEEO_ENVIRONMENTS_TABLE:-seeo-environments}
+      - SEEO_SECRETS_SECRET_NAME=${SEEO_SECRETS_SECRET_NAME:-seeo/runtime/credentials}
+      - SEEO_TTL_CHECK_INTERVAL_SECONDS=${SEEO_TTL_CHECK_INTERVAL_SECONDS:-60}
+    volumes:
+      - .:/app
+    command: bundle exec rake solid_queue:start

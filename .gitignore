@@ -1,14 +1,9 @@
-# Python
+# Python (kept defensively in case any old artifacts remain)
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-env/
-venv/
-ENV/
-.venv
-pip-log.txt
 *.egg-info/
 dist/
 build/
@@ -39,10 +34,26 @@ Thumbs.db
 # Logs
 *.log
 
+# Ruby / Rails
+*.gem
+*.rbc
+/.config
+/coverage/
+/InstalledFiles
+/pkg/
+/spec/reports/
+/spec/examples.txt
+/test/tmp/
+/test/version_tmp/
+/tmp/
+/log/
+/storage/
+
 # Jekyll build artifacts
 docs/_site/
 docs/.sass-cache/
 docs/.jekyll-cache/
+docs/.jekyll-metadata
 *.scssc
 
 # Jekyll/Bundler vendored dependencies

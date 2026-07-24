@@ -1,0 +1,16 @@
+# Solid Queue recurring tasks
+# Schedule the TTL monitor to run every minute.
+production:
+  ttl_monitor:
+    class: TtlMonitorJob
+    schedule: "*/1 * * * *"
+
+development:
+  ttl_monitor:
+    class: TtlMonitorJob
+    schedule: "*/1 * * * *"
+
+test:
+  ttl_monitor:
+    class: TtlMonitorJob
+    schedule: "*/1 * * * *"

@@ -15,16 +15,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
         with:
-          python-version: "3.11"
+          ruby-version: "3.3"
+          bundler-cache: true
+          working-directory: backend
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -e ".[dev]"
+      - name: Set up database
+        run: bundle exec rails db:create db:migrate
 
-      - name: Run tests
-        run: pytest -v
+      - name: Run RuboCop
+        run: bundle exec rubocop
+
+      - name: Run RSpec
+        run: bundle exec rspec

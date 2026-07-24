@@ -2,7 +2,7 @@
 
 A production-oriented, full-stack internal tool that lets teams request temporary, secure AWS environments on demand. SEEO automatically provisions hardened EC2 instances, securely injects runtime credentials via AWS Secrets Manager, tracks every environment's TTL in DynamoDB, and tears down resources when they expire.
 
-> **Portfolio purpose:** SEEO demonstrates secure application development in Python with FastAPI, enterprise-grade AWS architecture, infrastructure-as-code with Terraform, secrets lifecycle management, and automated infrastructure lifecycle management.
+> **Portfolio purpose:** SEEO demonstrates secure application development with Ruby on Rails, enterprise-grade AWS architecture, infrastructure-as-code with Terraform, secrets lifecycle management, and automated infrastructure lifecycle management.
 
 > **Project site:** [samueladegnan.github.io/seeo-aws-orchestrator](https://samueladegnan.github.io/seeo-aws-orchestrator/)
 
@@ -24,10 +24,10 @@ A production-oriented, full-stack internal tool that lets teams request temporar
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                         SEEO Backend (FastAPI)                      │
+│                         SEEO Backend (Ruby on Rails)                │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐   │
 │  │ Environments │  │    Health    │  │      TTL Service         │   │
-│  │   Router     │  │    Router    │  │  (background thread)     │   │
+│  │  Controller  │  │  Controller  │  │    (Solid Queue job)     │   │
 │  └──────┬───────┘  └──────┬───────┘  └────────────┬─────────────┘   │
 └─────────┼─────────────────┼───────────────────────┼─────────────────┘
           │                 │                       │
@@ -40,15 +40,15 @@ A production-oriented, full-stack internal tool that lets teams request temporar
 
 ### Technology Stack
 
-| Layer                | Technology                                   |
-|----------------------|----------------------------------------------|
-| API / Business Logic | Python 3.11, FastAPI, Pydantic v2            |
-| Cloud Orchestration  | boto3 (EC2, EBS, Secrets Manager, DynamoDB)  |
-| State Store          | DynamoDB                                     |
-| Secrets Management   | AWS Secrets Manager                          |
-| Infrastructure       | Terraform (AWS provider)                     |
-| Dashboard            | Vanilla JS + CSS served by FastAPI/Jinja2    |
-| Container            | Docker                                       |
+| Layer                | Technology                                         |
+|----------------------|----------------------------------------------------|
+| API / Business Logic | Ruby 3.3, Ruby on Rails 7, Active Model              |
+| Cloud Orchestration  | aws-sdk-ruby (EC2, EBS, Secrets Manager, DynamoDB) |
+| State Store          | DynamoDB                                           |
+| Secrets Management   | AWS Secrets Manager                                |
+| Infrastructure       | Terraform (AWS provider)                           |
+| Dashboard            | Vanilla JS + CSS served by Rails API               |
+| Container            | Docker                                             |
 
 ---
 
@@ -58,29 +58,23 @@ A production-oriented, full-stack internal tool that lets teams request temporar
 .
 ├── backend/
 │   ├── app/
-│   │   ├── config.py              # Pydantic settings
-│   │   ├── dependencies.py        # FastAPI dependencies
-│   │   ├── main.py                # FastAPI entrypoint & lifespan
-│   │   ├── models.py              # Pydantic request/response models
-│   │   ├── routers/
-│   │   │   ├── environments.py    # Environment CRUD endpoints
-│   │   │   └── health.py          # Health check
-│   │   ├── services/
-│   │   │   ├── auth_service.py    # API key validation
-│   │   │   ├── aws_service.py     # AWS orchestration logic
-│   │   │   └── ttl_service.py     # TTL background monitor
-│   │   ├── static/                # Dashboard CSS/JS
-│   │   └── templates/
-│   │       └── index.html         # Dashboard
+│   │   ├── controllers/           # Rails controllers
+│   │   ├── models/                # ActiveModel objects
+│   │   ├── services/              # AWS and auth services
+│   │   └── jobs/                  # Solid Queue background jobs
+│   ├── config/                    # Rails configuration
+│   ├── db/                        # Migrations (Solid Queue, etc.)
+│   ├── spec/                      # RSpec tests
 │   ├── Dockerfile
-│   ├── requirements.txt
-│   └── .env.example
+│   ├── docker-compose.yml
+│   └── Gemfile
 ├── infrastructure/
 │   ├── main.tf                    # VPC, IAM, SG, DynamoDB, Secrets
 │   ├── variables.tf
 │   └── outputs.tf
 ├── scripts/
 │   └── ec2_user_data.sh           # Bootstrap reference
+├── docs/                          # GitHub Pages site
 ├── README.md
 └── .gitignore
 ```
@@ -89,7 +83,7 @@ A production-oriented, full-stack internal tool that lets teams request temporar
 
 ## Prerequisites
 
-- **Python 3.11+**
+- **Ruby 3.3+**
 - **AWS CLI** configured with appropriate credentials
 - **Terraform 1.5+**
 - (Optional) **Docker**
@@ -120,18 +114,18 @@ Note the outputs (VPC ID, subnet IDs, security group ID, instance profile name).
 
 ```bash
 cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+bundle install
+bin/rails solid_queue:install:migrations
+bin/rails db:create db:migrate
+bin/rails server
 ```
 
-Open [http://localhost:8000](http://localhost:8000) for the dashboard and [http://localhost:8000/docs](http://localhost:8000/docs) for the OpenAPI docs.
+Open [http://localhost:3000](http://localhost:3000) for the dashboard and [http://localhost:3000/environments](http://localhost:3000/environments) for the API.
 
 ### 4. Request an Environment
 
 ```bash
-curl -X POST "http://localhost:8000/environments" \
+curl -X POST "http://localhost:3000/environments" \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-api-key" \
   -d '{"project_name": "my-api", "ttl_minutes": 60}'
@@ -141,22 +135,22 @@ curl -X POST "http://localhost:8000/environments" \
 
 ## Environment Variables
 
-| Variable                  | Description                                       | Default                  |
-|---------------------------|---------------------------------------------------|--------------------------|
-| `API_KEY`                 | API key for all protected endpoints               | `dev-change-me...`       |
-| `AWS_REGION`              | AWS region                                        | `us-east-1`              |
-| `AWS_PROFILE`             | AWS CLI profile name (optional)                   | —                        |
-| `EC2_KEY_PAIR`            | EC2 key pair name for SSH access                  | —                        |
-| `EC2_AMI_ID`              | AMI ID to launch (optional; latest AL2023 used)   | —                        |
-| `EC2_INSTANCE_TYPE`       | Default EC2 instance type                         | `t3.micro`               |
-| `EC2_SUBNET_ID`           | Subnet ID for launched instances                  | —                        |
-| `EC2_SECURITY_GROUP_ID`   | Security group ID for launched instances          | —                        |
-| `IAM_INSTANCE_PROFILE`    | IAM instance profile attached to EC2 instances    | —                        |
-| `ENVIRONMENTS_TABLE`      | DynamoDB table name                               | `seeo-environments`      |
-| `SECRETS_SECRET_NAME`     | Secrets Manager secret name                       | `seeo/runtime/credentials` |
-| `TTL_CHECK_INTERVAL_SECONDS` | TTL scan interval in seconds                   | `60`                     |
-| `CORS_ALLOW_ORIGINS`      | Comma-separated list of allowed CORS origins   | `*`                      |
-| `CORS_ALLOW_CREDENTIALS`  | Allow CORS requests with credentials           | `false`                  |
+| Variable                       | Description                                    | Default                    |
+|--------------------------------|------------------------------------------------|----------------------------|
+| `SEEO_API_KEY`                 | API key for all protected endpoints            | `dev-change-me...`       |
+| `AWS_REGION`                   | AWS region                                     | `us-east-1`                |
+| `AWS_PROFILE`                  | AWS CLI profile name (optional)                | —                          |
+| `SEEO_EC2_KEY_PAIR`            | EC2 key pair name for SSH access               | —                          |
+| `SEEO_EC2_AMI_ID`              | AMI ID to launch (optional; latest AL2023 used) | —                         |
+| `SEEO_EC2_INSTANCE_TYPE`       | Default EC2 instance type                      | `t3.micro`                 |
+| `SEEO_EC2_SUBNET_ID`           | Subnet ID for launched instances               | —                          |
+| `SEEO_EC2_SECURITY_GROUP_ID` | Security group ID for launched instances       | —                          |
+| `SEEO_IAM_INSTANCE_PROFILE`    | IAM instance profile attached to EC2 instances | —                          |
+| `SEEO_ENVIRONMENTS_TABLE`      | DynamoDB table name                            | `seeo-environments`        |
+| `SEEO_SECRETS_SECRET_NAME`     | Secrets Manager secret name                    | `seeo/runtime/credentials` |
+| `SEEO_TTL_CHECK_INTERVAL_SECONDS` | TTL scan interval in seconds                | `60`                       |
+| `CORS_ALLOW_ORIGINS`           | Comma-separated list of allowed CORS origins     | `*`                        |
+| `CORS_ALLOW_CREDENTIALS`       | Allow CORS requests with credentials             | `false`                    |
 
 ---
 
@@ -176,14 +170,14 @@ Run the test suite with:
 
 ```bash
 cd backend
-python -m pytest tests/
+bundle exec rspec
 ```
 
-For syntax checks you can also run:
+For linting:
 
 ```bash
 cd backend
-python -m compileall app/
+bundle exec rubocop
 ```
 
 ---
