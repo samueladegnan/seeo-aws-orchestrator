@@ -2,7 +2,8 @@
 
 from fastapi import APIRouter, Depends
 
-from ..config import Settings, get_settings_dependency
+from ..config import Settings
+from ..dependencies import get_settings_dependency
 from ..models import HealthResponse
 
 router = APIRouter(prefix="/health", tags=["health"])

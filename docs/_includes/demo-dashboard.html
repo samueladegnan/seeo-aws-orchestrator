@@ -1,0 +1,675 @@
+<div class="seeo-demo">
+  <style>
+    .seeo-demo {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-light: #334155;
+      --primary: #38bdf8;
+      --primary-hover: #0ea5e9;
+      --danger: #f87171;
+      --danger-hover: #ef4444;
+      --success: #4ade80;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --border: #475569;
+      background: var(--bg);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin: 1.5rem 0 2rem;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    .seeo-demo * {
+      box-sizing: border-box;
+    }
+
+    .seeo-demo__container {
+      width: min(1100px, 100%);
+      margin: 0 auto;
+    }
+
+    .seeo-demo__notice {
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 0.5rem;
+      padding: 0.85rem 1rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+      color: #e0f2fe;
+    }
+
+    .seeo-demo__grid {
+      display: grid;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (min-width: 900px) {
+      .seeo-demo__grid {
+        grid-template-columns: 320px 1fr;
+      }
+    }
+
+    .seeo-demo__card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    }
+
+    .seeo-demo__card h2 {
+      margin-top: 0;
+      margin-bottom: 1rem;
+      font-size: 1.25rem;
+      color: var(--text);
+    }
+
+    .seeo-demo__form {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .seeo-demo__field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .seeo-demo__field label {
+      font-size: 0.9rem;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .seeo-demo__field input {
+      padding: 0.65rem 0.85rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 1rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .seeo-demo__field input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+    }
+
+    .seeo-demo__btn {
+      padding: 0.7rem 1.2rem;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: background-color 0.2s, transform 0.1s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .seeo-demo__btn:active {
+      transform: scale(0.98);
+    }
+
+    .seeo-demo__btn-primary {
+      background: var(--primary);
+      color: #0f172a;
+    }
+
+    .seeo-demo__btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .seeo-demo__btn-secondary {
+      background: var(--surface-light);
+      color: var(--text);
+    }
+
+    .seeo-demo__btn-secondary:hover {
+      background: #475569;
+    }
+
+    .seeo-demo__btn-danger {
+      background: var(--danger);
+      color: #450a0a;
+    }
+
+    .seeo-demo__btn-danger:hover {
+      background: var(--danger-hover);
+    }
+
+    .seeo-demo__table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .seeo-demo__table-wrap {
+      overflow-x: auto;
+    }
+
+    .seeo-demo__table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+
+    .seeo-demo__table,
+    .seeo-demo__table thead,
+    .seeo-demo__table tbody,
+    .seeo-demo__table tr,
+    .seeo-demo__table th,
+    .seeo-demo__table td {
+      background: transparent !important;
+      color: var(--text) !important;
+    }
+
+    .seeo-demo__table th,
+    .seeo-demo__table td {
+      text-align: left;
+      padding: 0.85rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .seeo-demo__table th {
+      color: var(--muted) !important;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+
+    .seeo-demo__table tr:hover td {
+      background: rgba(255, 255, 255, 0.03) !important;
+    }
+
+    .seeo-demo__status {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .seeo-demo__status.ready { background: rgba(74, 222, 128, 0.15); color: var(--success); }
+    .seeo-demo__status.provisioning { background: rgba(56, 189, 248, 0.15); color: var(--primary); }
+    .seeo-demo__status.pending { background: rgba(148, 163, 184, 0.15); color: var(--muted); }
+    .seeo-demo__status.terminated,
+    .seeo-demo__status.expired { background: rgba(248, 113, 113, 0.15); color: var(--danger); }
+    .seeo-demo__status.terminating { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+
+    .seeo-demo__countdown {
+      font-variant-numeric: tabular-nums;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    }
+
+    .seeo-demo__countdown--expired {
+      color: var(--danger);
+    }
+
+    .seeo-demo__message {
+      margin-top: 1rem;
+      padding: 0.85rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .seeo-demo__message.success {
+      background: rgba(74, 222, 128, 0.12);
+      color: var(--success);
+      border: 1px solid rgba(74, 222, 128, 0.3);
+    }
+
+    .seeo-demo__message.error {
+      background: rgba(248, 113, 113, 0.12);
+      color: var(--danger);
+      border: 1px solid rgba(248, 113, 113, 0.3);
+    }
+
+    .seeo-demo__message.hidden {
+      display: none;
+    }
+
+    .seeo-demo__empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 2rem;
+    }
+
+    .seeo-demo__stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .seeo-demo__stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .seeo-demo__stat-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--primary);
+      line-height: 1;
+      margin-bottom: 0.35rem;
+    }
+
+    .seeo-demo__stat-label {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .seeo-demo__log {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      max-height: 220px;
+      overflow-y: auto;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+
+    .seeo-demo__log-entry {
+      margin-bottom: 0.4rem;
+      color: var(--muted);
+    }
+
+    .seeo-demo__log-entry:last-child {
+      margin-bottom: 0;
+    }
+
+    .seeo-demo__log-time {
+      color: #64748b;
+      margin-right: 0.5rem;
+    }
+
+    .seeo-demo__log-entry.success { color: var(--success); }
+    .seeo-demo__log-entry.error { color: var(--danger); }
+    .seeo-demo__log-entry.info { color: var(--primary); }
+
+    .seeo-demo__actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .seeo-demo__actions .seeo-demo__btn {
+      padding: 0.45rem 0.75rem;
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 640px) {
+      .seeo-demo {
+        padding: 1rem;
+        border-radius: 0.5rem;
+      }
+
+      .seeo-demo__table-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .seeo-demo__table th,
+      .seeo-demo__table td {
+        padding: 0.75rem 0.5rem;
+      }
+    }
+  </style>
+
+  <div class="seeo-demo__container">
+    <div class="seeo-demo__notice">
+      <strong>Simulation only.</strong> This demo runs entirely in your browser. No AWS resources are provisioned.
+    </div>
+
+    <div class="seeo-demo__stats" id="seeo-stats" aria-label="Environment statistics">
+      <div class="seeo-demo__stat">
+        <div class="seeo-demo__stat-value" id="seeo-stat-active">0</div>
+        <div class="seeo-demo__stat-label">Active</div>
+      </div>
+      <div class="seeo-demo__stat">
+        <div class="seeo-demo__stat-value" id="seeo-stat-provisioning">0</div>
+        <div class="seeo-demo__stat-label">Provisioning</div>
+      </div>
+      <div class="seeo-demo__stat">
+        <div class="seeo-demo__stat-value" id="seeo-stat-expired">0</div>
+        <div class="seeo-demo__stat-label">Expired</div>
+      </div>
+    </div>
+
+    <div class="seeo-demo__grid">
+      <section class="seeo-demo__card">
+        <h2>Request Environment</h2>
+        <form id="seeo-request-form" class="seeo-demo__form">
+          <div class="seeo-demo__field">
+            <label for="seeo-project-name">Project Name</label>
+            <input type="text" id="seeo-project-name" placeholder="e.g. my-api" required>
+          </div>
+          <div class="seeo-demo__field">
+            <label for="seeo-ttl">TTL (minutes)</label>
+            <input type="number" id="seeo-ttl" min="1" max="1440" value="60" required>
+          </div>
+          <button type="submit" class="seeo-demo__btn seeo-demo__btn-primary">Provision Environment</button>
+        </form>
+        <div id="seeo-message" class="seeo-demo__message hidden"></div>
+      </section>
+
+      <section class="seeo-demo__card">
+        <div class="seeo-demo__table-header">
+          <h2>Environments</h2>
+          <div class="seeo-demo__actions">
+            <button id="seeo-refresh-btn" class="seeo-demo__btn seeo-demo__btn-secondary">Refresh</button>
+            <button id="seeo-clear-expired-btn" class="seeo-demo__btn seeo-demo__btn-secondary">Clear Expired</button>
+          </div>
+        </div>
+        <div class="seeo-demo__table-wrap">
+          <table class="seeo-demo__table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Project</th>
+                <th>Status</th>
+                <th>Public IP</th>
+                <th>TTL Remaining</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="seeo-table-body">
+              <tr class="seeo-demo__empty">
+                <td colspan="6">No environments found.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <section class="seeo-demo__card">
+      <h2>Activity Log</h2>
+      <div id="seeo-log" class="seeo-demo__log">
+        <div class="seeo-demo__log-entry">Waiting for activity...</div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      const STORAGE_KEY = 'seeo-demo-environments';
+      const LOG_KEY = 'seeo-demo-log';
+      const MAX_LOG = 25;
+
+      const statusClass = (status) => {
+        const map = {
+          ready: 'ready',
+          provisioning: 'provisioning',
+          pending: 'pending',
+          terminated: 'terminated',
+          expired: 'expired',
+          terminating: 'terminating',
+        };
+        return map[status] || 'pending';
+      };
+
+      const escapeHtml = (str) => {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      };
+
+      const loadEnvironments = () => {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          try {
+            return JSON.parse(saved);
+          } catch (e) {
+            console.error('Failed to parse demo environments', e);
+          }
+        }
+        const now = Date.now();
+        return [
+          {
+            id: 'seeo-' + Math.random().toString(36).slice(2, 10),
+            project_name: 'demo-api',
+            status: 'ready',
+            public_ip: '54.123.45.67',
+            expires_at: now + 45 * 60 * 1000,
+          },
+          {
+            id: 'seeo-' + Math.random().toString(36).slice(2, 10),
+            project_name: 'frontend-preview',
+            status: 'provisioning',
+            public_ip: '-',
+            expires_at: now + 120 * 60 * 1000,
+          },
+        ];
+      };
+
+      let environments = loadEnvironments();
+      persistEnvironments();
+
+      let logEntries = [];
+      try {
+        const savedLog = localStorage.getItem(LOG_KEY);
+        if (savedLog) logEntries = JSON.parse(savedLog);
+      } catch (e) {
+        console.error('Failed to parse demo log', e);
+      }
+
+      function persistEnvironments() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(environments));
+      }
+
+      function persistLog() {
+        localStorage.setItem(LOG_KEY, JSON.stringify(logEntries));
+      }
+
+      function addLog(message, type) {
+        const entry = {
+          time: new Date().toLocaleTimeString(),
+          message,
+          type: type || 'default',
+        };
+        logEntries.unshift(entry);
+        if (logEntries.length > MAX_LOG) logEntries = logEntries.slice(0, MAX_LOG);
+        persistLog();
+        renderLog();
+      }
+
+      function renderLog() {
+        const logEl = document.getElementById('seeo-log');
+        if (logEntries.length === 0) {
+          logEl.innerHTML = '<div class="seeo-demo__log-entry">Waiting for activity...</div>';
+          return;
+        }
+        logEl.innerHTML = logEntries.map((entry) => `
+          <div class="seeo-demo__log-entry ${escapeHtml(entry.type)}">
+            <span class="seeo-demo__log-time">${escapeHtml(entry.time)}</span>
+            ${escapeHtml(entry.message)}
+          </div>
+        `).join('');
+      }
+
+      function formatTimeRemaining(ms) {
+        if (ms <= 0) return 'Expired';
+        const totalSeconds = Math.floor(ms / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        if (hours > 0) {
+          return `${hours}h ${minutes}m ${seconds}s`;
+        }
+        return `${minutes}m ${seconds}s`;
+      }
+
+      function updateStats() {
+        const active = environments.filter((e) => e.status === 'ready').length;
+        const provisioning = environments.filter((e) => e.status === 'provisioning').length;
+        const expired = environments.filter((e) => e.status === 'expired').length;
+        document.getElementById('seeo-stat-active').textContent = active;
+        document.getElementById('seeo-stat-provisioning').textContent = provisioning;
+        document.getElementById('seeo-stat-expired').textContent = expired;
+      }
+
+      function showMessage(text, type) {
+        const el = document.getElementById('seeo-message');
+        el.textContent = text;
+        el.className = `seeo-demo__message ${type}`;
+        el.classList.remove('hidden');
+        setTimeout(() => el.classList.add('hidden'), 5000);
+      }
+
+      function render() {
+        const tbody = document.getElementById('seeo-table-body');
+        if (environments.length === 0) {
+          tbody.innerHTML = '<tr class="seeo-demo__empty"><td colspan="6">No environments found.</td></tr>';
+          updateStats();
+          return;
+        }
+
+        const now = Date.now();
+        tbody.innerHTML = environments.map((env) => {
+          const remaining = env.expires_at - now;
+          const expired = remaining <= 0;
+          const displayStatus = expired ? 'expired' : env.status;
+          const countdownClass = expired ? 'seeo-demo__countdown seeo-demo__countdown--expired' : 'seeo-demo__countdown';
+          return `
+            <tr data-id="${escapeHtml(env.id)}">
+              <td title="${escapeHtml(env.id)}">${escapeHtml(env.id.slice(0, 14))}...</td>
+              <td>${escapeHtml(env.project_name)}</td>
+              <td><span class="seeo-demo__status ${statusClass(displayStatus)}">${escapeHtml(displayStatus)}</span></td>
+              <td>${escapeHtml(env.public_ip || '-')}</td>
+              <td class="${countdownClass}" data-expires="${env.expires_at}">${formatTimeRemaining(remaining)}</td>
+              <td>
+                <button class="seeo-demo__btn seeo-demo__btn-danger" data-id="${escapeHtml(env.id)}">Terminate</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        document.querySelectorAll('#seeo-table-body button[data-id]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-id');
+            terminate(id);
+          });
+        });
+
+        updateStats();
+      }
+
+      function updateCountdowns() {
+        const now = Date.now();
+        document.querySelectorAll('#seeo-table-body td[data-expires]').forEach((cell) => {
+          const expiresAt = parseInt(cell.getAttribute('data-expires'), 10);
+          const remaining = expiresAt - now;
+          cell.textContent = formatTimeRemaining(remaining);
+          if (remaining <= 0) {
+            cell.classList.add('seeo-demo__countdown--expired');
+            const row = cell.closest('tr');
+            if (!row) return;
+            const id = row.getAttribute('data-id');
+            const env = environments.find((e) => e.id === id);
+            if (env && env.status !== 'expired') {
+              env.status = 'expired';
+              persistEnvironments();
+              addLog(`Environment ${env.id.slice(0, 14)} expired`, 'error');
+              render();
+            }
+          }
+        });
+      }
+
+      function requestEnvironment(event) {
+        event.preventDefault();
+        const projectName = document.getElementById('seeo-project-name').value.trim();
+        const ttl = parseInt(document.getElementById('seeo-ttl').value, 10);
+        if (!projectName) return;
+
+        const env = {
+          id: 'seeo-' + Math.random().toString(36).slice(2, 10),
+          project_name: projectName,
+          status: 'provisioning',
+          public_ip: '-',
+          expires_at: Date.now() + ttl * 60 * 1000,
+        };
+
+        environments.unshift(env);
+        persistEnvironments();
+        render();
+        addLog(`Requested environment ${env.id.slice(0, 14)} for "${projectName}"`, 'info');
+        showMessage('Environment requested successfully.', 'success');
+        document.getElementById('seeo-request-form').reset();
+
+        setTimeout(() => {
+          const idx = environments.findIndex((e) => e.id === env.id);
+          if (idx !== -1 && environments[idx].status === 'provisioning') {
+            environments[idx].status = 'ready';
+            environments[idx].public_ip = `54.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}`;
+            persistEnvironments();
+            render();
+            addLog(`Environment ${env.id.slice(0, 14)} is ready`, 'success');
+          }
+        }, 2500);
+      }
+
+      function terminate(id) {
+        if (!confirm(`Terminate environment ${id}?`)) return;
+        const idx = environments.findIndex((e) => e.id === id);
+        if (idx !== -1) {
+          const env = environments[idx];
+          env.status = 'terminating';
+          render();
+          addLog(`Terminating environment ${id.slice(0, 14)}...`, 'info');
+          setTimeout(() => {
+            environments = environments.filter((e) => e.id !== id);
+            persistEnvironments();
+            render();
+            addLog(`Environment ${id.slice(0, 14)} terminated`, 'success');
+            showMessage('Environment terminated.', 'success');
+          }, 800);
+        }
+      }
+
+      function clearExpired() {
+        const before = environments.length;
+        environments = environments.filter((e) => e.status !== 'expired');
+        if (environments.length < before) {
+          persistEnvironments();
+          render();
+          addLog('Cleared expired environments', 'info');
+        }
+      }
+
+      document.getElementById('seeo-request-form').addEventListener('submit', requestEnvironment);
+      document.getElementById('seeo-refresh-btn').addEventListener('click', () => {
+        render();
+        addLog('Refreshed environment list', 'info');
+      });
+      document.getElementById('seeo-clear-expired-btn').addEventListener('click', clearExpired);
+
+      render();
+      renderLog();
+
+      const countdownInterval = setInterval(updateCountdowns, 1000);
+      window.addEventListener('beforeunload', () => clearInterval(countdownInterval));
+    })();
+  </script>
+</div>

@@ -38,3 +38,13 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Jekyll build artifacts
+docs/_site/
+docs/.sass-cache/
+docs/.jekyll-cache/
+*.scssc
+
+# Jekyll/Bundler vendored dependencies
+docs/vendor/
+docs/.bundle/

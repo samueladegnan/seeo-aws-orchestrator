@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
-from ..config import get_settings_dependency
+from ..dependencies import get_settings_dependency
 from ..dependencies import require_api_key
 from ..models import (
     CreateEnvironmentRequest,

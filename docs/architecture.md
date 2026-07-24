@@ -2,6 +2,7 @@
 title: Architecture
 layout: default
 permalink: /architecture/
+mermaid: true
 ---
 
 # SEEO Architecture
@@ -16,20 +17,22 @@ permalink: /architecture/
 
 ## Component diagram
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         SEEO Backend (FastAPI)                      │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐   │
-│  │ Environments │  │    Health    │  │      TTL Service         │   │
-│  │   Router     │  │    Router    │  │  (background thread)     │   │
-│  └──────┬───────┘  └──────┬───────┘  └────────────┬─────────────┘   │
-└─────────┼─────────────────┼───────────────────────┼─────────────────┘
-          │                 │                       │
-          ▼                 ▼                       ▼
-     ┌─────────┐     ┌──────────────┐         ┌───────────────┐
-     │  EC2    │     │ DynamoDB     │         │Secrets Manager│
-     │ + EBS   │     │ Environments │         │ Runtime creds │
-     └─────────┘     └──────────────┘         └───────────────┘
+```mermaid
+flowchart TB
+    subgraph "SEEO Backend"
+        R[Environments Router]
+        H[Health Router]
+        T[TTL Service]
+    end
+
+    U[Developer / Dashboard]
+    U --> R
+    R --> D[(DynamoDB)]
+    R --> E[EC2 + EBS]
+    R --> S[Secrets Manager]
+    T --> D
+    T --> E
+    E --> S
 ```
 
 ## Security highlights

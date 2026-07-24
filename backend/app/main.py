@@ -66,4 +66,4 @@ templates = Jinja2Templates(directory=os.path.join(base_dir, "templates"))
 @app.get("/")
 def dashboard(request: Request):
     """Serve the SEEO dashboard."""
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="index.html")

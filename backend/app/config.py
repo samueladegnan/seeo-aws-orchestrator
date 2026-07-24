@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     secrets_secret_name: str = "seeo/runtime/credentials"
 
     # TTL checker interval in seconds
-    ttl_check_interval_seconds: int = 60
+    ttl_check_interval_seconds: int = 60000
 
     # CORS: comma-separated list of allowed origins. "*" allows all.
     cors_allow_origins: str = "*"

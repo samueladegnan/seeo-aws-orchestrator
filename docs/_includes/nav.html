@@ -1,16 +1,16 @@
 {% assign home_active = false %}
 {% if page.url == "/" or page.url == "/index.html" %}{% assign home_active = true %}{% endif %}
 
-<nav class="seeo-nav">
-  <div class="seeo-nav-brand">
-    <a href="{{ site.baseurl }}/">SEEO</a>
+<nav class="site-nav" aria-label="Main navigation">
+  <div class="site-nav__container">
+    <a class="site-nav__brand" href="{{ site.baseurl }}/">SEEO</a>
+    <ul class="site-nav__links">
+      <li><a href="https://samueladegnan.github.io/" target="_blank">&larr; Back to Portfolio</a></li>
+      <li><a href="{{ site.baseurl }}/" {% if home_active %}class="site-nav__link--active"{% endif %}>Home</a></li>
+      <li><a href="{{ site.baseurl }}/demo/" {% if page.url == "/demo/" %}class="site-nav__link--active"{% endif %}>Demo</a></li>
+      <li><a href="{{ site.baseurl }}/architecture/" {% if page.url == "/architecture/" %}class="site-nav__link--active"{% endif %}>Architecture</a></li>
+      <li><a href="{{ site.baseurl }}/api/" {% if page.url == "/api/" %}class="site-nav__link--active"{% endif %}>API</a></li>
+      <li><a href="{{ site.github.repository_url }}" target="_blank">GitHub</a></li>
+    </ul>
   </div>
-  <ul class="seeo-nav-links">
-    <li><a href="{{ site.baseurl }}/" {% if home_active %}class="active"{% endif %}>Home</a></li>
-    <li><a href="{{ site.baseurl }}/demo/" {% if page.url == "/demo/" %}class="active"{% endif %}>Demo</a></li>
-    <li><a href="{{ site.baseurl }}/architecture/" {% if page.url == "/architecture/" %}class="active"{% endif %}>Architecture</a></li>
-    <li><a href="{{ site.baseurl }}/api/" {% if page.url == "/api/" %}class="active"{% endif %}>API</a></li>
-    <li><a href="{{ site.baseurl }}/manual-steps/" {% if page.url == "/manual-steps/" %}class="active"{% endif %}>Manual Steps</a></li>
-    <li><a href="{{ site.github.repository_url }}" target="_blank">GitHub</a></li>
-  </ul>
 </nav>
