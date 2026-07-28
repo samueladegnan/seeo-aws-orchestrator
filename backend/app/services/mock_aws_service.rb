@@ -3,7 +3,7 @@
 class MockAwsService
   # In-memory store so environments persist across requests in dev/test.
   # Production should never use this; SeeoConfig.mock_aws? defaults to false there.
-  STORE = []
+  STORE = [] # rubocop:disable Style/MutableConstant
   MUTEX = Mutex.new
 
   class << self
@@ -43,9 +43,7 @@ class MockAwsService
 
   def list_environments(status_filter = nil)
     environments = MUTEX.synchronize { STORE.dup }
-    if status_filter
-      environments = environments.select { |env| env.status == status_filter }
-    end
+    environments = environments.select { |env| env.status == status_filter } if status_filter
     environments
   end
 

@@ -12,6 +12,9 @@ The SEEO Dashboard is a React + Vite application that lets teams request, monito
 
 <a class="btn" href="https://seeo-dashboard.vercel.app" target="_blank" rel="noopener noreferrer">Open Live Demo</a>
 
+<a href="https://samueladegnan.github.io/">← Back to portfolio</a>
+
+
 The live demo runs the full stack in **Mock AWS Mode**, so no AWS credentials are required. Because it is hosted on free tiers, the backend may take **30–50 seconds to wake up** after a period of inactivity. The dashboard will show a loading message while the server starts.
 
 > **Note:** Some ad blockers and privacy extensions block requests to `.onrender.com` domains, which can prevent the dashboard from waking the backend or connecting to the real-time WebSocket updates. If the dashboard seems stuck or shows **Live updates: disconnected**, try disabling your ad blocker or opening the demo in an incognito/private window.

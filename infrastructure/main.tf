@@ -106,7 +106,7 @@ resource "aws_security_group" "seeo" {
   egress {
     description = "Allow all outbound"
     from_port   = 0
-    to_port       = 0
+    to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -181,8 +181,8 @@ resource "aws_dynamodb_table" "environments" {
   }
 
   global_secondary_index {
-    name     = "StatusIndex"
-    hash_key = "status"
+    name            = "StatusIndex"
+    hash_key        = "status"
     projection_type = "ALL"
   }
 
@@ -285,8 +285,8 @@ resource "aws_dynamodb_table" "audit_logs" {
   }
 
   global_secondary_index {
-    name     = "TimestampIndex"
-    hash_key = "timestamp"
+    name            = "TimestampIndex"
+    hash_key        = "timestamp"
     projection_type = "ALL"
   }
 

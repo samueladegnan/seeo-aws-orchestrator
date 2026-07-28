@@ -307,7 +307,17 @@ function App() {
 
       <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/80 shadow-sm backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <h1 className="text-xl font-bold tracking-tight text-slate-900">SEEO</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-bold tracking-tight text-slate-900">SEEO</h1>
+            <a
+              href="https://samueladegnan.github.io/"
+              target="_self"
+              rel="noopener noreferrer"
+              className="hidden rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200 sm:inline-block"
+            >
+              ← Back to portfolio
+            </a>
+          </div>
           <div className="flex items-center gap-2 text-sm" title="Ad blockers may block the real-time WebSocket connection">
             <span className="text-slate-500">Live updates:</span>
             <span

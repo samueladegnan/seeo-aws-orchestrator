@@ -19,7 +19,8 @@ class AuditLogService
     private
 
     def log_to_rails(action, target, details)
-      Rails.logger.info "[AuditLog] #{action} target=#{target} actor=#{Current.user&.email || 'anonymous'} details=#{details.to_json}"
+      actor = Current.user&.email || 'anonymous'
+      Rails.logger.info "[AuditLog] #{action} target=#{target} actor=#{actor} details=#{details.to_json}"
     end
 
     def client

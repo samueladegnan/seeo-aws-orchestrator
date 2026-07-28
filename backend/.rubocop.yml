@@ -1,4 +1,4 @@
-require:
+plugins:
   - rubocop-rails
   - rubocop-rspec
 
@@ -9,6 +9,7 @@ AllCops:
     - "bin/**/*"
     - "vendor/**/*"
     - "tmp/**/*"
+    - "db/schema.rb"
 
 Style/Documentation:
   Enabled: false
