@@ -7,18 +7,24 @@ class PolicyService
 
   DEFAULT_POLICIES = {
     'max_ttl_minutes' => 24 * 60,
-    'allowed_instance_types' => %w[t3.micro t3.small t3.medium t2.micro t2.small m6i.large],
-    'max_concurrent_environments' => 10
+    'allowed_instance_types' => %w[t3.micro t3.small t3.medium t2.micro t2.small m6i.large m5.large m5.xlarge c5.large],
+    'allowed_regions' => %w[us-east-1 us-west-2 eu-west-1 ap-southeast-1],
+    'max_concurrent_environments' => 10,
+    'max_volume_size_gb' => 1000,
+    'allowed_volume_types' => %w[gp3 io2 st1]
   }.freeze
 
   REGO_PATH = Rails.root.join('policies/provision.rego').freeze
 
   class << self
-    def check_provision!(project_name:, ttl_minutes:, instance_type:, team:)
+    def check_provision!(project_name:, ttl_minutes:, instance_type:, team:, region: nil, volume_size: nil, volume_type: nil)
       result = evaluate('data.seeo.provision', {
                           'project_name' => project_name,
                           'ttl_minutes' => ttl_minutes,
                           'instance_type' => instance_type,
+                          'region' => region,
+                          'volume_size' => volume_size,
+                          'volume_type' => volume_type,
                           'team' => team_payload(team)
                         })
 
@@ -66,6 +72,18 @@ class PolicyService
 
       unless policies['allowed_instance_types'].include?(input['instance_type'])
         violations << "Instance type #{input['instance_type']} is not allowed"
+      end
+
+      if input['region'].present? && !policies['allowed_regions'].include?(input['region'])
+        violations << "Region #{input['region']} is not allowed"
+      end
+
+      if input['volume_type'].present? && !policies['allowed_volume_types'].include?(input['volume_type'])
+        violations << "Volume type #{input['volume_type']} is not allowed"
+      end
+
+      if input['volume_size'].present? && input['volume_size'] > policies['max_volume_size_gb']
+        violations << "Volume size exceeds maximum of #{policies['max_volume_size_gb']} GB"
       end
 
       { 'allow' => violations.empty?, 'deny' => violations }

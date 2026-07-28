@@ -1,8 +1,8 @@
 # SEEO — Secure Ephemeral Environment Orchestrator
 
-SEEO is a multi-tenant internal developer platform for provisioning secure, short-lived AWS environments on demand. It demonstrates production-grade cloud engineering: multi-tenancy, RBAC, policy-as-code, audit logging, cost tracking, real-time updates, and infrastructure-as-code.
+SEEO is a multi-tenant internal developer platform for provisioning secure, short-lived AWS environments on demand. I built it to show what it takes to go from a simple provisioning API to something a real engineering team could adopt: secure by default, observable, and cost-conscious.
 
-> **Why I built it:** I wanted to show what it takes to go from a simple provisioning API to a platform that a real engineering team could adopt—secure by default, observable, and cost-conscious.
+> **Why I built it:** I kept seeing side projects and intern sandboxes left running for weeks, racking up bills and exposing unused services. SEEO is my take on fixing that with role-based access, policy checks, and automatic cleanup.
 
 > **Project site:** [samueladegnan.github.io/seeo-aws-orchestrator](https://samueladegnan.github.io/seeo-aws-orchestrator/)
 
@@ -17,7 +17,7 @@ SEEO is a multi-tenant internal developer platform for provisioning secure, shor
 - **Real-time dashboard**: ActionCable broadcasts environment state changes to the React dashboard.
 - **Structured logging**: JSON logs ready for CloudWatch and SIEM pipelines.
 - **React frontend**: A modern Vite + React dashboard alongside the Rails API.
-- **Security-first CI**: RuboCop, RSpec, Terraform `fmt`/`validate`, and Checkov scans in GitHub Actions.
+- **Security-first CI**: RuboCop, RSpec, Terraform `fmt`/`validate`, Checkov scans, and AI Guardrail triage in GitHub Actions.
 
 ---
 
@@ -161,7 +161,7 @@ docker run --rm -e RAILS_ENV=test -e SEEO_JWT_SECRET=test-secret seeo-backend sh
 - [ ] Daily/weekly cost reports by team.
 - [ ] GitOps-style infrastructure requests via PR.
 - [ ] Deploy backend to ECS/App Runner with the included Terraform.
-- [ ] Integrate the AI Guardrail for policy/security scanning.
+- [x] Integrate the AI Guardrail for policy/security scanning.
 
 ---
 

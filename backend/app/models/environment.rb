@@ -7,9 +7,11 @@ class Environment
 
   attr_accessor :id, :project_name, :status, :created_at, :expires_at,
                 :instance_id, :public_ip, :private_ip, :volume_id, :ttl_minutes, :message,
-                :instance_type
+                :instance_type, :session_id, :region, :volume_size, :volume_type,
+                :tags, :notes, :ssh_key_name
 
-  validates :id, :project_name, :status, :created_at, :expires_at, :ttl_minutes, presence: true
+  validates :id, :project_name, :status, :created_at, :expires_at, :ttl_minutes, :region, presence: true
+  validates :volume_size, numericality: { greater_than_or_equal_to: 10, less_than_or_equal_to: 1000 }, allow_nil: true
   validates :status, inclusion: { in: STATUSES }
   validates :ttl_minutes, numericality: { greater_than_or_equal_to: 1 }
 
@@ -31,7 +33,13 @@ class Environment
       volume_id: volume_id,
       ttl_minutes: ttl_minutes,
       instance_type: instance_type,
-      message: message
+      message: message,
+      region: region,
+      volume_size: volume_size,
+      volume_type: volume_type,
+      tags: tags,
+      notes: notes,
+      ssh_key_name: ssh_key_name
     }
   end
 
@@ -45,8 +53,18 @@ class Environment
       instance_id: instance_id,
       public_ip: public_ip,
       ttl_minutes: ttl_minutes,
-      instance_type: instance_type
+      instance_type: instance_type,
+      region: region,
+      volume_size: volume_size,
+      volume_type: volume_type,
+      tags: tags,
+      notes: notes,
+      cost: estimated_cost
     }
+  end
+
+  def estimated_cost
+    CostTrackingService.environment_cost(self)
   end
 
   def expired?

@@ -27,6 +27,13 @@ RSpec.describe 'Environments API', type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body).to include('environments', 'cost')
     end
+
+    it 'filters by status' do
+      allow_any_instance_of(AwsService).to receive(:list_environments).with('ready').and_return([])
+
+      get '/environments?status=ready', headers: { 'Authorization' => "Bearer #{AuthorizationService.issue_token(admin)}" }
+      expect(response).to have_http_status(:ok)
+    end
   end
 
   describe 'POST /environments' do
@@ -38,7 +45,8 @@ RSpec.describe 'Environments API', type: :request do
           status: 'provisioning',
           created_at: Time.current,
           expires_at: 1.hour.from_now,
-          ttl_minutes: 60
+          ttl_minutes: 60,
+          region: 'us-east-1'
         )
       )
 
@@ -70,7 +78,8 @@ RSpec.describe 'Environments API', type: :request do
           status: 'terminated',
           created_at: Time.current,
           expires_at: 1.hour.from_now,
-          ttl_minutes: 60
+          ttl_minutes: 60,
+          region: 'us-east-1'
         )
       )
 

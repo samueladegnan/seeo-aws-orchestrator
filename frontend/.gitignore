@@ -22,3 +22,6 @@ dist-ssr/
 Thumbs.db
 .vscode/
 .idea/
+
+# Temporary local dev files (e.g. background Vite dev server)
+tmp-fe.*

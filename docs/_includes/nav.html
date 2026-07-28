@@ -4,11 +4,12 @@
 <nav class="site-nav" aria-label="Primary">
   <a class="site-nav-brand" href="{{ site.baseurl }}/">SEEO</a>
   <ul class="site-nav-links">
-    <li><a href="https://samueladegnan.github.io/" target="_blank" rel="noopener noreferrer">&larr; Back to Portfolio</a></li>
+    <li><a href="https://samueladegnan.github.io/">&larr; Back to Portfolio</a></li>
     <li><a href="{{ site.baseurl }}/" {% if home_active %}class="active" aria-current="page"{% endif %}>Overview</a></li>
-    <li><a href="{{ site.baseurl }}/demo/" {% if page.url == "/demo/" %}class="active" aria-current="page"{% endif %}>Demo</a></li>
+    <li><a href="{{ site.baseurl }}/demo/" {% if page.url == "/demo/" %}class="active" aria-current="page"{% endif %}>Live Demo</a></li>
     <li><a href="{{ site.baseurl }}/architecture/" {% if page.url == "/architecture/" %}class="active" aria-current="page"{% endif %}>Architecture</a></li>
     <li><a href="{{ site.baseurl }}/api/" {% if page.url == "/api/" %}class="active" aria-current="page"{% endif %}>API</a></li>
+    <li><a href="{{ site.baseurl }}/security/" {% if page.url == "/security/" %}class="active" aria-current="page"{% endif %}>Security Report</a></li>
     <li><a href="{{ site.github.repository_url }}" target="_blank" rel="noopener noreferrer" aria-label="SEEO source on GitHub">GitHub</a></li>
     <li><a class="btn" href="https://seeo-dashboard.vercel.app/" target="_blank" rel="noopener noreferrer">Try the Demo</a></li>
   </ul>

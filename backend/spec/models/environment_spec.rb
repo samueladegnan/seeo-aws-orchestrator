@@ -10,7 +10,8 @@ RSpec.describe Environment, type: :model do
       status: 'ready',
       created_at: Time.current,
       expires_at: 1.hour.from_now,
-      ttl_minutes: 60
+      ttl_minutes: 60,
+      region: 'us-east-1'
     }
   end
 

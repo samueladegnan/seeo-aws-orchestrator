@@ -134,6 +134,33 @@ a:focus-visible {
   outline-offset: 2px;
 }
 
+.btn-primary,
+.main-content .btn-primary {
+  color: #fff;
+  background-color: #155799;
+  border-color: #155799;
+  box-shadow: 0 4px 12px rgba(21, 87, 153, 0.25);
+  font-weight: 600;
+  padding: 0.85rem 1.25rem;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.main-content .btn-primary:hover,
+.main-content .btn-primary:focus {
+  color: #fff;
+  background-color: #10487a;
+  border-color: #10487a;
+  text-decoration: none;
+  box-shadow: 0 6px 16px rgba(21, 87, 153, 0.35);
+}
+
+.btn-primary:focus-visible,
+.main-content .btn-primary:focus-visible {
+  outline: 2px solid #155799;
+  outline-offset: 2px;
+}
+
 /* Sticky nav demo button */
 .site-nav-links .btn {
   display: inline-block;
@@ -433,6 +460,7 @@ table tr:nth-child(2n) {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 0.5rem;
 }
 
@@ -570,6 +598,35 @@ table tr:nth-child(2n) {
   color: #475569;
   font-size: 0.95rem;
   line-height: 1.5;
+}
+
+/* Utility helpers */
+.text-center {
+  text-align: center;
+}
+
+.cta-wrapper {
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.local-demo-cta {
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.local-demo-cta .btn {
+  margin: 0;
+  background-color: #155799;
+  border-color: #155799;
+  color: #fff;
+}
+
+.local-demo-cta .btn:hover,
+.local-demo-cta .btn:focus {
+  background-color: #10487a;
+  border-color: #10487a;
+  color: #fff;
 }
 
 /* Accessibility: respect reduced motion */

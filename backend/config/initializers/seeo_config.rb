@@ -66,5 +66,13 @@ module SeeoConfig
       value = ENV.fetch('SEEO_MOCK_AWS', Rails.env.production? ? 'false' : 'true')
       value == 'true'
     end
+
+    def mock_env_limit
+      ENV.fetch('SEEO_MOCK_ENV_LIMIT', '20').to_i
+    end
+
+    def mock_provisioning_delay_seconds
+      ENV.fetch('SEEO_MOCK_PROVISIONING_DELAY_SECONDS', '2').to_i
+    end
   end
 end

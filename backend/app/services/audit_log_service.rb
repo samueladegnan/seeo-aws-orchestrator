@@ -3,7 +3,7 @@
 class AuditLogService
   class << self
     def record(action:, target:, details: {})
-      if SeeoConfig.mock_aws?
+      if mock_aws?
         log_to_rails(action, target, details)
         return
       end
@@ -14,6 +14,11 @@ class AuditLogService
       )
     rescue Aws::DynamoDB::Errors::ServiceError => e
       Rails.logger.warn "[AuditLog] Failed to write #{action}: #{e.message}"
+    end
+
+    # Exposed so specs can stub the AWS mock toggle without reaching into SeeoConfig.
+    def mock_aws?
+      SeeoConfig.mock_aws?
     end
 
     private

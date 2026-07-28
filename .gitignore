@@ -35,6 +35,10 @@ Thumbs.db
 # Logs
 *.log
 
+# Windows NUL artifact produced by some shell redirects
+nul
+NUL
+
 # Ruby / Rails
 *.gem
 *.rbc

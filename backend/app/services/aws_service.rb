@@ -15,7 +15,7 @@ class AwsService
   # Public API
   # ------------------------------------------------------------------
 
-  def create_environment(project, ttl_minutes, instance_type = nil)
+  def create_environment(project, ttl_minutes, instance_type = nil, options = {})
     project_name = project.is_a?(Project) ? project.name : project
     team = project.is_a?(Project) ? project.team : Current.team
 
@@ -25,6 +25,9 @@ class AwsService
 
     ami_id = settings.ec2_ami_id || latest_amazon_linux_ami
     selected_instance_type = instance_type || settings.ec2_instance_type
+    region = options[:region].presence || settings.aws_region
+    volume_size = options[:volume_size].presence || 10
+    volume_type = options[:volume_type].presence || 'gp3'
 
     user_data = encode_user_data(environment_id, settings.secrets_secret_name)
 
@@ -51,7 +54,13 @@ class AwsService
       instance_id: instance_id,
       volume_id: volume_id,
       ttl_minutes: ttl_minutes,
-      instance_type: selected_instance_type
+      instance_type: selected_instance_type,
+      region: region,
+      volume_size: volume_size,
+      volume_type: volume_type,
+      tags: options[:tags].presence || {},
+      notes: options[:notes].presence || '',
+      ssh_key_name: options[:ssh_key_name].presence || settings.ec2_key_pair
     )
     persist_environment(environment)
     environment
@@ -106,29 +115,12 @@ class AwsService
     environment = get_environment(environment_id)
     raise ArgumentError, "Environment #{environment_id} not found" unless environment
 
-    environment.status = 'terminating'
-    persist_environment(environment)
+    terminate_existing_environment(environment)
+  end
 
-    if environment.instance_id
-      begin
-        ec2_client.terminate_instances(instance_ids: [environment.instance_id])
-      rescue Aws::EC2::Errors::InvalidInstanceIDNotFound
-        # Instance may already be gone
-      end
-      wait_for_instance_termination(environment.instance_id)
-    end
-
-    if environment.volume_id
-      begin
-        ec2_client.delete_volume(volume_id: environment.volume_id)
-      rescue Aws::EC2::Errors::InvalidVolumeNotFound, Aws::EC2::Errors::VolumeInUse
-        # Already gone or still in use
-      end
-    end
-
-    environment.status = 'terminated'
-    persist_environment(environment)
-    environment
+  # Alias used by the TTL monitor so both real and mock services share the same interface.
+  def force_terminate_environment(environment_id)
+    terminate_environment(environment_id)
   end
 
   def refresh_environment_state(environment_id)
@@ -170,6 +162,32 @@ class AwsService
   # ------------------------------------------------------------------
 
   private
+
+  def terminate_existing_environment(environment)
+    environment.status = 'terminating'
+    persist_environment(environment)
+
+    if environment.instance_id
+      begin
+        ec2_client.terminate_instances(instance_ids: [environment.instance_id])
+      rescue Aws::EC2::Errors::InvalidInstanceIDNotFound
+        # Instance may already be gone
+      end
+      wait_for_instance_termination(environment.instance_id)
+    end
+
+    if environment.volume_id
+      begin
+        ec2_client.delete_volume(volume_id: environment.volume_id)
+      rescue Aws::EC2::Errors::InvalidVolumeNotFound, Aws::EC2::Errors::VolumeInUse
+        # Already gone or still in use
+      end
+    end
+
+    environment.status = 'terminated'
+    persist_environment(environment)
+    environment
+  end
 
   def ec2_client
     @ec2_client ||= Aws::EC2::Client.new(client_options)
@@ -242,7 +260,13 @@ class AwsService
       instance_id: attrs[:instance_id],
       volume_id: attrs[:volume_id],
       ttl_minutes: attrs[:ttl_minutes].to_i,
-      instance_type: attrs[:instance_type]
+      instance_type: attrs[:instance_type],
+      region: attrs[:region],
+      volume_size: attrs[:volume_size],
+      volume_type: attrs[:volume_type],
+      tags: attrs[:tags],
+      notes: attrs[:notes],
+      ssh_key_name: attrs[:ssh_key_name]
     )
   end
 
@@ -337,7 +361,13 @@ class AwsService
       'volume_id' => environment.volume_id,
       'ttl_minutes' => environment.ttl_minutes,
       'instance_type' => environment.instance_type,
-      'message' => environment.message
+      'message' => environment.message,
+      'region' => environment.region,
+      'volume_size' => environment.volume_size,
+      'volume_type' => environment.volume_type,
+      'tags' => environment.tags,
+      'notes' => environment.notes,
+      'ssh_key_name' => environment.ssh_key_name
     }
   end
 
@@ -354,7 +384,13 @@ class AwsService
       volume_id: item['volume_id'],
       ttl_minutes: item['ttl_minutes'].to_i,
       instance_type: item['instance_type'],
-      message: item['message']
+      message: item['message'],
+      region: item['region'],
+      volume_size: item['volume_size'],
+      volume_type: item['volume_type'],
+      tags: item['tags'],
+      notes: item['notes'],
+      ssh_key_name: item['ssh_key_name']
     )
   end
 end

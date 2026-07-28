@@ -30,37 +30,37 @@ RSpec.describe TtlMonitorJob, type: :job do
       aws_service = instance_double(AwsService)
       allow(AwsService).to receive(:new).and_return(aws_service)
       allow(aws_service).to receive(:list_expired_environments).and_return([expired_env])
-      allow(aws_service).to receive(:terminate_environment).with(expired_env.id).and_return(expired_env)
+      allow(aws_service).to receive(:force_terminate_environment).with(expired_env.id).and_return(expired_env)
 
       expect { described_class.new.perform }.not_to raise_error
       expect(aws_service).to have_received(:list_expired_environments)
-      expect(aws_service).to have_received(:terminate_environment).with(expired_env.id)
+      expect(aws_service).to have_received(:force_terminate_environment).with(expired_env.id)
     end
 
     it 'does nothing when no environments are expired' do
       aws_service = instance_double(AwsService)
       allow(AwsService).to receive(:new).and_return(aws_service)
       allow(aws_service).to receive(:list_expired_environments).and_return([])
-      allow(aws_service).to receive(:terminate_environment)
+      allow(aws_service).to receive(:force_terminate_environment)
 
       described_class.new.perform
 
-      expect(aws_service).not_to have_received(:terminate_environment)
+      expect(aws_service).not_to have_received(:force_terminate_environment)
     end
 
     it 'logs and continues when a single termination fails' do
       aws_service = instance_double(AwsService)
       allow(AwsService).to receive(:new).and_return(aws_service)
       allow(aws_service).to receive(:list_expired_environments).and_return([expired_env, active_env])
-      allow(aws_service).to receive(:terminate_environment).with(expired_env.id).and_raise(StandardError, 'AWS failure')
-      allow(aws_service).to receive(:terminate_environment).with(active_env.id).and_return(active_env)
+      allow(aws_service).to receive(:force_terminate_environment).with(expired_env.id).and_raise(StandardError, 'AWS failure')
+      allow(aws_service).to receive(:force_terminate_environment).with(active_env.id).and_return(active_env)
 
       expect(Rails.logger).to receive(:error).with("[TTL] Failed to terminate #{expired_env.id}: AWS failure")
 
       described_class.new.perform
 
-      expect(aws_service).to have_received(:terminate_environment).with(expired_env.id)
-      expect(aws_service).to have_received(:terminate_environment).with(active_env.id)
+      expect(aws_service).to have_received(:force_terminate_environment).with(expired_env.id)
+      expect(aws_service).to have_received(:force_terminate_environment).with(active_env.id)
     end
   end
 end

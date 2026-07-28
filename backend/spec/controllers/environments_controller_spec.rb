@@ -35,6 +35,37 @@ RSpec.describe EnvironmentsController, type: :controller do
     end
   end
 
+  describe 'POST #create with options' do
+    let(:environment) do
+      Environment.new(
+        id: 'demo-123',
+        project_name: 'my-api',
+        status: 'provisioning',
+        created_at: Time.current,
+        expires_at: 1.hour.from_now,
+        ttl_minutes: 60,
+        region: 'us-east-1'
+      )
+    end
+
+    it 'passes region and volume options to the service' do
+      expect_any_instance_of(AwsService).to receive(:create_environment).with(
+        'my-api', 60, 'm6i.large',
+        hash_including(region: 'eu-west-1', volume_size: 100, volume_type: 'io2')
+      ).and_return(environment)
+
+      post :create, params: {
+        project_name: 'my-api',
+        ttl_minutes: 60,
+        instance_type: 'm6i.large',
+        region: 'eu-west-1',
+        volume_size: 100,
+        volume_type: 'io2'
+      }
+      expect(response).to have_http_status(:created)
+    end
+  end
+
   describe 'GET #show' do
     let(:environment) do
       Environment.new(
@@ -43,7 +74,8 @@ RSpec.describe EnvironmentsController, type: :controller do
         status: 'ready',
         created_at: Time.current,
         expires_at: 1.hour.from_now,
-        ttl_minutes: 60
+        ttl_minutes: 60,
+        region: 'us-east-1'
       )
     end
 
@@ -69,7 +101,8 @@ RSpec.describe EnvironmentsController, type: :controller do
         status: 'provisioning',
         created_at: Time.current,
         expires_at: 1.hour.from_now,
-        ttl_minutes: 60
+        ttl_minutes: 60,
+        region: 'us-east-1'
       )
     end
 
@@ -89,7 +122,8 @@ RSpec.describe EnvironmentsController, type: :controller do
         status: 'terminated',
         created_at: Time.current,
         expires_at: 1.hour.from_now,
-        ttl_minutes: 60
+        ttl_minutes: 60,
+        region: 'us-east-1'
       )
     end
 
@@ -109,7 +143,8 @@ RSpec.describe EnvironmentsController, type: :controller do
         status: 'ready',
         created_at: Time.current,
         expires_at: 1.hour.from_now,
-        ttl_minutes: 60
+        ttl_minutes: 60,
+        region: 'us-east-1'
       )
     end
 

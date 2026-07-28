@@ -12,18 +12,19 @@ permalink: /
 
 <p class="hero__title">A platform for secure, short-lived AWS environments</p>
 
-<p class="hero__lead">SEEO is a multi-tenant internal developer platform. Teams request environments through a React dashboard or API, policy-as-code enforces guardrails, and every action is audited and cost-tracked.</p>
+<p class="hero__lead">SEEO provisions secure, short-lived AWS environments on demand through a React dashboard or API. I built it after too many side-project sandboxes stuck around too long and cost too much.</p>
 
 </div>
 
-## Features
+## What it does
 
-- **Multi-tenancy & RBAC**: teams, users, projects, and role-based access (admin, operator, viewer).
-- **Policy-as-code**: OPA/Rego checks every provision request.
-- **Audit logging**: every create/destroy event is recorded in DynamoDB.
-- **Cost tracking**: estimated spend per environment and per team.
-- **Real-time updates**: ActionCable WebSocket broadcasts to the React dashboard.
-- **Structured logging & CloudWatch**: production-ready observability.
+- **Multi-tenancy & RBAC**: keeps teams, projects, and permissions separate so one team cannot accidentally blow up another's sandbox.
+- **Policy-as-code**: OPA/Rego checks every provision request before any AWS call is made.
+- **Audit logging**: every create/destroy event is recorded with who did it and when.
+- **Cost tracking**: rough cost estimates per environment and team, because free-tier surprises are real.
+- **Real-time updates**: ActionCable WebSocket broadcasts state changes to the React dashboard.
+- **Observability**: structured JSON logs ready for CloudWatch or a SIEM pipeline.
+- **AI Guardrail**: every CI run triages Brakeman findings with an AI guardrail and produces a report.
 
 ## How It Works
 
@@ -33,7 +34,7 @@ permalink: /
 
 ### 1. Request
 
-A developer requests an environment through the React dashboard or Rails API, choosing a project and TTL.
+Developers request an environment through the React dashboard or Rails API with a project and TTL.
 
 </div>
 
@@ -41,7 +42,7 @@ A developer requests an environment through the React dashboard or Rails API, ch
 
 ### 2. Authorize & Validate
 
-SEEO verifies the user's JWT or API key, checks RBAC, and runs OPA policy checks before allowing provisioning.
+SEEO verifies the JWT or API key, checks RBAC, and runs OPA policy checks.
 
 </div>
 
@@ -49,7 +50,7 @@ SEEO verifies the user's JWT or API key, checks RBAC, and runs OPA policy checks
 
 ### 3. Provision
 
-SEEO stores environment metadata in DynamoDB, writes an audit record, and spins up a hardened EC2 instance with an attached EBS volume.
+Metadata is stored, an audit record is written, and a hardened EC2 instance is spun up.
 
 </div>
 
@@ -57,34 +58,12 @@ SEEO stores environment metadata in DynamoDB, writes an audit record, and spins 
 
 ### 4. Observe & Expire
 
-ActionCable streams state changes, CloudWatch captures structured logs, and the TTL service tears down expired environments automatically.
+ActionCable streams state changes while the TTL service tears down expired environments automatically.
 
 </div>
 
 </div>
-
-## Explore Further
-
-- [Demo](./demo/) — see the dashboard preview and run it locally.
-- [Architecture Deep Dive](./architecture/) — data flow, component diagram, and security highlights.
-- [API Documentation](./api/) — authentication, endpoints, and role-based access.
-- [Frontend README](https://github.com/samueladegnan/seeo-aws-orchestrator/tree/main/frontend) — how to run the React dashboard.
-- [Backend README](https://github.com/samueladegnan/seeo-aws-orchestrator/tree/main/backend) — configuration, setup, and Docker commands.
-
-## Technology Stack
-
-| Layer | Technology |
-|-------|------------|
-| API / Business Logic | Ruby 3.3, Ruby on Rails 7, Active Model |
-| Frontend | React 18, Vite, Tailwind CSS |
-| Real-time | ActionCable |
-| Cloud Orchestration | aws-sdk-ruby (EC2, EBS, DynamoDB, Secrets Manager, Cost Explorer) |
-| State Store | DynamoDB |
-| Auth | JWT tenant tokens + legacy API key |
-| Policy Engine | OPA/Rego (with Ruby fallback) |
-| Infrastructure | Terraform |
-| CI/CD | GitHub Actions, RuboCop, RSpec, Checkov |
 
 ## About the Author
 
-Built by [Sam Degnan](https://samueladegnan.github.io/) as a portfolio project to demonstrate platform engineering, secure cloud automation, and infrastructure-as-code.
+I am [Sam Degnan](https://samueladegnan.github.io/), a software engineer focused on platform engineering, secure cloud automation, and infrastructure-as-code. SEEO is one of my portfolio projects; I built it end-to-end to show how a small team could safely self-service cloud environments.

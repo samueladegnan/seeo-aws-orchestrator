@@ -23,6 +23,7 @@ class ApplicationController < ActionController::API
 
   def set_current_context
     Thread.current[:request_user_agent] = request.user_agent
+    Current.session_id = request.headers['X-Session-ID'].presence || 'default'
     yield
   ensure
     Current.reset

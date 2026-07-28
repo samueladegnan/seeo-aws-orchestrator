@@ -1,0 +1,118 @@
+name: SEEO AI Guardrail
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  guardrail:
+    name: Static analysis + AI guardrail triage
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout SEEO
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+
+      - name: Install Brakeman
+        run: gem install brakeman --no-document
+
+      - name: Run Brakeman and generate SARIF
+        run: brakeman --format sarif --output seeo-brakeman.sarif backend
+
+      - name: Run AI Guardrail triage
+        uses: samueladegnan/ai-cicd-security-guardrail@main
+        with:
+          report-path: ./seeo-brakeman.sarif
+          repo-root: .
+          provider: ${{ secrets.GUARDRAIL_LLM_PROVIDER || 'mock' }}
+          llm-api-key: ${{ secrets.GUARDRAIL_LLM_API_KEY }}
+          llm-model: ${{ secrets.GUARDRAIL_LLM_MODEL }}
+          output-markdown: guardrail-report.md
+          output-json: guardrail-report.json
+
+      - name: Generate docs/security.md
+        run: |
+          cat << 'EOF' > docs/security.md
+          ---
+          title: Security Report
+          layout: default
+          permalink: /security/
+          ---
+
+          # Security Report
+
+          Generated automatically by the [ai-cicd-security-guardrail](https://github.com/samueladegnan/ai-cicd-security-guardrail) GitHub Actions workflow.
+
+          ## What This Report Shows
+
+          Every push to main is scanned with [Brakeman](https://brakemanscanner.org/), the findings are exported as a SARIF report, and the AI CI/CD Security Guardrail triages them. This page is the raw output of the most recent run, committed automatically by the guardrail workflow so the portfolio always reflects the current state of the codebase.
+
+          EOF
+
+          cat guardrail-report.md >> docs/security.md
+
+          cat << 'EOF' >> docs/security.md
+
+          ## Built-in security controls
+
+          SEEO also enforces security through design:
+
+          - **Authentication**: every sensitive endpoint requires a JWT tenant token or API key.
+          - **RBAC**: admin, operator, and viewer roles restrict what each user can do.
+          - **Policy-as-code**: OPA/Rego enforces TTLs, allowed instance types, and team limits before provisioning.
+          - **Audit logging**: every create/destroy event is recorded with actor, team, and timestamp.
+          - **No hardcoded secrets**: runtime credentials are fetched from AWS Secrets Manager.
+          - **IAM least privilege**: the EC2 instance role can only read its assigned secret.
+          - **Encrypted data at rest**: DynamoDB and Secrets Manager encrypt data.
+          - **Non-root container**: the backend Dockerfile runs as an unprivileged user.
+
+          ## CI/CD configuration
+
+          The guardrail workflow is defined in `.github/workflows/guardrail.yml`. On every push and pull request it:
+
+          1. Runs Brakeman to generate a SARIF report of the Rails backend.
+          2. Feeds that report to the AI Guardrail, which triages each finding with an LLM.
+          3. Produces a Markdown summary and a JSON report that can be downloaded from the workflow run.
+
+          The guardrail uses a mock provider by default so the pipeline runs without paid API keys. To use a real LLM, set these repository secrets:
+
+          - `GUARDRAIL_LLM_PROVIDER` — `openai`, `anthropic`, `gemini`, or `mock`
+          - `GUARDRAIL_LLM_API_KEY` — your provider API key
+          - `GUARDRAIL_LLM_MODEL` — model name (optional, e.g., `gpt-4o-mini`)
+
+          ## Reporting issues
+
+          If you spot a security issue, please open a private issue or email me directly. I take disclosures seriously and will respond as quickly as possible.
+          EOF
+
+      - name: Commit and push updated security report
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/security.md
+          if ! git diff --staged --quiet; then
+            git commit -m "docs: auto-update security report [skip ci]"
+            git push
+          else
+            echo "No changes to docs/security.md"
+          fi
+
+      - name: Upload guardrail reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: guardrail-reports
+          path: |
+            guardrail-report.md
+            guardrail-report.json
+            seeo-brakeman.sarif
