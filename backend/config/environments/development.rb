@@ -21,6 +21,9 @@ Rails.application.configure do
   config.action_controller.perform_caching = true
   config.cache_store = :memory_store
 
+  # Allow ActionCable connections from the Vite dev server (development only).
+  config.action_cable.allowed_request_origins = [/.*/]
+
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log
 

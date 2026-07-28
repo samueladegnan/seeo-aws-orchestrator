@@ -2,6 +2,7 @@ import { Fragment, useEffect, useState, useRef } from 'react'
 
 const API_KEY = import.meta.env.VITE_SEEO_API_KEY || 'dev-change-me-in-production'
 const API_BASE = import.meta.env.VITE_API_BASE || ''
+const isLocalApi = !API_BASE || /localhost|127\.0\.0\.1|host\.docker\.internal/.test(API_BASE)
 
 const REGIONS = [
   { value: 'us-east-1', label: 'US East (N. Virginia)' },
@@ -184,6 +185,19 @@ function App() {
     setCost(data.cost || null)
   }
 
+  const tryRefreshEnvironments = async () => {
+    try {
+      setError(null)
+      setLoading(true)
+      await fetchEnvironments()
+    } catch (err) {
+      console.error('[SEEO] fetchEnvironments failed:', err)
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const fetchEnvironmentsRef = useRef(fetchEnvironments)
   fetchEnvironmentsRef.current = fetchEnvironments
   const environmentsRef = useRef(environments)
@@ -191,17 +205,17 @@ function App() {
 
   const fetchHealth = async (signal) => {
     try {
-      const res = await fetch(`${API_BASE}/health`, {
-        headers: { 'X-API-Key': API_KEY, 'X-Session-ID': SESSION_ID },
-        signal,
-      })
-      if (!res.ok) return false
+      // Health is public; omit auth headers to avoid a CORS preflight on /health.
+      const res = await fetch(`${API_BASE}/health`, { signal })
+      if (!res.ok) return { ok: false, error: new Error(`HTTP ${res.status}`) }
       const data = await res.json()
       setMockMode(data.mock_mode === true)
       setColdStarting(false)
-      return true
-    } catch {
-      return false
+      return { ok: true }
+    } catch (err) {
+      if (err.name === 'AbortError') return { ok: false, error: null }
+      console.error('[SEEO] health check failed:', err)
+      return { ok: false, error: err }
     }
   }
 
@@ -215,6 +229,13 @@ function App() {
       return await fn()
     } catch (err) {
       if (!isNetworkError(err)) throw err
+      if (isLocalApi) {
+        throw new Error(
+          `Could not reach the backend at ${API_BASE || 'http://localhost:3000'}. ` +
+          `Error: ${err.message}. Make sure the Rails server/Docker container is running and port 3000 is exposed. ` +
+          `If the server is running, open the browser console (F12 → Console/Network) for details.`
+        )
+      }
       const controller = new AbortController()
       wakeAbortRef.current = controller
       setColdStarting(true)
@@ -225,8 +246,8 @@ function App() {
             clearWakeRefs()
             return reject(new Error('Cancelled'))
           }
-          const ok = await fetchHealth(controller.signal)
-          if (ok) {
+          const health = await fetchHealth(controller.signal)
+          if (health.ok) {
             if (!mounted.current) return
             setColdStarting(false)
             try {
@@ -246,7 +267,7 @@ function App() {
               setColdStarting(false)
               setServerUnreachable(true)
               clearWakeRefs()
-              reject(new Error('Server unreachable'))
+              reject(new Error(`Server unreachable${health.error?.message ? `: ${health.error.message}` : ''}`))
             }
           }
         }
@@ -262,8 +283,8 @@ function App() {
     let attempts = 0
 
     const tryWake = async () => {
-      const ok = await fetchHealth(controller.signal)
-      if (ok) {
+      const health = await fetchHealth(controller.signal)
+      if (health.ok) {
         try {
           await fetchEnvironments()
           if (!mounted.current) return
@@ -277,14 +298,27 @@ function App() {
         }
       } else {
         if (!mounted.current) return
-        setColdStarting(true)
         attempts += 1
-        if (attempts < 60) {
+        // In local dev, the Rails server in Docker can take a few seconds to boot.
+        // Give it a short grace period before showing the error, but don't show
+        // the production "waking up" modal.
+        const maxLocalAttempts = isLocalApi ? 5 : 60
+        if (attempts < maxLocalAttempts) {
+          if (!isLocalApi) setColdStarting(true)
           timeout = setTimeout(tryWake, 3000)
         } else {
-          setColdStarting(false)
+          if (!isLocalApi) setColdStarting(false)
           setLoading(false)
-          setServerUnreachable(true)
+          const errMsg = health.error ? ` (${health.error.message})` : ''
+          if (isLocalApi) {
+            setError(
+              `Could not reach the backend at ${API_BASE || 'http://localhost:3000'}.${errMsg} ` +
+              `Make sure the Rails server/Docker container is running and port 3000 is exposed. ` +
+              `Open the browser console (F12 → Console/Network) for details.`
+            )
+          } else {
+            setServerUnreachable(true)
+          }
         }
       }
     }
@@ -447,6 +481,7 @@ function App() {
     })
     if (!res.ok) {
       const data = await res.json().catch(() => ({}))
+      console.error('[SEEO] createEnvironment failed:', data.error || `HTTP ${res.status}`)
       throw new Error(data.error || `HTTP ${res.status}`)
     }
     return res.json()
@@ -471,6 +506,7 @@ function App() {
       })
       setError(null)
     } catch (err) {
+      console.error('[SEEO] handleCreate error:', err)
       setError(err.message)
     } finally {
       setIsSubmitting(false)
@@ -484,6 +520,7 @@ function App() {
     })
     if (!res.ok) {
       const data = await res.json().catch(() => ({}))
+      console.error('[SEEO] destroyEnvironment failed:', data.error || `HTTP ${res.status}`)
       throw new Error(data.error || `HTTP ${res.status}`)
     }
     return res.json()
@@ -497,6 +534,7 @@ function App() {
       await fetchEnvironments()
       setError(null)
     } catch (err) {
+      console.error('[SEEO] handleDestroy error:', err)
       setError(err.message)
     } finally {
       setDestroyingId(null)
@@ -616,10 +654,16 @@ function App() {
           <div className="mb-6 rounded-lg border border-rose-200 bg-rose-50 p-4 text-rose-800" role="alert">
             <p className="font-semibold">Error</p>
             <p className="text-sm">{error}</p>
+            <button
+              onClick={tryRefreshEnvironments}
+              className="mt-3 rounded-md bg-rose-200 px-3 py-1.5 text-sm font-semibold text-rose-900 hover:bg-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-500"
+            >
+              Retry
+            </button>
           </div>
         )}
 
-        <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="mb-8 grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
           <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 lg:col-span-2">
             <h2 className="mb-4 text-lg font-semibold">Create environment</h2>
             <form onSubmit={handleCreate} className="space-y-4" aria-label="Create environment form">
@@ -648,63 +692,66 @@ function App() {
                   onChange={(e) => setForm({ ...form, instance_type: e.target.value })}
                   options={INSTANCE_TYPES}
                 />
-                <Input
-                  label="TTL (minutes)"
-                  id="ttl-minutes"
-                  type="number"
-                  min={1}
-                  max={1440}
-                  required
-                  value={form.ttl_minutes}
-                  onChange={(e) => setForm({ ...form, ttl_minutes: parseInt(e.target.value, 10) || 1 })}
-                />
-                <Input
-                  label="Volume size (GB)"
-                  id="volume-size"
-                  type="number"
-                  min={10}
-                  max={1000}
-                  value={form.volume_size}
-                  onChange={(e) => setForm({ ...form, volume_size: parseInt(e.target.value, 10) || 10 })}
-                />
-                <Select
-                  label="Volume type"
-                  id="volume-type"
-                  value={form.volume_type}
-                  onChange={(e) => setForm({ ...form, volume_type: e.target.value })}
-                  options={VOLUME_TYPES}
-                />
-                <Input
-                  label="Tags"
-                  id="tags"
-                  type="text"
-                  placeholder="env=demo, owner=sam"
-                  value={form.tags}
-                  onChange={(e) => setForm({ ...form, tags: e.target.value })}
-                  className="sm:col-span-2"
-                />
-                <Input
-                  label="SSH key name"
-                  id="ssh-key-name"
-                  type="text"
-                  placeholder="seeo-demo-key"
-                  value={form.ssh_key_name}
-                  onChange={(e) => setForm({ ...form, ssh_key_name: e.target.value })}
-                  className="sm:col-span-2"
-                />
               </div>
 
               {showAdvanced && (
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <Input
-                    label="Notes"
-                    id="notes"
-                    as="textarea"
-                    rows={3}
-                    placeholder="Add a description or purpose for this environment..."
-                    value={form.notes}
-                    onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                  />
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <Input
+                      label="TTL (minutes)"
+                      id="ttl-minutes"
+                      type="number"
+                      min={1}
+                      max={1440}
+                      required
+                      value={form.ttl_minutes}
+                      onChange={(e) => setForm({ ...form, ttl_minutes: parseInt(e.target.value, 10) || 1 })}
+                    />
+                    <Input
+                      label="Volume size (GB)"
+                      id="volume-size"
+                      type="number"
+                      min={10}
+                      max={1000}
+                      value={form.volume_size}
+                      onChange={(e) => setForm({ ...form, volume_size: parseInt(e.target.value, 10) || 10 })}
+                    />
+                    <Select
+                      label="Volume type"
+                      id="volume-type"
+                      value={form.volume_type}
+                      onChange={(e) => setForm({ ...form, volume_type: e.target.value })}
+                      options={VOLUME_TYPES}
+                    />
+                    <Input
+                      label="Tags"
+                      id="tags"
+                      type="text"
+                      placeholder="env=demo, owner=sam"
+                      value={form.tags}
+                      onChange={(e) => setForm({ ...form, tags: e.target.value })}
+                      className="sm:col-span-2"
+                    />
+                    <Input
+                      label="SSH key name"
+                      id="ssh-key-name"
+                      type="text"
+                      placeholder="seeo-demo-key"
+                      value={form.ssh_key_name}
+                      onChange={(e) => setForm({ ...form, ssh_key_name: e.target.value })}
+                      className="sm:col-span-2"
+                    />
+                    <Input
+                      label="Notes"
+                      id="notes"
+                      as="textarea"
+                      rows={3}
+                      placeholder="Add a description or purpose for this environment..."
+                      value={form.notes}
+                      onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                      className="sm:col-span-2"
+                    />
+                  </div>
                 </div>
               )}
 

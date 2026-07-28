@@ -20,6 +20,7 @@ data "aws_availability_zones" "available" {
 }
 
 resource "aws_vpc" "seeo" {
+  # checkov:skip=CKV2_AWS_11: VPC flow logs are disabled to avoid unnecessary CloudWatch/S3 costs for a demo.
   cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
   enable_dns_support   = true
@@ -27,6 +28,11 @@ resource "aws_vpc" "seeo" {
   tags = {
     Name = "seeo-vpc"
   }
+}
+
+# Manage the default security group for this VPC so we can remove its default rules.
+resource "aws_default_security_group" "seeo_default" {
+  vpc_id = aws_vpc.seeo.id
 }
 
 resource "aws_internet_gateway" "seeo" {
@@ -38,6 +44,7 @@ resource "aws_internet_gateway" "seeo" {
 }
 
 resource "aws_subnet" "seeo" {
+  # checkov:skip=CKV_AWS_130: Public IP on launch is required for direct EC2 access in this demo.
   count                   = 2
   vpc_id                  = aws_vpc.seeo.id
   cidr_block              = cidrsubnet(var.vpc_cidr, 8, count.index)
@@ -72,6 +79,9 @@ resource "aws_route_table_association" "seeo" {
 # Security Group
 # -----------------------------------------------------------------------------
 resource "aws_security_group" "seeo" {
+  # checkov:skip=CKV_AWS_260: Port 80/443 open to the world is intended for public web access in this demo.
+  # checkov:skip=CKV_AWS_382: Broad outbound access is acceptable for ephemeral demo instances.
+  # checkov:skip=CKV2_AWS_5: Security group is attached dynamically at runtime, not in Terraform.
   name_prefix = "seeo-ec2-"
   description = "Allow SSH and ephemeral application traffic"
   vpc_id      = aws_vpc.seeo.id
@@ -166,6 +176,8 @@ resource "aws_iam_instance_profile" "seeo_ec2" {
 # DynamoDB TABLE
 # -----------------------------------------------------------------------------
 resource "aws_dynamodb_table" "environments" {
+  # checkov:skip=CKV_AWS_119: Default AWS-owned encryption key is sufficient for this free-tier demo table.
+  # checkov:skip=CKV_AWS_28: Point-in-time recovery is disabled to avoid unnecessary storage costs.
   name         = var.environments_table
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "id"
@@ -199,6 +211,8 @@ resource "aws_dynamodb_table" "environments" {
 # SECRETS MANAGER
 # -----------------------------------------------------------------------------
 resource "aws_secretsmanager_secret" "seeo" {
+  # checkov:skip=CKV_AWS_149: Default AWS-owned encryption key is sufficient for this free-tier demo secret.
+  # checkov:skip=CKV2_AWS_57: Automatic secret rotation is not required for this demo environment.
   name        = var.secrets_secret_name
   description = "Runtime credentials for SEEO-provisioned environments"
 }
@@ -215,6 +229,8 @@ resource "aws_secretsmanager_secret_version" "seeo" {
 # BACKEND APPLICATION POLICY (for local/dev runner)
 # -----------------------------------------------------------------------------
 data "aws_iam_policy_document" "seeo_backend" {
+  # checkov:skip=CKV_AWS_111: EC2 orchestration requires broad write permissions for demo functionality.
+  # checkov:skip=CKV_AWS_356: Resource wildcard is required for EC2 lifecycle calls such as RunInstances.
   statement {
     effect = "Allow"
     actions = [
@@ -256,11 +272,13 @@ resource "aws_iam_policy" "seeo_backend" {
 }
 
 resource "aws_iam_user" "seeo_backend" {
+  # checkov:skip=CKV_AWS_273: Local IAM user is used for simplicity instead of AWS Identity Center (SSO).
   count = var.create_backend_user ? 1 : 0
   name  = "seeo-backend"
 }
 
 resource "aws_iam_user_policy_attachment" "seeo_backend" {
+  # checkov:skip=CKV_AWS_40: Direct user policy attachment is acceptable for a single-user demo backend.
   count      = var.create_backend_user ? 1 : 0
   user       = aws_iam_user.seeo_backend[0].name
   policy_arn = aws_iam_policy.seeo_backend[0].arn
@@ -270,6 +288,8 @@ resource "aws_iam_user_policy_attachment" "seeo_backend" {
 # AUDIT LOG TABLE
 # -----------------------------------------------------------------------------
 resource "aws_dynamodb_table" "audit_logs" {
+  # checkov:skip=CKV_AWS_119: Default AWS-owned encryption key is sufficient for this free-tier demo table.
+  # checkov:skip=CKV_AWS_28: Point-in-time recovery is disabled to avoid unnecessary storage costs.
   name         = var.audit_log_table
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "id"
@@ -299,6 +319,8 @@ resource "aws_dynamodb_table" "audit_logs" {
 # COST SNAPSHOTS TABLE
 # -----------------------------------------------------------------------------
 resource "aws_dynamodb_table" "cost_snapshots" {
+  # checkov:skip=CKV_AWS_119: Default AWS-owned encryption key is sufficient for this free-tier demo table.
+  # checkov:skip=CKV_AWS_28: Point-in-time recovery is disabled to avoid unnecessary storage costs.
   name         = var.cost_snapshots_table
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "id"
@@ -317,6 +339,8 @@ resource "aws_dynamodb_table" "cost_snapshots" {
 # CLOUDWATCH LOG GROUP
 # -----------------------------------------------------------------------------
 resource "aws_cloudwatch_log_group" "seeo" {
+  # checkov:skip=CKV_AWS_158: Default AWS-owned encryption key is sufficient for this demo log group.
+  # checkov:skip=CKV_AWS_338: 14-day retention is sufficient and avoids long-term storage costs.
   name              = "/seeo/backend"
   retention_in_days = 14
 
@@ -329,8 +353,9 @@ resource "aws_cloudwatch_log_group" "seeo" {
 # ECR REPOSITORY FOR BACKEND CONTAINER
 # -----------------------------------------------------------------------------
 resource "aws_ecr_repository" "seeo" {
+  # checkov:skip=CKV_AWS_136: Default AES256 server-side encryption is sufficient for this demo repository.
   name                 = "seeo-backend"
-  image_tag_mutability = "MUTABLE"
+  image_tag_mutability = "IMMUTABLE"
 
   image_scanning_configuration {
     scan_on_push = true

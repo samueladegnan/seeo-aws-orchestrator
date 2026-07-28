@@ -6,10 +6,10 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/environments': 'http://localhost:3000',
-      '/health': 'http://localhost:3000',
+      '/environments': 'http://127.0.0.1:3000',
+      '/health': 'http://127.0.0.1:3000',
       '/cable': {
-        target: 'http://localhost:3000',
+        target: 'http://127.0.0.1:3000',
         ws: true,
         changeOrigin: true,
         rewriteWsOrigin: true,
