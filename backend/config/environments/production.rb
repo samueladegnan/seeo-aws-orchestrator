@@ -34,6 +34,7 @@ Rails.application.configure do
   # For this demo app we allow all hosts so the Render URL works out of the box.
   if ENV['RAILS_ALLOW_ALL_HOSTS'] == 'true'
     config.hosts.clear
+    config.action_cable.allowed_request_origins = [/.*/]
   else
     config.hosts = ENV.fetch('RAILS_ALLOWED_HOSTS', '.localhost').split(',').map(&:strip)
   end

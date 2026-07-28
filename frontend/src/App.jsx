@@ -308,8 +308,8 @@ function App() {
       <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/80 shadow-sm backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <h1 className="text-xl font-bold tracking-tight text-slate-900">SEEO</h1>
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-slate-500">WebSocket:</span>
+          <div className="flex items-center gap-2 text-sm" title="Ad blockers may block the real-time WebSocket connection">
+            <span className="text-slate-500">Live updates:</span>
             <span
               className={`inline-flex h-2.5 w-2.5 rounded-full ${
                 wsStatus === 'connected'
@@ -443,6 +443,9 @@ function App() {
             <p className="mt-2 text-sm text-slate-600">
               The demo backend sleeps after a period of inactivity. This can take 30–50 seconds.
             </p>
+            <p className="mt-2 text-xs text-slate-500">
+              Still stuck? Ad blockers sometimes block requests to <code className="rounded bg-slate-100 px-1">.onrender.com</code> domains. Try disabling your ad blocker or opening this page in an incognito/private window.
+            </p>
           </div>
         </div>
       )}
@@ -457,7 +460,7 @@ function App() {
           <div className="w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-xl ring-1 ring-slate-200">
             <h3 id="unreachable-title" className="text-lg font-semibold text-slate-900">Demo server unavailable</h3>
             <p className="mt-2 text-sm text-slate-600">
-              The live backend could not be reached. You can run the demo locally instead.
+              The live backend could not be reached. Ad blockers sometimes block requests to <code className="rounded bg-slate-100 px-1">.onrender.com</code> domains — try disabling your ad blocker or opening this page in an incognito/private window. You can also run the demo locally.
             </p>
             <div className="mt-6 flex justify-center gap-3">
               <Button variant="secondary" onClick={() => setServerUnreachable(false)}>
