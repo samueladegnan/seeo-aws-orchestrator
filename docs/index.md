@@ -66,4 +66,4 @@ ActionCable streams state changes while the TTL service tears down expired envir
 
 ## About the Author
 
-I am [Sam Degnan](https://samueladegnan.github.io/), a software engineer focused on platform engineering, secure cloud automation, and infrastructure-as-code. SEEO is one of my portfolio projects; I built it end-to-end to show how a small team could safely self-service cloud environments.
+Built by [Samuel Degnan](https://samueladegnan.github.io/) as a portfolio project demonstrating full-stack engineering, secure cloud automation, and infrastructure-as-code.

@@ -51,16 +51,18 @@ flowchart TB
     E --> S
 ```
 
-## Security highlights
+## Built-in security controls
 
-- **No hardcoded secrets** in source code or user-data.
-- **IAM least privilege** — EC2 instance role can only read its assigned secret.
-- **JWT + API key authentication** on all sensitive endpoints.
-- **RBAC** — admin, operator, and viewer roles limit what each user can do.
-- **Policy-as-code** — OPA/Rego enforces guardrails before any AWS call.
-- **Audit logging** — every create/destroy event is recorded with actor, team, and timestamp.
-- **Non-root container** in the provided Dockerfile.
-- **Encrypted secrets at rest** via AWS Secrets Manager and DynamoDB.
+SEEO enforces security through design:
+
+- **Authentication**: every sensitive endpoint requires a JWT tenant token or API key.
+- **RBAC**: admin, operator, and viewer roles restrict what each user can do.
+- **Policy-as-code**: OPA/Rego enforces TTLs, allowed instance types, and team limits before provisioning.
+- **Audit logging**: every create/destroy event is recorded with actor, team, and timestamp.
+- **No hardcoded secrets**: runtime credentials are fetched from AWS Secrets Manager.
+- **IAM least privilege**: the EC2 instance role can only read its assigned secret.
+- **Encrypted data at rest**: DynamoDB and Secrets Manager encrypt data.
+- **Non-root container**: the backend Dockerfile runs as an unprivileged user.
 
 ## Infrastructure
 

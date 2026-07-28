@@ -77,6 +77,8 @@ SEEO also enforces security through design:
 - **Encrypted data at rest**: DynamoDB and Secrets Manager encrypt data.
 - **Non-root container**: the backend Dockerfile runs as an unprivileged user.
 
+See the [Architecture]({{ site.baseurl }}/architecture/) page for details on SEEO's built-in security controls, including authentication, RBAC, policy-as-code, audit logging, and least-privilege IAM.
+
 ## CI/CD configuration
 
 The guardrail workflow is defined in `.github/workflows/guardrail.yml`. On every push and pull request it:

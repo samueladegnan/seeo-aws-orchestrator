@@ -16,7 +16,7 @@ SEEO is a multi-tenant internal developer platform for provisioning secure, shor
 - **Cost tracking**: Estimated spend per environment and per team based on instance type and TTL.
 - **Real-time dashboard**: ActionCable broadcasts environment state changes to the React dashboard.
 - **Structured logging**: JSON logs ready for CloudWatch and SIEM pipelines.
-- **React frontend**: A modern Vite + React dashboard alongside the Rails API.
+- **React frontend**: A modern Vite 8 + React 18 dashboard alongside the Rails API.
 - **Security-first CI**: RuboCop, RSpec, Terraform `fmt`/`validate`, Checkov scans, and AI Guardrail triage in GitHub Actions.
 
 ---
@@ -59,7 +59,7 @@ SEEO is a multi-tenant internal developer platform for provisioning secure, shor
 | Layer | Technology |
 |-------|------------|
 | API / Business Logic | Ruby 3.3, Ruby on Rails 7, Active Model |
-| Frontend | React 18, Vite, Tailwind CSS |
+| Frontend | React 18, Vite 8, Tailwind CSS, ESLint 9 |
 | Real-time | ActionCable / WebSockets |
 | Cloud Orchestration | aws-sdk-ruby (EC2, EBS, DynamoDB, Secrets Manager, Cost Explorer) |
 | State Store | DynamoDB |
@@ -118,11 +118,18 @@ Frontend:
 
 ```bash
 cd frontend
+cp .env.example .env  # optional: copy local environment template
 npm install
 npm run dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173) for the dashboard.
+
+## Live demo
+
+A fully deployed demo is available at [https://seeo-dashboard.vercel.app/](https://seeo-dashboard.vercel.app/). It runs the backend in **Mock AWS Mode**, so no AWS credentials are required. Each visitor gets their own isolated session via a browser-generated session id stored in local storage.
+
+> **Note:** Because the backend is hosted on Render's free tier, it may take **30–50 seconds** to wake up after a period of inactivity. The dashboard will show a loading message while the server starts. Some ad blockers may block requests to `.onrender.com`; if the dashboard seems stuck, try disabling your ad blocker or use an incognito/private window.
 
 ## Docs / portfolio site (optional)
 

@@ -2,8 +2,8 @@
 
 require 'simplecov'
 SimpleCov.start 'rails' do
-  add_filter '/spec/'
-  add_filter '/config/'
+  skip '/spec/'
+  skip '/config/'
 end
 
 RSpec.configure do |config|

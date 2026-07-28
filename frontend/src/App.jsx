@@ -1,8 +1,18 @@
-import { Fragment, useEffect, useState, useRef } from 'react'
+import { Fragment, useCallback, useEffect, useState, useRef } from 'react'
 
 const API_KEY = import.meta.env.VITE_SEEO_API_KEY || 'dev-change-me-in-production'
-const API_BASE = import.meta.env.VITE_API_BASE || ''
-const isLocalApi = !API_BASE || /localhost|127\.0\.0\.1|host\.docker\.internal/.test(API_BASE)
+const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+const API_BASE = import.meta.env.VITE_API_BASE || (isLocalhost ? 'http://localhost:3000' : '')
+const isLocalApi = /localhost|127\.0\.0\.1|host\.docker\.internal/.test(API_BASE)
+
+function getWsUrl() {
+  if (API_BASE) {
+    const base = API_BASE.replace(/\/$/, '')
+    return base.replace(/^http/, 'ws') + '/cable'
+  }
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  return `${protocol}//${window.location.host}/cable`
+}
 
 const REGIONS = [
   { value: 'us-east-1', label: 'US East (N. Virginia)' },
@@ -164,6 +174,8 @@ function App() {
   const reconnectTimeoutRef = useRef(null)
   const reconnectAttemptRef = useRef(0)
   const mounted = useRef(true)
+  const statusFilterRef = useRef(statusFilter)
+  statusFilterRef.current = statusFilter
 
   useEffect(() => {
     return () => {
@@ -171,7 +183,7 @@ function App() {
     }
   }, [])
 
-  const fetchEnvironments = async () => {
+  const fetchEnvironments = useCallback(async () => {
     const query = statusFilter ? `?status=${encodeURIComponent(statusFilter)}` : ''
     const res = await fetch(`${API_BASE}/environments${query}`, {
       headers: { 'X-API-Key': API_KEY, 'X-Session-ID': SESSION_ID },
@@ -183,7 +195,9 @@ function App() {
     const data = await res.json()
     setEnvironments((data.environments || []).filter((env) => env.status !== 'terminated'))
     setCost(data.cost || null)
-  }
+    // Any successful refresh means the backend is reachable; clear stale errors.
+    setError(null)
+  }, [statusFilter, setError])
 
   const tryRefreshEnvironments = async () => {
     try {
@@ -198,8 +212,6 @@ function App() {
     }
   }
 
-  const fetchEnvironmentsRef = useRef(fetchEnvironments)
-  fetchEnvironmentsRef.current = fetchEnvironments
   const environmentsRef = useRef(environments)
   environmentsRef.current = environments
 
@@ -280,7 +292,6 @@ function App() {
     mounted.current = true
     let timeout = null
     const controller = new AbortController()
-    let attempts = 0
 
     const tryWake = async () => {
       const health = await fetchHealth(controller.signal)
@@ -293,33 +304,17 @@ function App() {
           if (!mounted.current) return
           setError(err.message)
         } finally {
-          if (!mounted.current) return
-          setLoading(false)
+          if (mounted.current) {
+            setLoading(false)
+          }
         }
       } else {
         if (!mounted.current) return
-        attempts += 1
         // In local dev, the Rails server in Docker can take a few seconds to boot.
-        // Give it a short grace period before showing the error, but don't show
-        // the production "waking up" modal.
-        const maxLocalAttempts = isLocalApi ? 5 : 60
-        if (attempts < maxLocalAttempts) {
-          if (!isLocalApi) setColdStarting(true)
-          timeout = setTimeout(tryWake, 3000)
-        } else {
-          if (!isLocalApi) setColdStarting(false)
-          setLoading(false)
-          const errMsg = health.error ? ` (${health.error.message})` : ''
-          if (isLocalApi) {
-            setError(
-              `Could not reach the backend at ${API_BASE || 'http://localhost:3000'}.${errMsg} ` +
-              `Make sure the Rails server/Docker container is running and port 3000 is exposed. ` +
-              `Open the browser console (F12 → Console/Network) for details.`
-            )
-          } else {
-            setServerUnreachable(true)
-          }
-        }
+        // Keep retrying until the backend is reachable so the error auto-clears
+        // once the server is ready. In production, show the waking-up modal.
+        if (!isLocalApi) setColdStarting(true)
+        timeout = setTimeout(tryWake, 3000)
       }
     }
 
@@ -331,7 +326,7 @@ function App() {
       if (wakeAbortRef.current) wakeAbortRef.current.abort()
       mounted.current = false
     }
-  }, [statusFilter])
+  }, [fetchEnvironments])
 
   useEffect(() => {
     if (!terminateTarget) return
@@ -343,16 +338,7 @@ function App() {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [terminateTarget])
 
-  const getWsUrl = () => {
-    if (API_BASE) {
-      const base = API_BASE.replace(/\/$/, '')
-      return base.replace(/^http/, 'ws') + '/cable'
-    }
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    return `${protocol}//${window.location.host}/cable`
-  }
-
-  const connectWebSocket = () => {
+  const connectWebSocket = useCallback(() => {
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current)
       reconnectTimeoutRef.current = null
@@ -378,6 +364,13 @@ function App() {
             if (env.status === 'terminated') {
               return prev.filter((e) => e.id !== env.id)
             }
+            // If a status filter is active, keep the live list consistent with it:
+            // remove the environment if it no longer matches the filter, otherwise
+            // add or update it in place.
+            const filter = statusFilterRef.current
+            if (filter && env.status !== filter) {
+              return prev.filter((e) => e.id !== env.id)
+            }
             const updated = [...prev]
             const index = updated.findIndex((e) => e.id === env.id)
             if (index >= 0) {
@@ -388,7 +381,7 @@ function App() {
             return updated
           })
         }
-      } catch (e) {
+      } catch {
         // Ignore non-environment ActionCable messages
       }
     }
@@ -404,7 +397,28 @@ function App() {
         reconnectTimeoutRef.current = null
       }
     }
-  }
+  }, [])
+
+  // Poll every few seconds while environments are still provisioning or the
+  // WebSocket is not connected, so the UI updates even if the socket is blocked.
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const hasProvisioning = environmentsRef.current.some((env) => env.status === 'provisioning')
+      if (mounted.current && (hasProvisioning || wsStatus !== 'connected')) {
+        fetchEnvironments().catch(() => {})
+      }
+    }, 4000)
+    return () => clearInterval(interval)
+  }, [fetchEnvironments, wsStatus])
+
+  useEffect(() => {
+    mounted.current = true
+    const cleanup = connectWebSocket()
+    return () => {
+      mounted.current = false
+      if (cleanup) cleanup()
+    }
+  }, [connectWebSocket, wsReconnectAttempt])
 
   const scheduleReconnect = (ws, status) => {
     if (!mounted.current) return
@@ -420,31 +434,13 @@ function App() {
   }
 
   const handleReconnect = () => {
+    if (wsStatus === 'connected') return
     reconnectAttemptRef.current = 0
     setWsStatus('connecting')
     setWsReconnectAttempt((prev) => prev + 1)
   }
 
-  useEffect(() => {
-    mounted.current = true
-    const cleanup = connectWebSocket()
-    return () => {
-      mounted.current = false
-      if (cleanup) cleanup()
-    }
-  }, [wsReconnectAttempt])
 
-  // Poll every few seconds while environments are still provisioning or the
-  // WebSocket is not connected, so the UI updates even if the socket is blocked.
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const hasProvisioning = environmentsRef.current.some((env) => env.status === 'provisioning')
-      if (mounted.current && (hasProvisioning || wsStatus !== 'connected')) {
-        fetchEnvironmentsRef.current().catch(() => {})
-      }
-    }, 4000)
-    return () => clearInterval(interval)
-  }, [wsStatus, statusFilter])
 
   const parseTags = (input) => {
     const tags = {}
@@ -490,9 +486,14 @@ function App() {
   const handleCreate = async (e) => {
     e.preventDefault()
     setIsSubmitting(true)
+    setError(null)
     try {
       await wakeAndRetry(() => createEnvironment(form))
-      await fetchEnvironments()
+      // Refresh the list, but don't let a transient refresh failure overwrite
+      // the success of the create. Polling/WebSocket will catch up.
+      await fetchEnvironments().catch((err) => {
+        console.warn('[SEEO] post-create refresh failed:', err)
+      })
       setForm({
         project_name: '',
         ttl_minutes: 60,
@@ -504,7 +505,6 @@ function App() {
         tags: '',
         ssh_key_name: '',
       })
-      setError(null)
     } catch (err) {
       console.error('[SEEO] handleCreate error:', err)
       setError(err.message)
@@ -529,10 +529,12 @@ function App() {
   const handleDestroy = async () => {
     if (!terminateTarget) return
     setDestroyingId(terminateTarget.id)
+    setError(null)
     try {
       await wakeAndRetry(() => destroyEnvironment(terminateTarget.id))
-      await fetchEnvironments()
-      setError(null)
+      await fetchEnvironments().catch((err) => {
+        console.warn('[SEEO] post-destroy refresh failed:', err)
+      })
     } catch (err) {
       console.error('[SEEO] handleDestroy error:', err)
       setError(err.message)
@@ -595,7 +597,7 @@ function App() {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4">
             <a
-              href="https://samueladegnan.github.io/"
+              href="https://samueladegnan.github.io/seeo-aws-orchestrator/"
               target="_self"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
