@@ -265,3 +265,101 @@ resource "aws_iam_user_policy_attachment" "seeo_backend" {
   user       = aws_iam_user.seeo_backend[0].name
   policy_arn = aws_iam_policy.seeo_backend[0].arn
 }
+
+# -----------------------------------------------------------------------------
+# AUDIT LOG TABLE
+# -----------------------------------------------------------------------------
+resource "aws_dynamodb_table" "audit_logs" {
+  name         = var.audit_log_table
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "id"
+
+  attribute {
+    name = "id"
+    type = "S"
+  }
+
+  attribute {
+    name = "timestamp"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name     = "TimestampIndex"
+    hash_key = "timestamp"
+    projection_type = "ALL"
+  }
+
+  tags = {
+    Name = var.audit_log_table
+  }
+}
+
+# -----------------------------------------------------------------------------
+# COST SNAPSHOTS TABLE
+# -----------------------------------------------------------------------------
+resource "aws_dynamodb_table" "cost_snapshots" {
+  name         = var.cost_snapshots_table
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "id"
+
+  attribute {
+    name = "id"
+    type = "S"
+  }
+
+  tags = {
+    Name = var.cost_snapshots_table
+  }
+}
+
+# -----------------------------------------------------------------------------
+# CLOUDWATCH LOG GROUP
+# -----------------------------------------------------------------------------
+resource "aws_cloudwatch_log_group" "seeo" {
+  name              = "/seeo/backend"
+  retention_in_days = 14
+
+  tags = {
+    Name = "seeo-backend-logs"
+  }
+}
+
+# -----------------------------------------------------------------------------
+# ECR REPOSITORY FOR BACKEND CONTAINER
+# -----------------------------------------------------------------------------
+resource "aws_ecr_repository" "seeo" {
+  name                 = "seeo-backend"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  tags = {
+    Name = "seeo-backend"
+  }
+}
+
+# -----------------------------------------------------------------------------
+# IAM ROLE FOR ECS / APP RUNNER BACKEND DEPLOYMENT
+# -----------------------------------------------------------------------------
+data "aws_iam_policy_document" "seeo_backend_task_trust" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["tasks.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "seeo_backend_task" {
+  name               = "seeo-backend-task-role"
+  assume_role_policy = data.aws_iam_policy_document.seeo_backend_task_trust.json
+
+  tags = {
+    Name = "seeo-backend-task-role"
+  }
+}

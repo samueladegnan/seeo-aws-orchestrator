@@ -1,8 +1,8 @@
 # SEEO — Secure Ephemeral Environment Orchestrator
 
-A production-oriented, full-stack internal tool that lets teams request temporary, secure AWS environments on demand. SEEO automatically provisions hardened EC2 instances, securely injects runtime credentials via AWS Secrets Manager, tracks every environment's TTL in DynamoDB, and tears down resources when they expire.
+SEEO is a multi-tenant internal developer platform for provisioning secure, short-lived AWS environments on demand. It demonstrates production-grade cloud engineering: multi-tenancy, RBAC, policy-as-code, audit logging, cost tracking, real-time updates, and infrastructure-as-code.
 
-> **Portfolio purpose:** SEEO demonstrates secure application development with Ruby on Rails, enterprise-grade AWS architecture, infrastructure-as-code with Terraform, secrets lifecycle management, and automated infrastructure lifecycle management.
+> **Why I built it:** I wanted to show what it takes to go from a simple provisioning API to a platform that a real engineering team could adopt—secure by default, observable, and cost-conscious.
 
 > **Project site:** [samueladegnan.github.io/seeo-aws-orchestrator](https://samueladegnan.github.io/seeo-aws-orchestrator/)
 
@@ -10,183 +10,158 @@ A production-oriented, full-stack internal tool that lets teams request temporar
 
 ## Features
 
-- **Self-service ephemeral environments** — Request environments via REST API or web dashboard.
-- **Secure credential handling** — EC2 instances use IAM roles to fetch runtime secrets from AWS Secrets Manager; no hardcoded credentials in code or user-data.
-- **TTL lifecycle automation** — Background service scans for expired environments and terminates them automatically.
-- **Infrastructure as Code** — Terraform provisions the VPC, subnets, security groups, IAM roles, DynamoDB table, and Secrets Manager secret.
-- **Audit trail & state tracking** — DynamoDB records every environment's lifecycle and metadata.
-- **Containerized backend** — Dockerfile included for consistent local or container deployment.
-- **Web dashboard** — Clean, responsive UI to request, monitor, and tear down environments.
+- **Multi-tenancy & RBAC**: Teams, users, and projects with admin, operator, and viewer roles.
+- **Policy-as-code**: OPA/Rego rules enforce TTLs, allowed instance types, and team limits before provisioning.
+- **Audit logging**: Every create/destroy event is written to DynamoDB with actor, team, and timestamp.
+- **Cost tracking**: Estimated spend per environment and per team based on instance type and TTL.
+- **Real-time dashboard**: ActionCable broadcasts environment state changes to the React dashboard.
+- **Structured logging**: JSON logs ready for CloudWatch and SIEM pipelines.
+- **React frontend**: A modern Vite + React dashboard alongside the Rails API.
+- **Security-first CI**: RuboCop, RSpec, Terraform `fmt`/`validate`, and Checkov scans in GitHub Actions.
 
 ---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         SEEO Backend (Ruby on Rails)                │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐   │
-│  │ Environments │  │    Health    │  │      TTL Service         │   │
-│  │  Controller  │  │  Controller  │  │    (Solid Queue job)     │   │
-│  └──────┬───────┘  └──────┬───────┘  └────────────┬─────────────┘   │
-└─────────┼─────────────────┼───────────────────────┼─────────────────┘
-          │                 │                       │
-          ▼                 ▼                       ▼
-     ┌─────────┐     ┌──────────────┐         ┌───────────────┐
-     │  EC2    │     │ DynamoDB     │         │Secrets Manager│
-     │ + EBS   │     │ Environments │         │ Runtime creds │
-     └─────────┘     └──────────────┘         └───────────────┘
-```
-
-### Technology Stack
-
-| Layer                | Technology                                         |
-|----------------------|----------------------------------------------------|
-| API / Business Logic | Ruby 3.3, Ruby on Rails 7, Active Model              |
-| Cloud Orchestration  | aws-sdk-ruby (EC2, EBS, Secrets Manager, DynamoDB) |
-| State Store          | DynamoDB                                           |
-| Secrets Management   | AWS Secrets Manager                                |
-| Infrastructure       | Terraform (AWS provider)                           |
-| Dashboard            | Vanilla JS + CSS served by Rails API               |
-| Container            | Docker                                             |
-
----
-
-## Project Structure
-
-```
-.
-├── backend/
-│   ├── app/
-│   │   ├── controllers/           # Rails controllers
-│   │   ├── models/                # ActiveModel objects
-│   │   ├── services/              # AWS and auth services
-│   │   └── jobs/                  # Solid Queue background jobs
-│   ├── config/                    # Rails configuration
-│   ├── db/                        # Migrations (Solid Queue, etc.)
-│   ├── spec/                      # RSpec tests
-│   ├── Dockerfile
-│   ├── docker-compose.yml
-│   └── Gemfile
-├── infrastructure/
-│   ├── main.tf                    # VPC, IAM, SG, DynamoDB, Secrets
-│   ├── variables.tf
-│   └── outputs.tf
-├── scripts/
-│   └── ec2_user_data.sh           # Bootstrap reference
-├── docs/                          # GitHub Pages site
-├── README.md
-└── .gitignore
+─────────────────────────────────────────────────────────────────────────┐
+│                        React Dashboard (Vite)                           │
+│                     Lists envs, shows cost, real-time updates           │
+└─────────────────────────────┬───────────────────────────────────────────┘
+                              │
+┌─────────────────────────────▼─────────────────────────────────────────┐
+│                        Rails 7 API                                        │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐        │
+│  │ Environments │  │   Health     │  │      TTL Service         │        │
+│  │  Controller  │  │  Controller  │  │    (Solid Queue job)     │        │
+│  └──────┬───────┘  └──────┬───────┘  └────────────┬─────────────┘        │
+│  ┌──────▼─────────────────┼───────────────────────┼──────┐               │
+│  │  AuthService           │                     │      │               │
+│  │  AuditLogService       │                     │      │               │
+│  │  PolicyService         │                     │      │               │
+│  │  CostTrackingService   │                     │      │               │
+│  └─────────────────────────┘                     │      │               │
+└───────────────────────────┼───────────────────────┼──────┼──────────────┘
+                            │                       │      │
+                                                   ▼      ▼
+┌─────────────┐    ┌─────────────────    ┌─────────────────┐
+│  EC2 + EBS  │    │    DynamoDB     │    │ Secrets Manager │
+│             │    │ Environments    │    │                 │
+│             │    │ Audit Logs      │    │                 │
+│             │    │                 │    │                 │
+└─────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
 ---
 
-## Prerequisites
+## Tech Stack
 
-- **Ruby 3.3+**
-- **AWS CLI** configured with appropriate credentials
-- **Terraform 1.5+**
-- (Optional) **Docker**
+| Layer | Technology |
+|-------|------------|
+| API / Business Logic | Ruby 3.3, Ruby on Rails 7, Active Model |
+| Frontend | React 18, Vite, Tailwind CSS |
+| Real-time | ActionCable / WebSockets |
+| Cloud Orchestration | aws-sdk-ruby (EC2, EBS, DynamoDB, Secrets Manager, Cost Explorer) |
+| State Store | DynamoDB |
+| Auth | JWT tenant tokens + legacy API key |
+| Policy Engine | OPA/Rego (with Ruby fallback) |
+| Infrastructure | Terraform, AWS |
+| CI/CD | GitHub Actions, RuboCop, RSpec, Checkov |
 
 ---
 
 ## Quick Start
 
-### 1. Clone & Configure
+The fastest way to run SEEO is with Docker. You can also run the backend and frontend directly if you have Ruby 3.3+ and Node.js installed.
+
+### Option A: Docker (recommended)
+
+From the project root:
 
 ```bash
+# macOS / Linux
 cp backend/.env.example backend/.env
-# Edit backend/.env with your AWS settings and a strong API_KEY
+# Edit backend/.env with your AWS credentials and secrets
+cd backend
+docker build -t seeo-backend .
+docker run --rm -p 3000:3000 --env-file .env seeo-backend
 ```
 
-### 2. Deploy the Infrastructure
+On Windows Command Prompt:
 
-```bash
-cd infrastructure
-terraform init
-terraform plan
-terraform apply
+```cmd
+cd C:\Users\sammd\Documents\GitProjects\seeo-aws-orchestrator\backend
+copy .env.example .env
+:: Edit .env with your AWS credentials and secrets
+docker build -t seeo-backend .
+docker run --rm -p 3000:3000 --env-file .env seeo-backend
 ```
 
-Note the outputs (VPC ID, subnet IDs, security group ID, instance profile name).
+> **Note:** If you change `SEEO_API_KEY` in `backend/.env`, make sure the frontend uses the same key via `VITE_SEEO_API_KEY` (set in `frontend/.env` or the default in `frontend/src/App.jsx`).
+>
+> By default, the backend runs in **Mock AWS Mode** (`SEEO_MOCK_AWS=true`) so it works without real AWS credentials. Set `SEEO_MOCK_AWS=false` to call real AWS APIs. In mock mode, audit logs are written to the Rails log instead of DynamoDB.
 
-### 3. Run the Backend Locally
+### Option B: Direct local install
+
+Backend:
 
 ```bash
 cd backend
+cp .env.example .env
+# Edit .env
 bundle install
-bin/rails solid_queue:install:migrations
 bin/rails db:create db:migrate
 bin/rails server
 ```
 
-Open [http://localhost:3000](http://localhost:3000) for the dashboard and [http://localhost:3000/environments](http://localhost:3000/environments) for the API.
-
-### 4. Request an Environment
+Frontend:
 
 ```bash
-curl -X POST "http://localhost:3000/environments" \
-  -H "Content-Type: application/json" \
-  -H "X-API-Key: your-api-key" \
-  -d '{"project_name": "my-api", "ttl_minutes": 60}'
+cd frontend
+npm install
+npm run dev
 ```
 
----
+Open [http://localhost:5173](http://localhost:5173) for the dashboard.
 
-## Environment Variables
+## Docs / portfolio site (optional)
 
-| Variable                       | Description                                    | Default                    |
-|--------------------------------|------------------------------------------------|----------------------------|
-| `SEEO_API_KEY`                 | API key for all protected endpoints            | `dev-change-me...`       |
-| `AWS_REGION`                   | AWS region                                     | `us-east-1`                |
-| `AWS_PROFILE`                  | AWS CLI profile name (optional)                | —                          |
-| `SEEO_EC2_KEY_PAIR`            | EC2 key pair name for SSH access               | —                          |
-| `SEEO_EC2_AMI_ID`              | AMI ID to launch (optional; latest AL2023 used) | —                         |
-| `SEEO_EC2_INSTANCE_TYPE`       | Default EC2 instance type                      | `t3.micro`                 |
-| `SEEO_EC2_SUBNET_ID`           | Subnet ID for launched instances               | —                          |
-| `SEEO_EC2_SECURITY_GROUP_ID` | Security group ID for launched instances       | —                          |
-| `SEEO_IAM_INSTANCE_PROFILE`    | IAM instance profile attached to EC2 instances | —                          |
-| `SEEO_ENVIRONMENTS_TABLE`      | DynamoDB table name                            | `seeo-environments`        |
-| `SEEO_SECRETS_SECRET_NAME`     | Secrets Manager secret name                    | `seeo/runtime/credentials` |
-| `SEEO_TTL_CHECK_INTERVAL_SECONDS` | TTL scan interval in seconds                | `60`                       |
-| `CORS_ALLOW_ORIGINS`           | Comma-separated list of allowed CORS origins     | `*`                        |
-| `CORS_ALLOW_CREDENTIALS`       | Allow CORS requests with credentials             | `false`                    |
+The Jekyll site in `docs/` is the project portfolio. Run it via Docker (Ruby/Bundler not required):
 
----
+```bash
+cd docs
+docker compose up --build
+```
 
-## Security Highlights
-
-- **No hardcoded secrets** in source code or user-data.
-- **IAM least privilege** — EC2 instance role can only read its assigned secret.
-- **API key authentication** on all sensitive endpoints.
-- **Non-root container** in the provided Dockerfile.
-- **Encrypted secrets at rest** via AWS Secrets Manager and DynamoDB.
+Open [http://localhost:4000](http://localhost:4000).
 
 ---
 
 ## Testing
 
-Run the test suite with:
-
-```bash
-cd backend
-bundle exec rspec
-```
-
-For linting:
+Backend tests and linting run inside the Docker image or locally:
 
 ```bash
 cd backend
 bundle exec rubocop
+bundle exec rspec
+```
+
+With Docker:
+
+```bash
+docker run --rm -e RAILS_ENV=test -e SEEO_JWT_SECRET=test-secret seeo-backend sh -c "bundle exec rails db:create db:migrate && bundle exec rspec"
 ```
 
 ---
 
-## Roadmap / Next Steps
+## Roadmap
 
-- Add email/Slack notifications on environment lifecycle events.
-- Introduce cost allocation tags and daily budget reporting.
-- Expand unit/integration test coverage beyond the core orchestration flows.
+- [ ] Email/Slack notifications on lifecycle events.
+- [ ] Daily/weekly cost reports by team.
+- [ ] GitOps-style infrastructure requests via PR.
+- [ ] Deploy backend to ECS/App Runner with the included Terraform.
+- [ ] Integrate the AI Guardrail for policy/security scanning.
 
 ---
 

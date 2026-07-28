@@ -28,5 +28,41 @@ jobs:
       - name: Run RuboCop
         run: bundle exec rubocop
 
-      - name: Run RSpec
+      - name: Run RSpec with coverage
         run: bundle exec rspec
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: backend/coverage/
+
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.0"
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+        working-directory: infrastructure
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: infrastructure
+
+      - name: Terraform Validate
+        run: terraform validate
+        working-directory: infrastructure
+
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: infrastructure
+          framework: terraform
+          quiet: true
+          soft_fail: true

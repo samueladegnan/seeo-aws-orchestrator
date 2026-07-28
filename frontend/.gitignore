@@ -1,0 +1,24 @@
+# Node / npm / yarn
+node_modules/
+.npm
+yarn-error.log
+yarn-debug.log*
+npm-debug.log*
+pnpm-debug.log*
+.eslintcache
+
+# Vite build output
+dist/
+dist-ssr/
+*.local
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE / OS files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

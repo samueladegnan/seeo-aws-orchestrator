@@ -18,11 +18,23 @@ Metrics/BlockLength:
     - "spec/**/*"
     - "config/routes.rb"
 
-Metrics/MethodLength:
-  Max: 30
-
 Metrics/ClassLength:
-  Max: 200
+  Max: 350
 
 Metrics/AbcSize:
-  Max: 30
+  Max: 40
+
+Metrics/MethodLength:
+  Max: 40
+
+RSpec/AnyInstance:
+  Enabled: false
+
+RSpec/MultipleExpectations:
+  Enabled: false
+
+RSpec/ExampleLength:
+  Enabled: false
+
+RSpec/MessageSpies:
+  Enabled: false

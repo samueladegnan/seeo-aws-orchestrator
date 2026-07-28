@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: seeo-backend
+    runtime: docker
+    repo: https://github.com/samueladegnan/seeo-aws-orchestrator
+    rootDir: backend
+    envVars:
+      - key: RAILS_ENV
+        value: production
+      - key: RAILS_LOG_TO_STDOUT
+        value: "true"
+      - key: RAILS_SERVE_STATIC_FILES
+        value: "true"
+      - key: SEEO_MOCK_AWS
+        value: "true"
+      - key: SEEO_API_KEY
+        generateValue: true
+      - key: SEEO_JWT_SECRET
+        generateValue: true
+      - key: CORS_ALLOW_ORIGINS
+        value: "https://seeo-dashboard.vercel.app,http://localhost:5173"
+      - key: CORS_ALLOW_CREDENTIALS
+        value: "false"
+      - key: DATABASE_URL
+        value: "sqlite3:///app/storage/production.sqlite3"
+    healthCheckPath: /health

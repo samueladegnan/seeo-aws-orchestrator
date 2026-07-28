@@ -10,11 +10,20 @@ permalink: /
 
 <div class="hero" markdown="1">
 
-<p class="hero__title">Secure, self-service AWS environments in seconds</p>
+<p class="hero__title">A platform for secure, short-lived AWS environments</p>
 
-<p class="hero__lead">SEEO is a production-oriented internal DevOps tool that automates the deployment of secure, TTL-bound AWS infrastructure through a REST API and web dashboard. Teams request temporary EC2 environments and every resource is automatically torn down once its TTL expires.</p>
+<p class="hero__lead">SEEO is a multi-tenant internal developer platform. Teams request environments through a React dashboard or API, policy-as-code enforces guardrails, and every action is audited and cost-tracked.</p>
 
 </div>
+
+## Features
+
+- **Multi-tenancy & RBAC**: teams, users, projects, and role-based access (admin, operator, viewer).
+- **Policy-as-code**: OPA/Rego checks every provision request.
+- **Audit logging**: every create/destroy event is recorded in DynamoDB.
+- **Cost tracking**: estimated spend per environment and per team.
+- **Real-time updates**: ActionCable WebSocket broadcasts to the React dashboard.
+- **Structured logging & CloudWatch**: production-ready observability.
 
 ## How It Works
 
@@ -24,119 +33,58 @@ permalink: /
 
 ### 1. Request
 
-A developer requests an environment through the **Rails API backend** or the web dashboard, specifying a project name and TTL.
+A developer requests an environment through the React dashboard or Rails API, choosing a project and TTL.
 
 </div>
 
 <div class="step" markdown="1">
 
-### 2. Provision
+### 2. Authorize & Validate
 
-SEEO stores environment metadata in **DynamoDB** and provisions a hardened **EC2 instance** with an attached **EBS volume**.
-
-</div>
-
-<div class="step" markdown="1">
-
-### 3. Authenticate
-
-The instance assumes an **IAM role** to fetch runtime credentials from **AWS Secrets Manager** — no credentials are baked into code or user-data.
+SEEO verifies the user's JWT or API key, checks RBAC, and runs OPA policy checks before allowing provisioning.
 
 </div>
 
 <div class="step" markdown="1">
 
-### 4. Expire
+### 3. Provision
 
-A background **TTL service** continuously scans for expired environments and terminates them automatically.
+SEEO stores environment metadata in DynamoDB, writes an audit record, and spins up a hardened EC2 instance with an attached EBS volume.
+
+</div>
+
+<div class="step" markdown="1">
+
+### 4. Observe & Expire
+
+ActionCable streams state changes, CloudWatch captures structured logs, and the TTL service tears down expired environments automatically.
 
 </div>
 
 </div>
-
-## Why It Matters
-
-- **Reduces infrastructure sprawl** by ensuring every environment has a strict expiration time.
-- **Proves secure orchestration** through least-privilege IAM roles and zero-hardcoded secrets.
-- **Demonstrates full-stack ownership** from Rails API backend and Terraform infrastructure to a responsive vanilla-JS dashboard.
-
-## Key Features
-
-<div class="feature-grid" markdown="1">
-
-<div class="feature-card" markdown="1">
-
-#### Self-Service Environments
-
-Request temporary EC2 environments through a REST API or a responsive web dashboard.
-
-</div>
-
-<div class="feature-card" markdown="1">
-
-#### Hardened EC2 + EBS
-
-Each request provisions a hardened EC2 instance with an attached EBS volume automatically.
-
-</div>
-
-<div class="feature-card" markdown="1">
-
-#### Zero-Hardcoded Secrets
-
-Runtime credentials are fetched from AWS Secrets Manager via IAM roles.
-
-</div>
-
-<div class="feature-card" markdown="1">
-
-#### TTL Lifecycle Automation
-
-Expired environments are torn down automatically by the background TTL service.
-
-</div>
-
-<div class="feature-card" markdown="1">
-
-#### Infrastructure as Code
-
-All AWS resources are defined and managed with Terraform.
-
-</div>
-
-<div class="feature-card" markdown="1">
-
-#### Containerized Backend
-
-Rails API backend ships in a Docker container for consistent deployment.
-
-</div>
-
-</div>
-
-## Live Demo
-
-Try the dashboard right in your browser — no AWS account or backend setup required — on the [Interactive Live Demo](./demo/).
-
-You can also run SEEO locally; see the [README](https://github.com/samueladegnan/seeo-aws-orchestrator#readme) for setup instructions.
 
 ## Explore Further
 
+- [Demo](./demo/) — see the dashboard preview and run it locally.
 - [Architecture Deep Dive](./architecture/) — data flow, component diagram, and security highlights.
-- [API Documentation](./api/) — authentication, endpoints, and dashboard details.
+- [API Documentation](./api/) — authentication, endpoints, and role-based access.
+- [Frontend README](https://github.com/samueladegnan/seeo-aws-orchestrator/tree/main/frontend) — how to run the React dashboard.
+- [Backend README](https://github.com/samueladegnan/seeo-aws-orchestrator/tree/main/backend) — configuration, setup, and Docker commands.
 
 ## Technology Stack
 
-| Layer                | Technology                                   |
-|----------------------|----------------------------------------------|
-| API / Business Logic | Ruby 3.3, Ruby on Rails 7, Active Model      |
-| Cloud Orchestration  | aws-sdk-ruby (EC2, EBS, Secrets Manager, DynamoDB) |
-| State Store          | DynamoDB                                     |
-| Secrets Management   | AWS Secrets Manager                          |
-| Infrastructure       | Terraform (AWS provider)                     |
-| Dashboard            | Vanilla JS + CSS served by Rails API         |
-| Container            | Docker                                       |
+| Layer | Technology |
+|-------|------------|
+| API / Business Logic | Ruby 3.3, Ruby on Rails 7, Active Model |
+| Frontend | React 18, Vite, Tailwind CSS |
+| Real-time | ActionCable |
+| Cloud Orchestration | aws-sdk-ruby (EC2, EBS, DynamoDB, Secrets Manager, Cost Explorer) |
+| State Store | DynamoDB |
+| Auth | JWT tenant tokens + legacy API key |
+| Policy Engine | OPA/Rego (with Ruby fallback) |
+| Infrastructure | Terraform |
+| CI/CD | GitHub Actions, RuboCop, RSpec, Checkov |
 
 ## About the Author
 
-Built by [Samuel Degnan](https://samueladegnan.github.io/) as a portfolio project demonstrating secure cloud engineering, infrastructure automation, and full-stack DevOps.
+Built by [Sam Degnan](https://samueladegnan.github.io/) as a portfolio project to demonstrate platform engineering, secure cloud automation, and infrastructure-as-code.

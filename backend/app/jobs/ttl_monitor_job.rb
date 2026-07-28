@@ -2,7 +2,7 @@
 
 class TtlMonitorJob < ApplicationJob
   def perform
-    Rails.logger.info "[TTL] Scanning for expired environments..."
+    Rails.logger.info '[TTL] Scanning for expired environments...'
     expired = AwsService.new.list_expired_environments
     expired.each do |environment|
       Rails.logger.info "[TTL] Environment #{environment.id} expired; terminating..."

@@ -33,3 +33,15 @@ variable "create_backend_user" {
   type        = bool
   default     = true
 }
+
+variable "audit_log_table" {
+  description = "DynamoDB table name for audit logs"
+  type        = string
+  default     = "seeo-audit-logs"
+}
+
+variable "cost_snapshots_table" {
+  description = "DynamoDB table name for cost snapshots"
+  type        = string
+  default     = "seeo-cost-snapshots"
+}

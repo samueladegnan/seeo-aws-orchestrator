@@ -1,9 +1,56 @@
 ---
-title: Live Demo
+title: Demo
 layout: demo
 permalink: /demo/
 ---
 
-This is a fully static, browser-based simulation of the SEEO dashboard. No AWS resources are created.
+## SEEO Dashboard
 
-{% include demo-dashboard.html %}
+The SEEO Dashboard is a React + Vite application that lets teams request, monitor, and terminate secure, short-lived AWS environments.
+
+### Live Demo
+
+<a class="btn" href="https://seeo-dashboard.vercel.app" target="_blank" rel="noopener noreferrer">Open Live Demo</a>
+
+The live demo runs the full stack in **Mock AWS Mode**, so no AWS credentials are required. Because it is hosted on free tiers, the backend may take **30–50 seconds to wake up** after a period of inactivity. The dashboard will show a loading message while the server starts.
+
+### Run it locally
+
+If the live backend is down or you want to explore the source, you can run the demo locally. Make sure the backend is running on [http://localhost:3000](http://localhost:3000), then:
+
+<a class="btn" href="http://localhost:5173" target="_blank" rel="noopener noreferrer">Open Local Demo</a>
+
+#### 1. Start the backend
+
+```bash
+cd backend
+cp .env.example .env
+docker build -t seeo-backend .
+docker run --rm -p 3000:3000 --env-file .env seeo-backend
+```
+
+The backend runs in **Mock AWS Mode** by default, so no AWS credentials are required.
+
+#### 2. Start the frontend
+
+In a second terminal:
+
+```bash
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
+```
+
+Open [http://localhost:5173](http://localhost:5173) to use the dashboard.
+
+## What to try
+
+- Create an environment for a project and TTL.
+- Watch the estimated cost update in real time.
+- Terminate an environment and see it reflected in the table.
+- Open two browser windows to see ActionCable WebSocket updates.
+
+## Source code
+
+The dashboard source is in the [`frontend/`](https://github.com/samueladegnan/seeo-aws-orchestrator/tree/main/frontend) directory of the repository.

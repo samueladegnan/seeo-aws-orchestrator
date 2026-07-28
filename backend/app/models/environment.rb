@@ -6,7 +6,8 @@ class Environment
   STATUSES = %w[pending provisioning ready expired terminating terminated error].freeze
 
   attr_accessor :id, :project_name, :status, :created_at, :expires_at,
-                :instance_id, :public_ip, :private_ip, :volume_id, :ttl_minutes, :message
+                :instance_id, :public_ip, :private_ip, :volume_id, :ttl_minutes, :message,
+                :instance_type
 
   validates :id, :project_name, :status, :created_at, :expires_at, :ttl_minutes, presence: true
   validates :status, inclusion: { in: STATUSES }
@@ -14,7 +15,7 @@ class Environment
 
   def initialize(attributes = {})
     super
-    @status ||= "pending"
+    @status ||= 'pending'
   end
 
   def to_h
@@ -29,6 +30,7 @@ class Environment
       private_ip: private_ip,
       volume_id: volume_id,
       ttl_minutes: ttl_minutes,
+      instance_type: instance_type,
       message: message
     }
   end
@@ -42,7 +44,8 @@ class Environment
       expires_at: expires_at&.iso8601,
       instance_id: instance_id,
       public_ip: public_ip,
-      ttl_minutes: ttl_minutes
+      ttl_minutes: ttl_minutes,
+      instance_type: instance_type
     }
   end
 

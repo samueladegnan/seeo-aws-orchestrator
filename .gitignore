@@ -18,8 +18,9 @@ build/
 *.tfstate
 *.tfstate.*
 .terraform/
-.terraform.lock.hcl
 *.tfvars
+# Keep lock file for reproducible provider versions (see README for why).
+# .terraform.lock.hcl
 
 # IDEs
 .vscode/
@@ -49,13 +50,4 @@ Thumbs.db
 /log/
 /storage/
 
-# Jekyll build artifacts
-docs/_site/
-docs/.sass-cache/
-docs/.jekyll-cache/
-docs/.jekyll-metadata
-*.scssc
-
-# Jekyll/Bundler vendored dependencies
-docs/vendor/
-docs/.bundle/
+# Jekyll build artifacts (per-directory rules live in docs/.gitignore)

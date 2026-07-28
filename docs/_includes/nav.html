@@ -1,16 +1,15 @@
 {% assign home_active = false %}
 {% if page.url == "/" or page.url == "/index.html" %}{% assign home_active = true %}{% endif %}
 
-<nav class="site-nav" aria-label="Main navigation">
-  <div class="site-nav__container">
-    <a class="site-nav__brand" href="{{ site.baseurl }}/">SEEO</a>
-    <ul class="site-nav__links">
-      <li><a href="https://samueladegnan.github.io/" target="_blank">&larr; Back to Portfolio</a></li>
-      <li><a href="{{ site.baseurl }}/" {% if home_active %}class="site-nav__link--active"{% endif %}>Home</a></li>
-      <li><a href="{{ site.baseurl }}/demo/" {% if page.url == "/demo/" %}class="site-nav__link--active"{% endif %}>Demo</a></li>
-      <li><a href="{{ site.baseurl }}/architecture/" {% if page.url == "/architecture/" %}class="site-nav__link--active"{% endif %}>Architecture</a></li>
-      <li><a href="{{ site.baseurl }}/api/" {% if page.url == "/api/" %}class="site-nav__link--active"{% endif %}>API</a></li>
-      <li><a href="{{ site.github.repository_url }}" target="_blank">GitHub</a></li>
-    </ul>
-  </div>
+<nav class="site-nav" aria-label="Primary">
+  <a class="site-nav-brand" href="{{ site.baseurl }}/">SEEO</a>
+  <ul class="site-nav-links">
+    <li><a href="https://samueladegnan.github.io/" target="_blank" rel="noopener noreferrer">&larr; Back to Portfolio</a></li>
+    <li><a href="{{ site.baseurl }}/" {% if home_active %}class="active" aria-current="page"{% endif %}>Overview</a></li>
+    <li><a href="{{ site.baseurl }}/demo/" {% if page.url == "/demo/" %}class="active" aria-current="page"{% endif %}>Demo</a></li>
+    <li><a href="{{ site.baseurl }}/architecture/" {% if page.url == "/architecture/" %}class="active" aria-current="page"{% endif %}>Architecture</a></li>
+    <li><a href="{{ site.baseurl }}/api/" {% if page.url == "/api/" %}class="active" aria-current="page"{% endif %}>API</a></li>
+    <li><a href="{{ site.github.repository_url }}" target="_blank" rel="noopener noreferrer" aria-label="SEEO source on GitHub">GitHub</a></li>
+    <li><a class="btn" href="{{ site.baseurl }}/demo/">Try the Demo</a></li>
+  </ul>
 </nav>

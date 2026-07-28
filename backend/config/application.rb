@@ -1,13 +1,16 @@
-require_relative "boot"
+# frozen_string_literal: true
 
-require "rails"
+require_relative 'boot'
+
+require 'rails'
 # Pick the frameworks you want:
-require "active_record/railtie"
-require "active_model/railtie"
-require "active_job/railtie"
-require "action_controller/railtie"
-require "action_view/railtie"
-require "active_support/railtie"
+require 'active_record/railtie'
+require 'active_model/railtie'
+require 'active_job/railtie'
+require 'action_controller/railtie'
+require 'action_view/railtie'
+require 'action_cable/engine'
+require 'active_support/railtie'
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
@@ -26,16 +29,16 @@ module SeeoBackend
     config.active_job.queue_adapter = Rails.env.production? ? :solid_queue : :inline
 
     # Time zone
-    config.time_zone = "UTC"
+    config.time_zone = 'UTC'
 
     # CORS
     config.middleware.insert_before 0, Rack::Cors do
       allow do
-        origins ENV.fetch("CORS_ALLOW_ORIGINS", "*").split(",").map(&:strip)
-        resource "*",
+        origins SeeoConfig.cors_allow_origins
+        resource '*',
                  headers: :any,
                  methods: %i[get post put patch delete options head],
-                 credentials: ENV.fetch("CORS_ALLOW_CREDENTIALS", "false") == "true"
+                 credentials: SeeoConfig.cors_allow_credentials?
       end
     end
   end

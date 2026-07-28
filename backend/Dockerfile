@@ -1,5 +1,7 @@
 FROM ruby:3.3-slim
 
+# NOTE: `ruby "~> 3.3.0"` in the Gemfile allows any Ruby 3.3.x patch release.
+
 # Install dependencies
 RUN apt-get update -qq && apt-get install -y \
   build-essential \
@@ -14,14 +16,16 @@ WORKDIR /app
 COPY Gemfile Gemfile.lock* ./
 RUN bundle install --jobs=4 --retry=3
 
+# Create non-root user for runtime security
+RUN useradd -m seeo
+
 # Copy application code
 COPY . .
+RUN chown -R seeo:seeo /app
 
 # Create writable storage directory for SQLite
 RUN mkdir -p /app/storage && chown -R seeo:seeo /app/storage
 
-# Non-root user for runtime security
-RUN useradd -m seeo && chown -R seeo:seeo /app
 USER seeo
 
 EXPOSE 3000
