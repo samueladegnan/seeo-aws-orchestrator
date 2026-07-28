@@ -18,6 +18,8 @@ services:
         generateValue: true
       - key: SEEO_JWT_SECRET
         generateValue: true
+      - key: SECRET_KEY_BASE
+        generateValue: true
       - key: CORS_ALLOW_ORIGINS
         value: "https://seeo-dashboard.vercel.app,http://localhost:5173"
       - key: CORS_ALLOW_CREDENTIALS

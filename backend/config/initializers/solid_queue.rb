@@ -1,3 +1,4 @@
 # frozen_string_literal: true
 
-Rails.application.config.solid_queue.recurring = Rails.application.config_for(:recurring) if Rails.env.production?
+# Solid Queue 1.0+ loads recurring schedules automatically from config/recurring.yml.
+# No manual assignment is needed.
