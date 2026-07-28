@@ -14,6 +14,8 @@ services:
         value: "true"
       - key: SEEO_MOCK_AWS
         value: "true"
+      - key: RAILS_ALLOW_ALL_HOSTS
+        value: "true"
       - key: SEEO_API_KEY
         generateValue: true
       - key: SEEO_JWT_SECRET
