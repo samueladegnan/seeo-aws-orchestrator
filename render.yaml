@@ -1,6 +1,7 @@
 services:
   - type: web
     name: seeo-backend
+    plan: free
     runtime: docker
     repo: https://github.com/samueladegnan/seeo-aws-orchestrator
     rootDir: backend
