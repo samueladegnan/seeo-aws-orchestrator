@@ -7,9 +7,12 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/environments': 'http://localhost:3000',
+      '/health': 'http://localhost:3000',
       '/cable': {
-        target: 'ws://localhost:3000',
+        target: 'http://localhost:3000',
         ws: true,
+        changeOrigin: true,
+        rewriteWsOrigin: true,
       },
     },
   },

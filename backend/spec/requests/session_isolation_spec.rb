@@ -31,11 +31,11 @@ RSpec.describe 'Session isolation', type: :request do
 
       get '/environments', headers: headers_for('session-a')
       expect(response).to have_http_status(:ok)
-      expect(response.parsed_body['environments'].map { |e| e['id'] }).to eq([alpha_id])
+      expect(response.parsed_body['environments'].pluck('id')).to eq([alpha_id])
 
       get '/environments', headers: headers_for('session-b')
       expect(response).to have_http_status(:ok)
-      expect(response.parsed_body['environments'].map { |e| e['project_name'] }).to eq(['beta'])
+      expect(response.parsed_body['environments'].pluck('project_name')).to eq(['beta'])
     end
 
     it 'does not allow one session to terminate another session environment' do

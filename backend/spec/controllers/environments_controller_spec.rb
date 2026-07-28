@@ -26,7 +26,9 @@ RSpec.describe EnvironmentsController, type: :controller do
 
   describe 'GET #index' do
     it 'returns a list of environments' do
-      allow_any_instance_of(AwsService).to receive(:list_environments).and_return([])
+      aws_mock = instance_double(AwsService)
+      allow(AwsService).to receive(:new).and_return(aws_mock)
+      allow(aws_mock).to receive(:list_environments).and_return([])
       get :index
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body).to eq({ 'environments' => [],
@@ -47,9 +49,14 @@ RSpec.describe EnvironmentsController, type: :controller do
         region: 'us-east-1'
       )
     end
+    let(:aws_mock) { instance_double(AwsService) }
+
+    before do
+      allow(AwsService).to receive(:new).and_return(aws_mock)
+    end
 
     it 'passes region and volume options to the service' do
-      expect_any_instance_of(AwsService).to receive(:create_environment).with(
+      allow(aws_mock).to receive(:create_environment).with(
         'my-api', 60, 'm6i.large',
         hash_including(region: 'eu-west-1', volume_size: 100, volume_type: 'io2')
       ).and_return(environment)
@@ -78,16 +85,21 @@ RSpec.describe EnvironmentsController, type: :controller do
         region: 'us-east-1'
       )
     end
+    let(:aws_mock) { instance_double(AwsService) }
+
+    before do
+      allow(AwsService).to receive(:new).and_return(aws_mock)
+    end
 
     it 'returns the environment' do
-      allow_any_instance_of(AwsService).to receive(:refresh_environment_state).with('test-123').and_return(environment)
+      allow(aws_mock).to receive(:refresh_environment_state).with('test-123').and_return(environment)
       get :show, params: { id: 'test-123' }
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body['project_name']).to eq('demo')
     end
 
     it 'returns 404 when not found' do
-      allow_any_instance_of(AwsService).to receive(:refresh_environment_state).and_return(nil)
+      allow(aws_mock).to receive(:refresh_environment_state).and_return(nil)
       get :show, params: { id: 'missing' }
       expect(response).to have_http_status(:not_found)
     end
@@ -105,9 +117,14 @@ RSpec.describe EnvironmentsController, type: :controller do
         region: 'us-east-1'
       )
     end
+    let(:aws_mock) { instance_double(AwsService) }
+
+    before do
+      allow(AwsService).to receive(:new).and_return(aws_mock)
+    end
 
     it 'creates an environment' do
-      allow_any_instance_of(AwsService).to receive(:create_environment).and_return(environment)
+      allow(aws_mock).to receive(:create_environment).and_return(environment)
       post :create, params: { project_name: 'my-api', ttl_minutes: 60, instance_type: 't3.micro' }
       expect(response).to have_http_status(:created)
       expect(response.parsed_body['project_name']).to eq('my-api')
@@ -126,9 +143,14 @@ RSpec.describe EnvironmentsController, type: :controller do
         region: 'us-east-1'
       )
     end
+    let(:aws_mock) { instance_double(AwsService) }
+
+    before do
+      allow(AwsService).to receive(:new).and_return(aws_mock)
+    end
 
     it 'terminates the environment' do
-      allow_any_instance_of(AwsService).to receive(:terminate_environment).and_return(environment)
+      allow(aws_mock).to receive(:terminate_environment).and_return(environment)
       delete :destroy, params: { id: 'demo-123' }
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body['status']).to eq('terminated')
@@ -147,9 +169,14 @@ RSpec.describe EnvironmentsController, type: :controller do
         region: 'us-east-1'
       )
     end
+    let(:aws_mock) { instance_double(AwsService) }
+
+    before do
+      allow(AwsService).to receive(:new).and_return(aws_mock)
+    end
 
     it 'refreshes the environment state' do
-      allow_any_instance_of(AwsService).to receive(:refresh_environment_state).and_return(environment)
+      allow(aws_mock).to receive(:refresh_environment_state).and_return(environment)
       post :refresh, params: { id: 'demo-123' }
       expect(response).to have_http_status(:ok)
     end

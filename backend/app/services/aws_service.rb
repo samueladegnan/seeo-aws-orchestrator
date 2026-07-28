@@ -16,52 +16,12 @@ class AwsService
   # ------------------------------------------------------------------
 
   def create_environment(project, ttl_minutes, instance_type = nil, options = {})
-    project_name = project.is_a?(Project) ? project.name : project
-    team = project.is_a?(Project) ? project.team : Current.team
+    attrs = build_creation_attrs(project, ttl_minutes, instance_type, options)
+    base_tags = build_base_tags(attrs[:id], attrs[:project_name], attrs[:team], ttl_minutes, project)
 
-    environment_id = generate_id(project_name)
-    created_at = Time.current.utc
-    expires_at = created_at + ttl_minutes.to_i.minutes
+    instance_id, volume_id = provision_resources(attrs[:id], base_tags, attrs[:ami_id], attrs[:instance_type])
 
-    ami_id = settings.ec2_ami_id || latest_amazon_linux_ami
-    selected_instance_type = instance_type || settings.ec2_instance_type
-    region = options[:region].presence || settings.aws_region
-    volume_size = options[:volume_size].presence || 10
-    volume_type = options[:volume_type].presence || 'gp3'
-
-    user_data = encode_user_data(environment_id, settings.secrets_secret_name)
-
-    base_tags = [
-      { key: 'Name', value: "seeo-#{environment_id}" },
-      { key: 'Project', value: project_name },
-      { key: 'seeo:environment_id', value: environment_id },
-      { key: 'seeo:ttl_minutes', value: ttl_minutes.to_s },
-      { key: 'seeo:managed_by', value: 'seeo' },
-      { key: 'seeo:team_id', value: team&.id.to_s },
-      { key: 'seeo:project_id', value: project.is_a?(Project) ? project.id.to_s : 'unknown' }
-    ]
-
-    run_args = build_run_args(ami_id, selected_instance_type, user_data, base_tags)
-    response = ec2_client.run_instances(run_args)
-    instance_id = response.instances.first.instance_id
-    volume_id = attach_volume_for(instance_id, base_tags)
-
-    environment = build_environment(
-      id: environment_id,
-      project_name: project_name,
-      created_at: created_at,
-      expires_at: expires_at,
-      instance_id: instance_id,
-      volume_id: volume_id,
-      ttl_minutes: ttl_minutes,
-      instance_type: selected_instance_type,
-      region: region,
-      volume_size: volume_size,
-      volume_type: volume_type,
-      tags: options[:tags].presence || {},
-      notes: options[:notes].presence || '',
-      ssh_key_name: options[:ssh_key_name].presence || settings.ec2_key_pair
-    )
+    environment = build_environment(attrs.merge(instance_id: instance_id, volume_id: volume_id))
     persist_environment(environment)
     environment
   end
@@ -205,6 +165,60 @@ class AwsService
     opts = { region: settings.aws_region }
     opts[:profile] = settings.aws_profile if settings.aws_profile
     opts
+  end
+
+  def build_creation_attrs(project, ttl_minutes, instance_type, options)
+    project_name = resolve_project_name(project)
+
+    {
+      id: generate_id(project_name),
+      project_name: project_name,
+      team: resolve_team(project),
+      created_at: Time.current.utc,
+      expires_at: Time.current.utc + ttl_minutes.to_i.minutes,
+      ami_id: settings.ec2_ami_id || latest_amazon_linux_ami,
+      instance_type: instance_type || settings.ec2_instance_type,
+      region: resolve_option(options, :region, settings.aws_region),
+      volume_size: resolve_option(options, :volume_size, 10),
+      volume_type: resolve_option(options, :volume_type, 'gp3'),
+      tags: resolve_option(options, :tags, {}),
+      notes: resolve_option(options, :notes, ''),
+      ssh_key_name: resolve_option(options, :ssh_key_name, settings.ec2_key_pair),
+      ttl_minutes: ttl_minutes
+    }
+  end
+
+  def resolve_option(options, key, fallback)
+    options[key].presence || fallback
+  end
+
+  def resolve_project_name(project)
+    project.is_a?(Project) ? project.name : project
+  end
+
+  def resolve_team(project)
+    project.is_a?(Project) ? project.team : Current.team
+  end
+
+  def build_base_tags(environment_id, project_name, team, ttl_minutes, project)
+    [
+      { key: 'Name', value: "seeo-#{environment_id}" },
+      { key: 'Project', value: project_name },
+      { key: 'seeo:environment_id', value: environment_id },
+      { key: 'seeo:ttl_minutes', value: ttl_minutes.to_s },
+      { key: 'seeo:managed_by', value: 'seeo' },
+      { key: 'seeo:team_id', value: team&.id.to_s },
+      { key: 'seeo:project_id', value: project.is_a?(Project) ? project.id.to_s : 'unknown' }
+    ]
+  end
+
+  def provision_resources(environment_id, base_tags, ami_id, instance_type)
+    user_data = encode_user_data(environment_id, settings.secrets_secret_name)
+    run_args = build_run_args(ami_id, instance_type, user_data, base_tags)
+    response = ec2_client.run_instances(run_args)
+    instance_id = response.instances.first.instance_id
+    volume_id = attach_volume_for(instance_id, base_tags)
+    [instance_id, volume_id]
   end
 
   def build_run_args(ami_id, selected_instance_type, user_data, base_tags)

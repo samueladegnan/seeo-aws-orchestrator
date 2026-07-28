@@ -11,11 +11,7 @@ class EnvironmentChannel < ApplicationCable::Channel
 
   def self.broadcast(environment, session_id = 'default')
     ActionCable.server.broadcast("environment_channel_#{session_id}", {
-                                   id: environment.id,
-                                   status: environment.status,
-                                   project_name: environment.project_name,
-                                   expires_at: environment.expires_at&.iso8601,
-                                   public_ip: environment.public_ip
+                                   environment: environment.to_summary
                                  })
   end
 

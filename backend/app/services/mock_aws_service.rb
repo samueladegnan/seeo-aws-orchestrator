@@ -14,33 +14,7 @@ class MockAwsService
   end
 
   def create_environment(project, ttl_minutes, instance_type = nil, options = {})
-    project_name = project.is_a?(Project) ? project.name : project
-    environment_id = generate_id(project_name)
-    created_at = Time.current.utc
-    expires_at = created_at + ttl_minutes.to_i.minutes
-    selected_instance_type = instance_type || SeeoConfig.ec2_instance_type
-    region = options[:region].presence || 'us-east-1'
-
-    environment = Environment.new(
-      id: environment_id,
-      project_name: project_name,
-      status: 'provisioning',
-      created_at: created_at,
-      expires_at: expires_at,
-      instance_id: "i-mock#{SecureRandom.hex(4)}",
-      public_ip: "203.0.113.#{rand(1..254)}",
-      private_ip: "10.0.#{rand(0..255)}.#{rand(1..254)}",
-      volume_id: "vol-mock#{SecureRandom.hex(4)}",
-      ttl_minutes: ttl_minutes.to_i,
-      instance_type: selected_instance_type,
-      session_id: Current.session_id.presence || 'default',
-      region: region,
-      volume_size: options[:volume_size].presence || 10,
-      volume_type: options[:volume_type].presence || 'gp3',
-      tags: stringify_tags(options[:tags]),
-      notes: options[:notes].presence || '',
-      ssh_key_name: options[:ssh_key_name].presence || 'seeo-demo-key'
-    )
+    environment = build_environment(project, ttl_minutes, instance_type, options)
 
     MUTEX.synchronize do
       if session_env_count >= SeeoConfig.mock_env_limit
@@ -122,6 +96,50 @@ class MockAwsService
       stored.status = 'ready'
       EnvironmentChannel.broadcast(stored, stored.session_id)
     end
+  end
+
+  def build_environment(project, ttl_minutes, instance_type, options)
+    project_name = project.is_a?(Project) ? project.name : project
+    environment_id = generate_id(project_name)
+    created_at = Time.current.utc
+    expires_at = created_at + ttl_minutes.to_i.minutes
+
+    Environment.new(
+      id: environment_id,
+      project_name: project_name,
+      status: 'provisioning',
+      created_at: created_at,
+      expires_at: expires_at,
+      instance_id: mock_instance_id,
+      public_ip: mock_public_ip,
+      private_ip: mock_private_ip,
+      volume_id: "vol-mock#{SecureRandom.hex(4)}",
+      ttl_minutes: ttl_minutes.to_i,
+      instance_type: instance_type || SeeoConfig.ec2_instance_type,
+      session_id: Current.session_id.presence || 'default',
+      region: resolve_option(options, :region, 'us-east-1'),
+      volume_size: resolve_option(options, :volume_size, 10),
+      volume_type: resolve_option(options, :volume_type, 'gp3'),
+      tags: stringify_tags(options[:tags]),
+      notes: resolve_option(options, :notes, ''),
+      ssh_key_name: resolve_option(options, :ssh_key_name, 'seeo-demo-key')
+    )
+  end
+
+  def resolve_option(options, key, fallback)
+    options[key].presence || fallback
+  end
+
+  def mock_instance_id
+    "i-mock#{SecureRandom.hex(4)}"
+  end
+
+  def mock_public_ip
+    "203.0.113.#{rand(1..254)}"
+  end
+
+  def mock_private_ip
+    "10.0.#{rand(0..255)}.#{rand(1..254)}"
   end
 
   def session_key

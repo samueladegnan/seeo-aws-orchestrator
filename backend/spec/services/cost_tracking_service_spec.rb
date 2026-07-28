@@ -17,8 +17,11 @@ RSpec.describe CostTrackingService do
     end
 
     it 'adds storage cost when volume options are provided' do
-      cost = described_class.estimate(instance_type: 't3.micro', ttl_minutes: 730, volume_size: 100, volume_type: 'gp3')
-      # 730 minutes = ~12.33 hours. compute = 0.0104 * 12.333 = ~0.1283. storage = 0.08 * 100 * 12.333 / 730 = ~0.1352. total ~0.2635
+      cost = described_class.estimate(
+        instance_type: 't3.micro', ttl_minutes: 730, volume_size: 100, volume_type: 'gp3'
+      )
+      # 730 minutes = ~12.33 hours. compute ≈ 0.1283.
+      # storage ≈ 0.1352. total ≈ 0.2635.
       expect(cost).to be > 0.13
     end
   end

@@ -21,7 +21,7 @@ RSpec.describe PolicyService do
       expect do
         described_class.check_provision!(
           project_name: 'my-api',
-          ttl_minutes: 24 * 60 + 1,
+          ttl_minutes: (24 * 60) + 1,
           instance_type: 't3.micro',
           team: team
         )

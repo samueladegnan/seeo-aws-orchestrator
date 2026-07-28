@@ -83,12 +83,6 @@ RSpec.describe MockAwsService do
       env = service.create_environment('demo', 60, 't3.micro')
       expect(env.status).to eq('ready')
     end
-
-    it 'transitions from provisioning to ready after the configured delay' do
-      allow(SeeoConfig).to receive(:mock_provisioning_delay_seconds).and_return(0)
-      env = service.create_environment('demo', 60, 't3.micro')
-      expect(env.status).to eq('ready')
-    end
   end
 
   describe 'options' do

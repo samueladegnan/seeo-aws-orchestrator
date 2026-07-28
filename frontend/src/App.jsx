@@ -148,6 +148,7 @@ function App() {
   const [destroyingId, setDestroyingId] = useState(null)
   const [terminateTarget, setTerminateTarget] = useState(null)
   const [wsStatus, setWsStatus] = useState('connecting')
+  const [wsReconnectAttempt, setWsReconnectAttempt] = useState(0)
   const [mockMode, setMockMode] = useState(true)
   const [coldStarting, setColdStarting] = useState(false)
   const [serverUnreachable, setServerUnreachable] = useState(false)
@@ -159,6 +160,8 @@ function App() {
   const cancelButtonRef = useRef(null)
   const wakeAbortRef = useRef(null)
   const wakeTimeoutRef = useRef(null)
+  const reconnectTimeoutRef = useRef(null)
+  const reconnectAttemptRef = useRef(0)
   const mounted = useRef(true)
 
   useEffect(() => {
@@ -180,6 +183,11 @@ function App() {
     setEnvironments((data.environments || []).filter((env) => env.status !== 'terminated'))
     setCost(data.cost || null)
   }
+
+  const fetchEnvironmentsRef = useRef(fetchEnvironments)
+  fetchEnvironmentsRef.current = fetchEnvironments
+  const environmentsRef = useRef(environments)
+  environmentsRef.current = environments
 
   const fetchHealth = async (signal) => {
     try {
@@ -310,10 +318,16 @@ function App() {
     return `${protocol}//${window.location.host}/cable`
   }
 
-  useEffect(() => {
+  const connectWebSocket = () => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current)
+      reconnectTimeoutRef.current = null
+    }
+
     const ws = new WebSocket(getWsUrl())
 
     ws.onopen = () => {
+      reconnectAttemptRef.current = 0
       setWsStatus('connected')
       ws.send(JSON.stringify({
         command: 'subscribe',
@@ -345,11 +359,58 @@ function App() {
       }
     }
 
-    ws.onclose = () => setWsStatus('disconnected')
-    ws.onerror = () => setWsStatus('error')
+    ws.onclose = () => scheduleReconnect(ws, 'disconnected')
+    ws.onerror = () => scheduleReconnect(ws, 'error')
 
-    return () => ws.close()
-  }, [])
+    return () => {
+      ws._stale = true
+      ws.close()
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+        reconnectTimeoutRef.current = null
+      }
+    }
+  }
+
+  const scheduleReconnect = (ws, status) => {
+    if (!mounted.current) return
+    if (reconnectTimeoutRef.current || ws._stale) return
+
+    setWsStatus(status)
+    reconnectAttemptRef.current += 1
+    const delay = Math.min(1000 * 2 ** reconnectAttemptRef.current, 30000)
+    reconnectTimeoutRef.current = setTimeout(() => {
+      if (!mounted.current) return
+      setWsReconnectAttempt((prev) => prev + 1)
+    }, delay)
+  }
+
+  const handleReconnect = () => {
+    reconnectAttemptRef.current = 0
+    setWsStatus('connecting')
+    setWsReconnectAttempt((prev) => prev + 1)
+  }
+
+  useEffect(() => {
+    mounted.current = true
+    const cleanup = connectWebSocket()
+    return () => {
+      mounted.current = false
+      if (cleanup) cleanup()
+    }
+  }, [wsReconnectAttempt])
+
+  // Poll every few seconds while environments are still provisioning or the
+  // WebSocket is not connected, so the UI updates even if the socket is blocked.
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const hasProvisioning = environmentsRef.current.some((env) => env.status === 'provisioning')
+      if (mounted.current && (hasProvisioning || wsStatus !== 'connected')) {
+        fetchEnvironmentsRef.current().catch(() => {})
+      }
+    }, 4000)
+    return () => clearInterval(interval)
+  }, [wsStatus, statusFilter])
 
   const parseTags = (input) => {
     const tags = {}
@@ -506,8 +567,10 @@ function App() {
             </a>
             <h1 className="text-xl font-bold tracking-tight text-slate-900" aria-label="SEEO dashboard">SEEO</h1>
           </div>
-          <div
-            className="group relative flex items-center gap-2 text-sm"
+          <button
+            type="button"
+            onClick={handleReconnect}
+            className="group relative flex items-center gap-2 rounded-lg p-2 text-sm transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
             onMouseEnter={() => setShowAdBlockerTip(true)}
             onMouseLeave={() => setShowAdBlockerTip(false)}
             onFocus={() => setShowAdBlockerTip(true)}
@@ -515,6 +578,7 @@ function App() {
             onKeyDown={(e) => {
               if (e.key === 'Escape') setShowAdBlockerTip(false)
             }}
+            aria-live="polite"
           >
             <span className="text-slate-500">Live updates:</span>
             <span
@@ -527,15 +591,13 @@ function App() {
               }`}
             />
             <span className="capitalize text-slate-600">{wsStatus}</span>
-            <button
-              type="button"
-              onClick={() => setShowAdBlockerTip(true)}
+            <span
               aria-label="Why might Live updates be disconnected?"
               aria-describedby="ws-tooltip"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-xs font-bold text-amber-800 hover:bg-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-400"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-xs font-bold text-amber-800 group-hover:bg-amber-200"
             >
               ?
-            </button>
+            </span>
             <span
               id="ws-tooltip"
               role="tooltip"
@@ -545,7 +607,7 @@ function App() {
             >
               Ad blockers and privacy extensions sometimes block <code className="rounded bg-slate-700 px-1">.onrender.com</code> requests. If the dashboard seems stuck or <strong>Live updates</strong> shows disconnected, try disabling your ad blocker or opening this page in an incognito/private window. The backend may also take 30–50 seconds to wake up.
             </span>
-          </div>
+          </button>
         </div>
       </header>
 
@@ -591,6 +653,7 @@ function App() {
                   id="ttl-minutes"
                   type="number"
                   min={1}
+                  max={1440}
                   required
                   value={form.ttl_minutes}
                   onChange={(e) => setForm({ ...form, ttl_minutes: parseInt(e.target.value, 10) || 1 })}

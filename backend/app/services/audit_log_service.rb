@@ -16,10 +16,7 @@ class AuditLogService
       Rails.logger.warn "[AuditLog] Failed to write #{action}: #{e.message}"
     end
 
-    # Exposed so specs can stub the AWS mock toggle without reaching into SeeoConfig.
-    def mock_aws?
-      SeeoConfig.mock_aws?
-    end
+    delegate :mock_aws?, to: SeeoConfig
 
     private
 

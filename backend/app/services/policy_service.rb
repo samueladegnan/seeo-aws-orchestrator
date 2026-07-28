@@ -17,16 +17,8 @@ class PolicyService
   REGO_PATH = Rails.root.join('policies/provision.rego').freeze
 
   class << self
-    def check_provision!(project_name:, ttl_minutes:, instance_type:, team:, region: nil, volume_size: nil, volume_type: nil)
-      result = evaluate('data.seeo.provision', {
-                          'project_name' => project_name,
-                          'ttl_minutes' => ttl_minutes,
-                          'instance_type' => instance_type,
-                          'region' => region,
-                          'volume_size' => volume_size,
-                          'volume_type' => volume_type,
-                          'team' => team_payload(team)
-                        })
+    def check_provision!(**options)
+      result = evaluate('data.seeo.provision', provision_input(options))
 
       return if result['allow']
 
@@ -74,19 +66,48 @@ class PolicyService
         violations << "Instance type #{input['instance_type']} is not allowed"
       end
 
-      if input['region'].present? && !policies['allowed_regions'].include?(input['region'])
-        violations << "Region #{input['region']} is not allowed"
-      end
-
-      if input['volume_type'].present? && !policies['allowed_volume_types'].include?(input['volume_type'])
-        violations << "Volume type #{input['volume_type']} is not allowed"
-      end
-
-      if input['volume_size'].present? && input['volume_size'] > policies['max_volume_size_gb']
-        violations << "Volume size exceeds maximum of #{policies['max_volume_size_gb']} GB"
-      end
+      check_region_policy(input, policies, violations)
+      check_volume_policy(input, policies, violations)
 
       { 'allow' => violations.empty?, 'deny' => violations }
+    end
+
+    def provision_input(options)
+      {
+        'project_name' => options[:project_name],
+        'ttl_minutes' => options[:ttl_minutes],
+        'instance_type' => options[:instance_type],
+        'region' => options[:region],
+        'volume_size' => options[:volume_size],
+        'volume_type' => options[:volume_type],
+        'team' => team_payload(options[:team])
+      }
+    end
+
+    def check_region_policy(input, policies, violations)
+      return if input['region'].blank?
+      return if policies['allowed_regions'].include?(input['region'])
+
+      violations << "Region #{input['region']} is not allowed"
+    end
+
+    def check_volume_policy(input, policies, violations)
+      check_volume_type(input, policies, violations)
+      check_volume_size(input, policies, violations)
+    end
+
+    def check_volume_type(input, policies, violations)
+      return if input['volume_type'].blank?
+      return if policies['allowed_volume_types'].include?(input['volume_type'])
+
+      violations << "Volume type #{input['volume_type']} is not allowed"
+    end
+
+    def check_volume_size(input, policies, violations)
+      return if input['volume_size'].blank?
+      return unless input['volume_size'] > policies['max_volume_size_gb']
+
+      violations << "Volume size exceeds maximum of #{policies['max_volume_size_gb']} GB"
     end
 
     def team_payload(team)

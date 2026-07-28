@@ -52,7 +52,8 @@ RSpec.describe TtlMonitorJob, type: :job do
       aws_service = instance_double(AwsService)
       allow(AwsService).to receive(:new).and_return(aws_service)
       allow(aws_service).to receive(:list_expired_environments).and_return([expired_env, active_env])
-      allow(aws_service).to receive(:force_terminate_environment).with(expired_env.id).and_raise(StandardError, 'AWS failure')
+      allow(aws_service).to receive(:force_terminate_environment)
+        .with(expired_env.id).and_raise(StandardError, 'AWS failure')
       allow(aws_service).to receive(:force_terminate_environment).with(active_env.id).and_return(active_env)
 
       expect(Rails.logger).to receive(:error).with("[TTL] Failed to terminate #{expired_env.id}: AWS failure")

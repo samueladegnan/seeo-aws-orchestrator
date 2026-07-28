@@ -25,24 +25,9 @@ class EnvironmentsController < ApplicationController
     project_name = @project&.name || environment_params.require(:project_name)
     ttl_minutes = environment_params.require(:ttl_minutes).to_i
     instance_type = environment_params[:instance_type] || SeeoConfig.ec2_instance_type
-    options = {
-      region: environment_params[:region],
-      volume_size: environment_params[:volume_size]&.to_i,
-      volume_type: environment_params[:volume_type],
-      tags: environment_params[:tags],
-      notes: environment_params[:notes],
-      ssh_key_name: environment_params[:ssh_key_name]
-    }
+    options = build_create_options
 
-    PolicyService.check_provision!(
-      project_name: project_name,
-      ttl_minutes: ttl_minutes,
-      instance_type: instance_type,
-      region: options[:region],
-      volume_size: options[:volume_size],
-      volume_type: options[:volume_type],
-      team: Current.team
-    )
+    validate_create_policy!(project_name, ttl_minutes, instance_type, options)
 
     environment = aws_service.create_environment(@project || project_name, ttl_minutes, instance_type, options)
 
@@ -107,11 +92,36 @@ class EnvironmentsController < ApplicationController
   end
 
   def environment_params
-    params.permit(:project_name, :ttl_minutes, :instance_type, :region, :volume_size,
-                    :volume_type, :notes, :ssh_key_name, tags: {})
+    @environment_params ||= params.permit(
+      :project_name, :ttl_minutes, :instance_type, :region, :volume_size,
+      :volume_type, :notes, :ssh_key_name, tags: {}
+    )
   end
 
   def aws_service
     @aws_service ||= SeeoConfig.mock_aws? ? MockAwsService.new : AwsService.new
+  end
+
+  def build_create_options
+    {
+      region: environment_params[:region],
+      volume_size: environment_params[:volume_size]&.to_i,
+      volume_type: environment_params[:volume_type],
+      tags: environment_params[:tags],
+      notes: environment_params[:notes],
+      ssh_key_name: environment_params[:ssh_key_name]
+    }
+  end
+
+  def validate_create_policy!(project_name, ttl_minutes, instance_type, options)
+    PolicyService.check_provision!(
+      project_name: project_name,
+      ttl_minutes: ttl_minutes,
+      instance_type: instance_type,
+      region: options[:region],
+      volume_size: options[:volume_size],
+      volume_type: options[:volume_type],
+      team: Current.team
+    )
   end
 end
