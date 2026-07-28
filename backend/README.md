@@ -38,6 +38,7 @@ bin/rails server
 | `SEEO_AUDIT_LOG_TABLE` | DynamoDB audit log table | `seeo-audit-logs` |
 | `SEEO_SECRETS_SECRET_NAME` | Secrets Manager secret name | `seeo/runtime/credentials` |
 | `SEEO_TTL_CHECK_INTERVAL_SECONDS` | TTL scan interval (used by the monitor job) | `60` |
+| `SEEO_MOCK_AWS` | Use in-memory mock AWS instead of real APIs | `true` in development |
 | `CORS_ALLOW_ORIGINS` | Comma-separated allowed origins | `*` |
 | `CORS_ALLOW_CREDENTIALS` | Whether CORS allows credentials | `false` |
 

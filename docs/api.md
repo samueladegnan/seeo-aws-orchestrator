@@ -28,6 +28,10 @@ curl -H "X-API-Key: your-api-key" http://localhost:3000/environments
 
 API-key requests authenticate as a transient admin service account with no team.
 
+### Session isolation (mock demo mode)
+
+When the backend runs in **Mock AWS Mode**, the dashboard sends a `X-Session-ID` header so each browser gets its own isolated set of environments. This is used only in the demo; real AWS-backed mode ignores the header.
+
 ## Authorization
 
 Endpoints require one of the following roles:
@@ -51,7 +55,8 @@ Response:
 ```json
 {
   "status": "ok",
-  "version": "0.1.0"
+  "version": "0.1.0",
+  "mock_mode": true
 }
 ```
 
@@ -72,8 +77,9 @@ Request body:
 ```
 
 - `project_name` is required.
-- `ttl_minutes` is required.
-- `instance_type` is optional and defaults to `SEEO_EC2_INSTANCE_TYPE` (`t3.micro`).
+- `ttl_minutes` is required and must not exceed the policy maximum (default 24 hours).
+- `instance_type` is optional and defaults to the configured default (e.g., `t3.micro`).
+- Optional fields: `region`, `volume_size`, `volume_type`, `ssh_key_name`, `tags`, `notes`.
 
 Response: `201 Created`
 
@@ -135,8 +141,8 @@ Polls AWS and updates the stored environment state.
 DELETE /environments/{environment_id}
 ```
 
-Terminates the EC2 instance, detaches/deletes the EBS volume, marks the environment as terminated, and writes an DynamoDB audit record.
+Terminates the EC2 instance, detaches/deletes the EBS volume, marks the environment as terminated, and writes an audit record.
 
 ## Real-time updates
 
-The Rails server mounts an WebSocket endpoint at `/cable`. The React dashboard can subscribe to `EnvironmentChannel` to receive environment state changes.
+The Rails server mounts a WebSocket endpoint at `/cable`. The React dashboard can subscribe to `EnvironmentChannel` to receive environment state changes.

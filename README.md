@@ -1,8 +1,6 @@
 # SEEO — Secure Ephemeral Environment Orchestrator
 
-SEEO is a multi-tenant internal developer platform for provisioning secure, short-lived AWS environments on demand. I built it to show what it takes to go from a simple provisioning API to something a real engineering team could adopt: secure by default, observable, and cost-conscious.
-
-> **Why I built it:** I kept seeing side projects and intern sandboxes left running for weeks, racking up bills and exposing unused services. SEEO is my take on fixing that with role-based access, policy checks, and automatic cleanup.
+SEEO is a full-stack project for provisioning secure, short-lived AWS environments on demand. It demonstrates a Rails API with multi-tenant auth and policy checks, a React dashboard with live updates, infrastructure as code with Terraform, and automated CI checks.
 
 > **Project site:** [samueladegnan.github.io/seeo-aws-orchestrator](https://samueladegnan.github.io/seeo-aws-orchestrator/)
 
@@ -11,46 +9,19 @@ SEEO is a multi-tenant internal developer platform for provisioning secure, shor
 ## Features
 
 - **Multi-tenancy & RBAC**: Teams, users, and projects with admin, operator, and viewer roles.
-- **Policy-as-code**: OPA/Rego rules enforce TTLs, allowed instance types, and team limits before provisioning.
-- **Audit logging**: Every create/destroy event is written to DynamoDB with actor, team, and timestamp.
-- **Cost tracking**: Estimated spend per environment and per team based on instance type and TTL.
+- **Policy engine**: OPA/Rego rules (with a built-in Ruby fallback) enforce TTLs, allowed instance types, and team limits before provisioning.
+- **Audit logging**: Every create/destroy event is recorded with actor, team, and timestamp.
+- **Cost estimates**: Rough per-environment and per-team spend based on instance type, volume, and TTL.
 - **Real-time dashboard**: ActionCable broadcasts environment state changes to the React dashboard.
-- **Structured logging**: JSON logs ready for CloudWatch and SIEM pipelines.
-- **React frontend**: A modern Vite 8 + React 18 dashboard alongside the Rails API.
-- **Security-first CI**: RuboCop, RSpec, Terraform `fmt`/`validate`, Checkov scans, and AI Guardrail triage in GitHub Actions.
+- **Structured logging**: JSON logs ready for CloudWatch or a SIEM pipeline.
+- **React frontend**: Vite + React 18 dashboard that talks directly to the Rails API.
+- **CI checks**: RuboCop, RSpec, Terraform `fmt`/`validate`, Checkov scans, and an AI Guardrail that triages Brakeman findings on every push.
 
 ---
 
 ## Architecture
 
-```
-─────────────────────────────────────────────────────────────────────────┐
-│                        React Dashboard (Vite)                           │
-│                     Lists envs, shows cost, real-time updates           │
-└─────────────────────────────┬───────────────────────────────────────────┘
-                              │
-┌─────────────────────────────▼─────────────────────────────────────────┐
-│                        Rails 7 API                                        │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐        │
-│  │ Environments │  │   Health     │  │      TTL Service         │        │
-│  │  Controller  │  │  Controller  │  │    (Solid Queue job)     │        │
-│  └──────┬───────┘  └──────┬───────┘  └────────────┬─────────────┘        │
-│  ┌──────▼─────────────────┼───────────────────────┼──────┐               │
-│  │  AuthService           │                     │      │               │
-│  │  AuditLogService       │                     │      │               │
-│  │  PolicyService         │                     │      │               │
-│  │  CostTrackingService   │                     │      │               │
-│  └─────────────────────────┘                     │      │               │
-└───────────────────────────┼───────────────────────┼──────┼──────────────┘
-                            │                       │      │
-                                                   ▼      ▼
-┌─────────────┐    ┌─────────────────    ┌─────────────────┐
-│  EC2 + EBS  │    │    DynamoDB     │    │ Secrets Manager │
-│             │    │ Environments    │    │                 │
-│             │    │ Audit Logs      │    │                 │
-│             │    │                 │    │                 │
-└─────────────┘    └─────────────────┘    └─────────────────┘
-```
+See the [Architecture page](https://samueladegnan.github.io/seeo-aws-orchestrator/architecture/) for a component diagram and detailed flow.
 
 ---
 
@@ -59,12 +30,12 @@ SEEO is a multi-tenant internal developer platform for provisioning secure, shor
 | Layer | Technology |
 |-------|------------|
 | API / Business Logic | Ruby 3.3, Ruby on Rails 7, Active Model |
-| Frontend | React 18, Vite 8, Tailwind CSS, ESLint 9 |
+| Frontend | React 18, Vite, Tailwind CSS, ESLint |
 | Real-time | ActionCable / WebSockets |
-| Cloud Orchestration | aws-sdk-ruby (EC2, EBS, DynamoDB, Secrets Manager, Cost Explorer) |
+| Cloud Orchestration | aws-sdk-ruby (EC2, DynamoDB, Secrets Manager) |
 | State Store | DynamoDB |
 | Auth | JWT tenant tokens + legacy API key |
-| Policy Engine | OPA/Rego (with Ruby fallback) |
+| Policy Engine | OPA/Rego with a built-in Ruby fallback |
 | Infrastructure | Terraform, AWS |
 | CI/CD | GitHub Actions, RuboCop, RSpec, Checkov |
 
@@ -127,7 +98,7 @@ Open [http://localhost:5173](http://localhost:5173) for the dashboard.
 
 ## Live demo
 
-A fully deployed demo is available at [https://seeo-dashboard.vercel.app/](https://seeo-dashboard.vercel.app/). It runs the backend in **Mock AWS Mode**, so no AWS credentials are required. Each visitor gets their own isolated session via a browser-generated session id stored in local storage.
+A deployed demo is available at [https://seeo-dashboard.vercel.app/](https://seeo-dashboard.vercel.app/). It runs the backend in **Mock AWS Mode**, so no AWS credentials are required and no real AWS resources are created. Each visitor gets their own isolated session via a browser-generated session id stored in local storage.
 
 > **Note:** Because the backend is hosted on Render's free tier, it may take **30–50 seconds** to wake up after a period of inactivity. The dashboard will show a loading message while the server starts. Some ad blockers may block requests to `.onrender.com`; if the dashboard seems stuck, try disabling your ad blocker or use an incognito/private window.
 
