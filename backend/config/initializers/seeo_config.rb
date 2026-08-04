@@ -7,7 +7,11 @@ module SeeoConfig
     end
 
     def api_key
-      ENV.fetch('SEEO_API_KEY', 'dev-change-me-in-production')
+      ENV.fetch('SEEO_API_KEY') do
+        raise 'SEEO_API_KEY must be set in production' if Rails.env.production?
+
+        'local-development-only'
+      end
     end
 
     def aws_region
@@ -60,6 +64,10 @@ module SeeoConfig
 
     def cors_allow_credentials?
       ENV.fetch('CORS_ALLOW_CREDENTIALS', 'false') == 'true'
+    end
+
+    def action_cable_allowed_origins
+      ENV.fetch('ACTION_CABLE_ALLOWED_ORIGINS', cors_allow_origins.join(',')).split(',').map(&:strip)
     end
 
     def mock_aws?

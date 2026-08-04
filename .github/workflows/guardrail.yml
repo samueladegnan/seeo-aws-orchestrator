@@ -24,10 +24,12 @@ jobs:
         run: gem install brakeman --no-document
 
       - name: Run Brakeman and generate SARIF
-        run: brakeman --format sarif --output seeo-brakeman.sarif backend
+        # Guardrail owns triage and disposition. Brakeman must still emit SARIF
+        # when it reports warnings so the next step can review them.
+        run: brakeman --format sarif --no-exit-on-warn --output seeo-brakeman.sarif backend
 
       - name: Run AI Guardrail triage
-        uses: samueladegnan/ai-cicd-security-guardrail@main
+        uses: samueladegnan/ai-cicd-security-guardrail@v1.1.0
         with:
           report-path: ./seeo-brakeman.sarif
           repo-root: .

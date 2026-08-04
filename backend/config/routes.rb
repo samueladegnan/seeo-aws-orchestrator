@@ -12,5 +12,7 @@ Rails.application.routes.draw do
   end
 
   # Real-time updates
+  get '/session-token', to: 'session_tokens#show'
+  get '/cable-token', to: 'cable_tokens#show'
   mount ActionCable.server => '/cable'
 end

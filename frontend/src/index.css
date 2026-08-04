@@ -2,6 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  background: #f8fafc;
+}
+
 body {
+  margin: 0;
+  min-width: 320px;
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+@media (max-width: 640px) {
+  body {
+    overflow-x: hidden;
+  }
 }

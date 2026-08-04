@@ -1,5 +1,78 @@
+{% assign canonical_url = page.url | replace:'index.html','' | absolute_url %}
+{% assign page_title = page.title | default: site.name %}
+{% assign page_description = page.description | default: site.description %}
+{% assign social_image = '/assets/social-card.png' | absolute_url %}
+
 <link rel="icon" type="image/svg+xml" href="{{ '/assets/favicon.svg' | relative_url }}">
-<link rel="mask-icon" href="{{ '/assets/favicon.svg' | relative_url }}" color="#155799">
+<link rel="mask-icon" href="{{ '/assets/favicon.svg' | relative_url }}" color="#166534">
+<link rel="canonical" href="{{ canonical_url | escape }}">
+<meta name="author" content="{{ site.author | default: 'Samuel Degnan' | escape }}">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#0b3027">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
+<meta property="og:locale" content="en_US">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="SEEO">
+<meta property="og:title" content="{{ page_title | escape }}">
+<meta property="og:description" content="{{ page_description | strip_html | strip_newlines | escape }}">
+<meta property="og:url" content="{{ canonical_url | escape }}">
+<meta property="og:image" content="{{ social_image | escape }}">
+<meta property="og:image:alt" content="SEEO secure ephemeral AWS environment platform">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ page_title | escape }}">
+<meta name="twitter:description" content="{{ page_description | strip_html | strip_newlines | escape }}">
+<meta name="twitter:image" content="{{ social_image | escape }}">
+<meta name="twitter:image:alt" content="SEEO secure ephemeral AWS environment platform">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "{{ site.url }}{{ site.baseurl }}/#website",
+      "name": {{ site.name | jsonify }},
+      "url": "{{ site.url }}{{ site.baseurl }}/",
+      "description": {{ site.description | jsonify }},
+      "inLanguage": "en"
+    },
+    {
+      "@type": "SoftwareSourceCode",
+      "@id": "https://github.com/samueladegnan/seeo-aws-orchestrator#software",
+      "name": "SEEO - Secure Ephemeral Environment Orchestrator",
+      "codeRepository": "https://github.com/samueladegnan/seeo-aws-orchestrator",
+      "programmingLanguage": ["Ruby", "JavaScript", "HCL", "Rego"],
+      "runtimePlatform": "Ruby on Rails, React, AWS",
+      "author": {
+        "@type": "Person",
+        "name": "Samuel Degnan",
+        "url": "https://samueladegnan.github.io/"
+      }
+    },
+    {
+      "@type": "WebPage",
+      "@id": {{ canonical_url | append: '#webpage' | jsonify }},
+      "url": {{ canonical_url | jsonify }},
+      "name": {{ page_title | jsonify }},
+      "description": {{ page_description | strip_html | strip_newlines | jsonify }},
+      "isPartOf": { "@id": "{{ site.url }}{{ site.baseurl }}/#website" },
+      "about": { "@id": "https://github.com/samueladegnan/seeo-aws-orchestrator#software" },
+      "author": {
+        "@type": "Person",
+        "name": "Samuel Degnan",
+        "url": "https://samueladegnan.github.io/"
+      },
+      "inLanguage": "en"
+    }
+  ]
+}
+</script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">

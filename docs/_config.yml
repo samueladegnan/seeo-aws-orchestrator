@@ -1,6 +1,9 @@
 title: SEEO
-name: SEEO
-description: "A full-stack AWS orchestration tool for secure, TTL-bound ephemeral environments."
+name: SEEO - Secure Ephemeral Environment Orchestrator
+description: "A full-stack platform for requesting, observing, and expiring secure TTL-bound AWS environments."
+lang: en
+author: Samuel Degnan
+repository: samueladegnan/seeo-aws-orchestrator
 show_downloads: false
 baseurl: /seeo-aws-orchestrator
 url: https://samueladegnan.github.io

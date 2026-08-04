@@ -1,12 +1,13 @@
 ---
-title: Live Demo
+title: Live Demo | SEEO AWS Environment Dashboard
+description: Try the SEEO React dashboard to request, monitor, and terminate short-lived AWS environments in a safe mock AWS demo.
 layout: demo
 permalink: /demo/
 ---
 
 ## SEEO Dashboard
 
-The SEEO Dashboard is a React + Vite application that lets you request, monitor, and terminate short-lived AWS environments.
+The SEEO Dashboard is a React and Vite application for requesting, monitoring, and terminating short-lived environments.
 
 ### Live Demo
 
@@ -14,7 +15,7 @@ The live demo runs the backend in **Mock AWS Mode**, so no AWS credentials are r
 
 > **Note:** Some ad blockers and privacy extensions block requests to `.onrender.com` domains, which can prevent the dashboard from waking the backend or connecting to WebSocket updates. If the dashboard seems stuck or shows **Live updates: disconnected**, try disabling your ad blocker or opening the demo in an incognito/private window.
 
-> **Is it shared?** No — the deployed demo gives each visitor a separate sandbox. Your browser generates a session id that is stored locally and sent with every request, so the environments you create are only visible in your browser. If you open the demo in a different browser or clear local storage, you get a fresh, empty session.
+> **Is it shared?** No. Each visitor receives a separate sandbox through a server-issued signed session token. The backend stores the session ownership, and ActionCable receives a separate short-lived token tied to that same session. A different browser or cleared local storage starts a fresh session.
 
 ### Run it locally
 
@@ -53,7 +54,7 @@ Open [http://localhost:5173](http://localhost:5173) to use the dashboard.
 - Create an environment for a project and TTL.
 - Watch the estimated cost update in real time.
 - Terminate an environment and see it reflected in the table.
-- Open two browser windows to see ActionCable WebSocket updates.
+- Open two browser windows to confirm each session receives only its own ActionCable updates.
 
 ## Source code
 

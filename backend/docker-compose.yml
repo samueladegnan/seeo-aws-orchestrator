@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   web:
     build: .
@@ -7,8 +5,8 @@ services:
       - "3000:3000"
     environment:
       - RAILS_ENV=development
-      - SEEO_API_KEY=${SEEO_API_KEY:-dev-change-me-in-production}
-      - SEEO_JWT_SECRET=${SEEO_JWT_SECRET:-dev-change-me-in-production}
+      - SEEO_API_KEY=${SEEO_API_KEY:-local-development-only}
+      - SEEO_JWT_SECRET=${SEEO_JWT_SECRET:-local-jwt-development-only}
       - AWS_REGION=${AWS_REGION:-us-east-1}
       - AWS_PROFILE=${AWS_PROFILE:-}
       - SEEO_ENVIRONMENTS_TABLE=${SEEO_ENVIRONMENTS_TABLE:-seeo-environments}
@@ -26,8 +24,8 @@ services:
     build: .
     environment:
       - RAILS_ENV=development
-      - SEEO_API_KEY=${SEEO_API_KEY:-dev-change-me-in-production}
-      - SEEO_JWT_SECRET=${SEEO_JWT_SECRET:-dev-change-me-in-production}
+      - SEEO_API_KEY=${SEEO_API_KEY:-local-development-only}
+      - SEEO_JWT_SECRET=${SEEO_JWT_SECRET:-local-jwt-development-only}
       - AWS_REGION=${AWS_REGION:-us-east-1}
       - AWS_PROFILE=${AWS_PROFILE:-}
       - SEEO_ENVIRONMENTS_TABLE=${SEEO_ENVIRONMENTS_TABLE:-seeo-environments}

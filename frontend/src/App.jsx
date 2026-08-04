@@ -1,17 +1,15 @@
 import { Fragment, useCallback, useEffect, useState, useRef } from 'react'
 
-const API_KEY = import.meta.env.VITE_SEEO_API_KEY || 'dev-change-me-in-production'
+const API_KEY = import.meta.env.VITE_SEEO_API_KEY || 'local-development-only'
 const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname)
 const API_BASE = import.meta.env.VITE_API_BASE || (isLocalhost ? 'http://localhost:3000' : '')
 const isLocalApi = /localhost|127\.0\.0\.1|host\.docker\.internal/.test(API_BASE)
 
-function getWsUrl() {
-  if (API_BASE) {
-    const base = API_BASE.replace(/\/$/, '')
-    return base.replace(/^http/, 'ws') + '/cable'
-  }
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  return `${protocol}//${window.location.host}/cable`
+function getWsUrl(token) {
+  const base = API_BASE
+    ? API_BASE.replace(/\/$/, '').replace(/^http/, 'ws')
+    : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`
+  return `${base}/cable?${new URLSearchParams({ token }).toString()}`
 }
 
 const REGIONS = [
@@ -32,35 +30,69 @@ const INSTANCE_TYPES = [
 ]
 
 const VOLUME_TYPES = [
-  { value: 'gp3', label: 'gp3 — General purpose SSD' },
-  { value: 'io2', label: 'io2 — Provisioned IOPS SSD' },
-  { value: 'st1', label: 'st1 — Throughput optimized HDD' },
+  { value: 'gp3', label: 'gp3 - General purpose SSD' },
+  { value: 'io2', label: 'io2 - Provisioned IOPS SSD' },
+  { value: 'st1', label: 'st1 - Throughput optimized HDD' },
 ]
 
-function generateSessionId() {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID()
-  }
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0
-    const v = c === 'x' ? r : (r & 0x3) | 0x8
-    return v.toString(16)
-  })
+let SESSION_ID = null
+let SESSION_TOKEN = null
+let SESSION_REFRESH = null
+try {
+  SESSION_ID = localStorage.getItem('seeo_session_id')
+  SESSION_TOKEN = localStorage.getItem('seeo_session_token')
+} catch {
+  // Storage may be unavailable in privacy-restricted browsers.
 }
 
-const SESSION_ID = (() => {
-  let id = null
-  try {
-    id = localStorage.getItem('seeo_session_id')
-    if (!id) {
-      id = generateSessionId()
-      localStorage.setItem('seeo_session_id', id)
+async function ensureSessionToken(forceRefresh = false) {
+  if (SESSION_REFRESH) return SESSION_REFRESH
+  if (!forceRefresh && SESSION_TOKEN && SESSION_ID) return SESSION_TOKEN
+
+  if (forceRefresh) {
+    SESSION_ID = null
+    SESSION_TOKEN = null
+    try {
+      localStorage.removeItem('seeo_session_id')
+      localStorage.removeItem('seeo_session_token')
+    } catch {
+      // Storage may be unavailable in privacy-restricted browsers.
     }
-  } catch {
-    id = generateSessionId()
   }
-  return id
-})()
+
+  const refresh = async () => {
+    const res = await fetch(`${API_BASE}/session-token`, {
+      headers: { 'X-API-Key': API_KEY },
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const data = await res.json()
+    SESSION_ID = data.session_id
+    SESSION_TOKEN = data.token
+    try {
+      localStorage.setItem('seeo_session_id', SESSION_ID)
+      localStorage.setItem('seeo_session_token', SESSION_TOKEN)
+    } catch {
+      // Keep the token in memory for this tab when storage is unavailable.
+    }
+    return SESSION_TOKEN
+  }
+
+  SESSION_REFRESH = refresh().finally(() => { SESSION_REFRESH = null })
+  return SESSION_REFRESH
+}
+
+async function authorizedFetch(url, options = {}) {
+  const request = async (forceRefresh = false) => {
+    const token = await ensureSessionToken(forceRefresh)
+    return fetch(url, {
+      ...options,
+      headers: { ...(options.headers || {}), 'X-Session-Token': token },
+    })
+  }
+
+  const response = await request()
+  return response.status === 401 ? request(true) : response
+}
 
 const STATUS_STYLES = {
   ready: 'bg-emerald-100 text-emerald-800',
@@ -159,6 +191,7 @@ function App() {
   const [destroyingId, setDestroyingId] = useState(null)
   const [terminateTarget, setTerminateTarget] = useState(null)
   const [wsStatus, setWsStatus] = useState('connecting')
+  const [cableToken, setCableToken] = useState(null)
   const [wsReconnectAttempt, setWsReconnectAttempt] = useState(0)
   const [mockMode, setMockMode] = useState(true)
   const [coldStarting, setColdStarting] = useState(false)
@@ -185,8 +218,8 @@ function App() {
 
   const fetchEnvironments = useCallback(async () => {
     const query = statusFilter ? `?status=${encodeURIComponent(statusFilter)}` : ''
-    const res = await fetch(`${API_BASE}/environments${query}`, {
-      headers: { 'X-API-Key': API_KEY, 'X-Session-ID': SESSION_ID },
+    const res = await authorizedFetch(`${API_BASE}/environments${query}`, {
+      headers: { 'X-API-Key': API_KEY },
     })
     if (!res.ok) {
       const data = await res.json().catch(() => ({}))
@@ -195,7 +228,7 @@ function App() {
     const data = await res.json()
     setEnvironments((data.environments || []).filter((env) => env.status !== 'terminated'))
     setCost(data.cost || null)
-    // Any successful refresh means the backend is reachable; clear stale errors.
+    // A successful refresh means the backend is reachable. Clear stale errors.
     setError(null)
   }, [statusFilter, setError])
 
@@ -217,7 +250,7 @@ function App() {
 
   const fetchHealth = async (signal) => {
     try {
-      // Health is public; omit auth headers to avoid a CORS preflight on /health.
+      // Health is public. Omit auth headers to avoid a CORS preflight on /health.
       const res = await fetch(`${API_BASE}/health`, { signal })
       if (!res.ok) return { ok: false, error: new Error(`HTTP ${res.status}`) }
       const data = await res.json()
@@ -344,14 +377,16 @@ function App() {
       reconnectTimeoutRef.current = null
     }
 
-    const ws = new WebSocket(getWsUrl())
+    if (!cableToken) return () => {}
+
+    const ws = new WebSocket(getWsUrl(cableToken.token))
 
     ws.onopen = () => {
       reconnectAttemptRef.current = 0
       setWsStatus('connected')
       ws.send(JSON.stringify({
         command: 'subscribe',
-        identifier: JSON.stringify({ channel: 'EnvironmentChannel', session_id: SESSION_ID })
+        identifier: JSON.stringify({ channel: 'EnvironmentChannel', stream_key: `session_${cableToken.sessionId}` })
       }))
     }
 
@@ -397,7 +432,7 @@ function App() {
         reconnectTimeoutRef.current = null
       }
     }
-  }, [])
+  }, [cableToken])
 
   // Poll every few seconds while environments are still provisioning or the
   // WebSocket is not connected, so the UI updates even if the socket is blocked.
@@ -410,6 +445,37 @@ function App() {
     }, 4000)
     return () => clearInterval(interval)
   }, [fetchEnvironments, wsStatus])
+
+  useEffect(() => {
+    let cancelled = false
+    const requestCableToken = async () => {
+      let sessionToken = await ensureSessionToken()
+      let sessionId = SESSION_ID
+      let res = await fetch(`${API_BASE}/cable-token`, {
+        headers: { 'X-API-Key': API_KEY, 'X-Session-Token': sessionToken },
+      })
+      if (res.status === 401) {
+        sessionToken = await ensureSessionToken(true)
+        sessionId = SESSION_ID
+        res = await fetch(`${API_BASE}/cable-token`, {
+          headers: { 'X-API-Key': API_KEY, 'X-Session-Token': sessionToken },
+        })
+      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = await res.json()
+      return { token: data.token, sessionId }
+    }
+
+    requestCableToken()
+      .then((data) => {
+        if (!cancelled) setCableToken(data)
+      })
+      .catch((err) => {
+        console.warn('[SEEO] ActionCable token request failed:', err)
+        if (!cancelled) setWsStatus('disconnected')
+      })
+    return () => { cancelled = true }
+  }, [])
 
   useEffect(() => {
     mounted.current = true
@@ -454,7 +520,7 @@ function App() {
     return tags
   }
 
-  const createEnvironment = async (formData) => {
+  const createEnvironment = async (formData, idempotencyKey) => {
     const payload = {
       project_name: formData.project_name,
       ttl_minutes: formData.ttl_minutes,
@@ -466,12 +532,12 @@ function App() {
       tags: parseTags(formData.tags),
       ssh_key_name: formData.ssh_key_name,
     }
-    const res = await fetch(`${API_BASE}/environments`, {
+    const res = await authorizedFetch(`${API_BASE}/environments`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-API-Key': API_KEY,
-        'X-Session-ID': SESSION_ID,
+        'X-Idempotency-Key': idempotencyKey,
       },
       body: JSON.stringify(payload),
     })
@@ -488,7 +554,10 @@ function App() {
     setIsSubmitting(true)
     setError(null)
     try {
-      await wakeAndRetry(() => createEnvironment(form))
+      const idempotencyKey = typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `idempotency-${Date.now()}-${Math.random().toString(16).slice(2)}`
+      await wakeAndRetry(() => createEnvironment(form, idempotencyKey))
       // Refresh the list, but don't let a transient refresh failure overwrite
       // the success of the create. Polling/WebSocket will catch up.
       await fetchEnvironments().catch((err) => {
@@ -514,9 +583,9 @@ function App() {
   }
 
   const destroyEnvironment = async (id) => {
-    const res = await fetch(`${API_BASE}/environments/${id}`, {
+    const res = await authorizedFetch(`${API_BASE}/environments/${id}`, {
       method: 'DELETE',
-      headers: { 'X-API-Key': API_KEY, 'X-Session-ID': SESSION_ID },
+      headers: { 'X-API-Key': API_KEY },
     })
     if (!res.ok) {
       const data = await res.json().catch(() => ({}))
@@ -589,7 +658,7 @@ function App() {
     <div className="min-h-screen bg-slate-50 text-slate-900">
       {mockMode && (
         <div className="bg-amber-100 px-4 py-2 text-center text-sm font-medium text-amber-900">
-          Demo Mode — no real AWS resources are provisioned.
+          Demo Mode. No real AWS resources are provisioned.
         </div>
       )}
 
@@ -597,15 +666,13 @@ function App() {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4">
             <a
-              href="https://samueladegnan.github.io/seeo-aws-orchestrator/"
-              target="_self"
-              rel="noopener noreferrer"
+              href="https://samueladegnan.github.io/"
               className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
             >
               <span aria-hidden="true">←</span>
               Back to portfolio
             </a>
-            <h1 className="text-xl font-bold tracking-tight text-slate-900" aria-label="SEEO dashboard">SEEO</h1>
+            <h1 className="text-lg font-bold tracking-tight text-slate-900 sm:text-xl" aria-label="SEEO dashboard">SEEO</h1>
           </div>
           <button
             type="button"
@@ -620,7 +687,7 @@ function App() {
             }}
             aria-live="polite"
           >
-            <span className="text-slate-500">Live updates:</span>
+            <span className="hidden text-slate-500 sm:inline">Live updates:</span>
             <span
               className={`inline-flex h-2.5 w-2.5 rounded-full ${
                 wsStatus === 'connected'
@@ -850,7 +917,7 @@ function App() {
                         <td className="px-6 py-4 text-slate-600">{env.ttl_minutes} min</td>
                         <td className="px-6 py-4 text-slate-600">{formatCost(env.cost)}</td>
                         <td className="px-6 py-4 text-slate-600">
-                          {env.public_ip || '—'}
+                          {env.public_ip || '-'}
                           {mockMode && env.public_ip && <span className="ml-1 text-xs text-slate-400">(mock)</span>}
                         </td>
                         <td className="px-6 py-4">
@@ -918,7 +985,7 @@ function App() {
           <div className="w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-xl ring-1 ring-slate-200">
             <h3 id="unreachable-title" className="text-lg font-semibold text-slate-900">Demo server unavailable</h3>
             <p className="mt-2 text-sm text-slate-600">
-              The live backend could not be reached. Ad blockers sometimes block requests to <code className="rounded bg-slate-100 px-1">.onrender.com</code> domains — try disabling your ad blocker or opening this page in an incognito/private window. You can also run the demo locally.
+              The live backend could not be reached. Ad blockers sometimes block requests to <code className="rounded bg-slate-100 px-1">.onrender.com</code> domains. Try disabling your ad blocker or opening this page in an incognito/private window. You can also run the demo locally.
             </p>
             <div className="mt-6 flex justify-center gap-3">
               <Button variant="secondary" onClick={() => setServerUnreachable(false)}>
@@ -974,7 +1041,7 @@ function App() {
 
       <footer className="border-t border-slate-200 bg-white py-6">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-sm text-slate-500">Built with Ruby on Rails, Terraform & AWS.</p>
+          <p className="text-center text-sm leading-relaxed text-slate-500">Built with Ruby on Rails, Terraform & AWS.<br />AI assistance helped with development. Final engineering decisions and review remain with Samuel Degnan.</p>
         </div>
       </footer>
     </div>
@@ -996,15 +1063,15 @@ function EnvironmentDetails({ env, mockMode }) {
         <DetailRow label="Status" value={<StatusBadge status={env.status} />} />
       </DetailBlock>
       <DetailBlock title="Network & Storage">
-        <DetailRow label="Public IP" value={env.public_ip || '—'} />
-        <DetailRow label="Private IP" value={env.private_ip || '—'} />
-        <DetailRow label="Instance ID" value={env.instance_id || '—'} />
+        <DetailRow label="Public IP" value={env.public_ip || '-'} />
+        <DetailRow label="Private IP" value={env.private_ip || '-'} />
+        <DetailRow label="Instance ID" value={env.instance_id || '-'} />
         <DetailRow label="Volume" value={`${env.volume_size || 10} GB ${env.volume_type || 'gp3'}`} />
-        <DetailRow label="Volume ID" value={env.volume_id || '—'} />
+        <DetailRow label="Volume ID" value={env.volume_id || '-'} />
       </DetailBlock>
       <DetailBlock title="Lifecycle">
-        <DetailRow label="Created" value={env.created_at ? new Date(env.created_at).toLocaleString() : '—'} />
-        <DetailRow label="Expires" value={env.expires_at ? new Date(env.expires_at).toLocaleString() : '—'} />
+        <DetailRow label="Created" value={env.created_at ? new Date(env.created_at).toLocaleString() : '-'} />
+        <DetailRow label="Expires" value={env.expires_at ? new Date(env.expires_at).toLocaleString() : '-'} />
         <DetailRow label="TTL" value={`${env.ttl_minutes} minutes`} />
         <DetailRow label="Estimated cost" value={formatCost(env.cost)} />
       </DetailBlock>
@@ -1012,7 +1079,7 @@ function EnvironmentDetails({ env, mockMode }) {
         {env.public_ip ? (
           <>
             <DetailRow label="SSH command" value={sshCommand} code />
-            {mockMode && <p className="mt-2 text-xs text-amber-700">Mock mode — this IP is not real.</p>}
+            {mockMode && <p className="mt-2 text-xs text-amber-700">Mock mode. This IP is not real.</p>}
           </>
         ) : (
           <p className="text-sm text-slate-500">No public IP assigned.</p>

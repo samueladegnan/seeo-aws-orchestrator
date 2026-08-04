@@ -35,9 +35,11 @@ Thumbs.db
 # Logs
 *.log
 
-# Windows NUL artifact produced by some shell redirects
+# Windows shell artifacts produced by malformed redirects or drive paths
 nul
 NUL
+C:
+C:/
 
 # Ruby / Rails
 *.gem

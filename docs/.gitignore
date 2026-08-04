@@ -14,3 +14,8 @@ vendor/
 Thumbs.db
 .vscode/
 .idea/
+
+# Malformed Windows drive-path artifacts
+C*/
+nul
+NUL

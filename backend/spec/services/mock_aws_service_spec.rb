@@ -69,6 +69,7 @@ RSpec.describe MockAwsService do
       Current.session_id = 'other-session'
       other_env = service.create_environment('beta', 60, 't3.micro')
 
+      Current.internal_cleanup = true
       service.force_terminate_environment(env.id)
       service.force_terminate_environment(other_env.id)
 
@@ -102,9 +103,22 @@ RSpec.describe MockAwsService do
     end
   end
 
+  describe 'idempotency' do
+    it 'reuses the same request and rejects a changed request' do
+      first = service.create_environment('demo', 60, 't3.micro', idempotency_key: 'request-1')
+      reused = service.create_environment('demo', 60, 't3.micro', idempotency_key: 'request-1')
+
+      expect(reused.id).to eq(first.id)
+      expect(reused.reused).to be(true)
+      expect do
+        service.create_environment('other', 60, 't3.micro', idempotency_key: 'request-1')
+      end.to raise_error(ArgumentError, /different request parameters/)
+    end
+  end
+
   describe 'per-session limits' do
     it 'caps the number of environments a session can create' do
-      20.times { |i| service.create_environment("project-#{i}", 60, 't3.micro') }
+      10.times { |i| service.create_environment("project-#{i}", 60, 't3.micro') }
       expect { service.create_environment('overflow', 60, 't3.micro') }.to raise_error(PolicyService::PolicyViolation)
     end
   end

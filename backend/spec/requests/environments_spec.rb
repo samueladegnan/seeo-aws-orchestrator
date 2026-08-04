@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 RSpec.describe 'Environments API', type: :request do
-  let(:api_key) { 'dev-change-me-in-production' }
+  let(:api_key) { 'local-development-only' }
   let(:team) { Team.create!(name: 'Acme', slug: 'acme') }
   let(:project) { Project.create!(team: team, name: 'api', slug: 'api') }
   let(:admin) { User.create!(team: team, email: 'admin@example.com', role: 'admin') }
@@ -93,6 +93,7 @@ RSpec.describe 'Environments API', type: :request do
   def allow_aws_service(method, *args, return_value)
     aws_mock = instance_double(AwsService)
     allow(AwsService).to receive(:new).and_return(aws_mock)
+    allow(aws_mock).to receive(:active_environment_count).and_return(0)
     if args.empty?
       allow(aws_mock).to receive(method).and_return(return_value)
     else

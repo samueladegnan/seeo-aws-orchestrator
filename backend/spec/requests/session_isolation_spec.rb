@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 RSpec.describe 'Session isolation', type: :request do
-  let(:api_key) { 'dev-change-me-in-production' }
+  let(:api_key) { 'local-development-only' }
 
   before do
     allow(SeeoConfig).to receive(:mock_aws?).and_return(true)
@@ -11,42 +11,69 @@ RSpec.describe 'Session isolation', type: :request do
     Current.reset
   end
 
-  def headers_for(session_id)
+  def headers_for(session)
     {
       'X-API-Key' => api_key,
-      'X-Session-ID' => session_id
+      'X-Session-Token' => session[:token]
     }
   end
 
+  describe 'API-key boundary' do
+    it 'does not allow the demo API key to reach real AWS mode' do
+      allow(SeeoConfig).to receive(:mock_aws?).and_return(false)
+      session = SessionTokenService.issue
+
+      get '/environments', headers: headers_for(session)
+      expect(response).to have_http_status(:forbidden)
+    end
+  end
+
   describe 'POST /environments' do
-    it 'scopes created environments to the session id' do
+    it 'scopes created environments to server-issued session tokens' do
+      session_a = SessionTokenService.issue
+      session_b = SessionTokenService.issue
+
       post '/environments', params: { project_name: 'alpha', ttl_minutes: 60, instance_type: 't3.micro' },
-                            headers: headers_for('session-a')
+                            headers: headers_for(session_a)
       expect(response).to have_http_status(:created)
       alpha_id = response.parsed_body['id']
 
       post '/environments', params: { project_name: 'beta', ttl_minutes: 60, instance_type: 't3.micro' },
-                            headers: headers_for('session-b')
+                            headers: headers_for(session_b)
       expect(response).to have_http_status(:created)
 
-      get '/environments', headers: headers_for('session-a')
+      get '/environments', headers: headers_for(session_a)
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body['environments'].pluck('id')).to eq([alpha_id])
 
-      get '/environments', headers: headers_for('session-b')
+      get '/environments', headers: headers_for(session_b)
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body['environments'].pluck('project_name')).to eq(['beta'])
     end
 
+    it 'rejects a missing or forged session token' do
+      get '/environments', headers: { 'X-API-Key' => api_key }
+      expect(response).to have_http_status(:unauthorized)
+
+      get '/environments', headers: {
+        'X-API-Key' => api_key,
+        'X-Session-Token' => 'forged-token'
+      }
+      expect(response).to have_http_status(:unauthorized)
+    end
+
     it 'does not allow one session to terminate another session environment' do
+      session_a = SessionTokenService.issue
+      session_b = SessionTokenService.issue
+
       post '/environments', params: { project_name: 'alpha', ttl_minutes: 60, instance_type: 't3.micro' },
-                            headers: headers_for('session-a')
+                            headers: headers_for(session_a)
       alpha_id = response.parsed_body['id']
 
-      delete "/environments/#{alpha_id}", headers: headers_for('session-b')
+      delete "/environments/#{alpha_id}", headers: headers_for(session_b)
       expect(response).to have_http_status(:not_found)
 
-      get '/environments', headers: headers_for('session-a')
+      get '/environments', headers: headers_for(session_a)
       expect(response.parsed_body['environments']).not_to be_empty
     end
   end

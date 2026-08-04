@@ -22,24 +22,13 @@ class EnvironmentsController < ApplicationController
   end
 
   def create
-    project_name = @project&.name || environment_params.require(:project_name)
-    ttl_minutes = environment_params.require(:ttl_minutes).to_i
-    instance_type = environment_params[:instance_type] || SeeoConfig.ec2_instance_type
-    options = build_create_options
-
-    validate_create_policy!(project_name, ttl_minutes, instance_type, options)
-
-    environment = aws_service.create_environment(@project || project_name, ttl_minutes, instance_type, options)
-
-    AuditLogService.record(
-      action: 'environment.create',
-      target: environment.id,
-      details: environment.to_h
-    )
-
-    render json: environment.to_h, status: :created
+    environment = create_environment
+    status = environment.reused ? :ok : :created
+    render json: environment.to_h, status: status
   rescue PolicyService::PolicyViolation => e
     render json: { error: e.message }, status: :unprocessable_content
+  rescue ActionController::ParameterMissing
+    render json: { error: 'project_name and ttl_minutes are required' }, status: :unprocessable_content
   rescue StandardError => e
     Rails.logger.error "[EnvironmentsController#create] #{e.class}: #{e.message}"
     render json: { error: 'Failed to create environment' }, status: :internal_server_error
@@ -55,10 +44,11 @@ class EnvironmentsController < ApplicationController
     )
 
     render json: environment.to_h
-  rescue ArgumentError => e
-    render json: { error: e.message }, status: :not_found
+  rescue ArgumentError
+    render json: { error: "Environment #{params[:id]} not found" }, status: :not_found
   rescue StandardError => e
-    render json: { error: "Failed to terminate environment: #{e.message}" }, status: :internal_server_error
+    Rails.logger.error "[EnvironmentsController#destroy] #{e.class}: #{e.message}"
+    render json: { error: 'Failed to terminate environment' }, status: :internal_server_error
   end
 
   def refresh
@@ -71,6 +61,29 @@ class EnvironmentsController < ApplicationController
   end
 
   private
+
+  def create_environment
+    project_name = @project&.name || environment_params.require(:project_name)
+    ttl_minutes = environment_params.require(:ttl_minutes).to_i
+    instance_type = environment_params[:instance_type] || SeeoConfig.ec2_instance_type
+    options = build_create_options
+
+    validate_create_policy!(project_name, ttl_minutes, instance_type, options)
+    environment = aws_service.create_environment(@project || project_name, ttl_minutes, instance_type, options)
+
+    record_create_audit(environment)
+    environment
+  end
+
+  def record_create_audit(environment)
+    return if environment.reused
+
+    AuditLogService.record(
+      action: 'environment.create',
+      target: environment.id,
+      details: environment.to_h
+    )
+  end
 
   def authorize_action!
     allowed = case action_name
@@ -109,7 +122,8 @@ class EnvironmentsController < ApplicationController
       volume_type: environment_params[:volume_type],
       tags: environment_params[:tags],
       notes: environment_params[:notes],
-      ssh_key_name: environment_params[:ssh_key_name]
+      ssh_key_name: environment_params[:ssh_key_name],
+      idempotency_key: request.headers['X-Idempotency-Key'].presence
     }
   end
 
@@ -121,6 +135,7 @@ class EnvironmentsController < ApplicationController
       region: options[:region],
       volume_size: options[:volume_size],
       volume_type: options[:volume_type],
+      active_environment_count: aws_service.active_environment_count,
       team: Current.team
     )
   end

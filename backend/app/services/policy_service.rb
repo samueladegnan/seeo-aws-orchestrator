@@ -25,6 +25,13 @@ class PolicyService
       raise PolicyViolation, result['deny']&.first || 'Provisioning denied by policy'
     end
 
+    def check_concurrency!(active_count)
+      limit = DEFAULT_POLICIES['max_concurrent_environments']
+      return if active_count < limit
+
+      raise PolicyViolation, "Concurrent environment limit of #{limit} reached"
+    end
+
     private
 
     def evaluate(query, input)
@@ -58,7 +65,9 @@ class PolicyService
       policies = DEFAULT_POLICIES
       violations = []
 
-      if input['ttl_minutes'] > policies['max_ttl_minutes']
+      if input['ttl_minutes'].to_i < 1
+        violations << 'TTL must be at least 1 minute'
+      elsif input['ttl_minutes'].to_i > policies['max_ttl_minutes']
         violations << "TTL exceeds maximum of #{policies['max_ttl_minutes']} minutes"
       end
 
@@ -68,6 +77,7 @@ class PolicyService
 
       check_region_policy(input, policies, violations)
       check_volume_policy(input, policies, violations)
+      check_concurrency_policy(input, policies, violations)
 
       { 'allow' => violations.empty?, 'deny' => violations }
     end
@@ -80,6 +90,7 @@ class PolicyService
         'region' => options[:region],
         'volume_size' => options[:volume_size],
         'volume_type' => options[:volume_type],
+        'active_environment_count' => options[:active_environment_count].to_i,
         'team' => team_payload(options[:team])
       }
     end
@@ -105,9 +116,15 @@ class PolicyService
 
     def check_volume_size(input, policies, violations)
       return if input['volume_size'].blank?
-      return unless input['volume_size'] > policies['max_volume_size_gb']
+      return unless input['volume_size'].to_i > policies['max_volume_size_gb']
 
       violations << "Volume size exceeds maximum of #{policies['max_volume_size_gb']} GB"
+    end
+
+    def check_concurrency_policy(input, policies, violations)
+      return if input['active_environment_count'].to_i < policies['max_concurrent_environments']
+
+      violations << "Concurrent environment limit of #{policies['max_concurrent_environments']} reached"
     end
 
     def team_payload(team)

@@ -1,5 +1,6 @@
 ---
-title: API
+title: API Documentation | SEEO Environment Lifecycle
+description: Reference the SEEO Rails REST API, JWT and API-key authentication, RBAC, environment lifecycle endpoints, and ActionCable WebSockets.
 layout: default
 permalink: /api/
 ---
@@ -10,7 +11,7 @@ The SEEO backend exposes a REST API built with Ruby on Rails.
 
 ## Authentication
 
-The API accepts either a JWT tenant token or a legacy API key.
+The API accepts a JWT tenant token or an API key in local/mock mode. The public mock demo uses the API key to obtain a signed browser session token. Real AWS lifecycle actions require JWT tenant authentication.
 
 ### JWT tenant token
 
@@ -20,17 +21,21 @@ curl -H "Authorization: Bearer <token>" http://localhost:3000/environments
 
 JWT tokens are issued by `AuthorizationService.issue_token(user)` and expire after 24 hours. They are associated with a user, team, and role.
 
-### Legacy API key
+### API key for service accounts
 
 ```bash
-curl -H "X-API-Key: your-api-key" http://localhost:3000/environments
+curl -H "X-API-Key: your-api-key" http://localhost:3000/session-token
 ```
 
-API-key requests authenticate as a transient admin service account with no team.
+API-key requests authenticate as a transient service account in local/mock mode. The public frontend uses this route to obtain a signed browser session token. Environment records created without a team are scoped to that verified session, and the key alone does not grant access to another session. API-key lifecycle access is rejected when real AWS mode is enabled.
 
-### Session isolation (mock demo mode)
+### Mock demo session token
 
-When the backend runs in **Mock AWS Mode**, the dashboard sends a `X-Session-ID` header so each browser gets its own isolated set of environments. This is used only in the demo; real AWS-backed mode ignores the header.
+The public mock demo first requests `GET /session-token` with the API key. The backend returns a signed session token and opaque session identifier. Subsequent mock requests send `X-Session-Token: <token>`. A client-chosen `X-Session-ID` is not accepted as identity.
+
+### Ownership and idempotency
+
+Tenant-backed records persist `team_id` and `owner_user_id`. Team requests are filtered by `team_id`. Mock/demo records are filtered by their session scope. Clients should send `X-Idempotency-Key` on create requests. Repeating a request with the same key returns the existing active environment instead of provisioning another one.
 
 ## Authorization
 
@@ -145,4 +150,4 @@ Terminates the EC2 instance, detaches/deletes the EBS volume, marks the environm
 
 ## Real-time updates
 
-The Rails server mounts a WebSocket endpoint at `/cable`. The React dashboard can subscribe to `EnvironmentChannel` to receive environment state changes.
+The Rails server mounts a WebSocket endpoint at `/cable`. Request `GET /cable-token` with normal API authentication and, in mock mode, the verified `X-Session-Token`. The response is a short-lived signed token. Pass its `token` value to ActionCable as the `token` query parameter and subscribe with `stream_key`. The server rejects arbitrary stream keys and derives the authorized stream from the signed team or session context.

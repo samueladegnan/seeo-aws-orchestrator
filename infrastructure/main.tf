@@ -217,13 +217,10 @@ resource "aws_secretsmanager_secret" "seeo" {
   description = "Runtime credentials for SEEO-provisioned environments"
 }
 
-resource "aws_secretsmanager_secret_version" "seeo" {
-  secret_id = aws_secretsmanager_secret.seeo.id
-  secret_string = jsonencode({
-    database_password = "change-me-in-production"
-    api_key           = "change-me-in-production"
-  })
-}
+# Secret values are intentionally provisioned outside Terraform so credentials do not
+# enter Terraform configuration or state. Populate this secret before real-mode use:
+# aws secretsmanager put-secret-value --secret-id seeo/runtime/credentials \
+#   --secret-string '{"database_password":"...","api_key":"..."}'
 
 # -----------------------------------------------------------------------------
 # BACKEND APPLICATION POLICY (for local/dev runner)

@@ -14,6 +14,7 @@ class AuthorizationService
       Current.user = User.new(email: 'service@seeo.local', role: 'admin')
       Current.team = nil
       Current.role = 'admin'
+      Current.service_account = true
     end
 
     def authenticate_token!(token)
@@ -23,6 +24,7 @@ class AuthorizationService
       Current.user = user
       Current.team = user.team
       Current.role = user.role
+      Current.service_account = false
     rescue ActiveRecord::RecordNotFound, JWT::DecodeError => e
       raise AuthenticationError, "Invalid tenant token: #{e.message}"
     end

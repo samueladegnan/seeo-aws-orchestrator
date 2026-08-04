@@ -30,12 +30,14 @@ Rails.application.configure do
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
 
-  # Enable DNS rebinding protection and other Host header attacks.
-  # For this demo app we allow all hosts so the Render URL works out of the box.
+  # Keep host and WebSocket origin checks enabled in production. Explicitly opt
+  # into a wildcard only for a disposable local/demo environment.
   if ENV['RAILS_ALLOW_ALL_HOSTS'] == 'true'
     config.hosts.clear
     config.action_cable.allowed_request_origins = [/.*/]
   else
     config.hosts = ENV.fetch('RAILS_ALLOWED_HOSTS', '.localhost').split(',').map(&:strip)
+    allowed_origins = ENV.fetch('ACTION_CABLE_ALLOWED_ORIGINS', ENV.fetch('CORS_ALLOW_ORIGINS', '*'))
+    config.action_cable.allowed_request_origins = allowed_origins.split(',').map(&:strip)
   end
 end

@@ -2,6 +2,7 @@
 
 class TtlMonitorJob < ApplicationJob
   def perform
+    Current.internal_cleanup = true
     Rails.logger.info '[TTL] Scanning for expired environments...'
     expired = service.list_expired_environments
     expired.each do |environment|
@@ -12,6 +13,8 @@ class TtlMonitorJob < ApplicationJob
         Rails.logger.error "[TTL] Failed to terminate #{environment.id}: #{e.message}"
       end
     end
+  ensure
+    Current.reset
   end
 
   private

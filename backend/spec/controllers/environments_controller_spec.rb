@@ -3,10 +3,13 @@
 require 'rails_helper'
 
 RSpec.describe EnvironmentsController, type: :controller do
-  let(:api_key) { 'dev-change-me-in-production' }
-  let(:headers) { { 'X-API-Key' => api_key } }
+  let(:api_key) { 'local-development-only' }
+  let(:session_token) { SessionTokenService.issue[:token] }
+  let(:headers) { { 'X-API-Key' => api_key, 'X-Session-Token' => session_token } }
 
   before do
+    allow(SeeoConfig).to receive(:mock_aws?).and_return(true)
+    allow(MockAwsService).to receive(:new).and_return(aws_mock) if defined?(aws_mock)
     request.headers.merge!(headers)
   end
 
@@ -26,8 +29,8 @@ RSpec.describe EnvironmentsController, type: :controller do
 
   describe 'GET #index' do
     it 'returns a list of environments' do
-      aws_mock = instance_double(AwsService)
-      allow(AwsService).to receive(:new).and_return(aws_mock)
+      aws_mock = instance_double(MockAwsService)
+      allow(MockAwsService).to receive(:new).and_return(aws_mock)
       allow(aws_mock).to receive(:list_environments).and_return([])
       get :index
       expect(response).to have_http_status(:ok)
@@ -49,10 +52,11 @@ RSpec.describe EnvironmentsController, type: :controller do
         region: 'us-east-1'
       )
     end
-    let(:aws_mock) { instance_double(AwsService) }
+    let(:aws_mock) { instance_double(MockAwsService) }
 
     before do
-      allow(AwsService).to receive(:new).and_return(aws_mock)
+      allow(MockAwsService).to receive(:new).and_return(aws_mock)
+      allow(aws_mock).to receive(:active_environment_count).and_return(0)
     end
 
     it 'passes region and volume options to the service' do
@@ -85,10 +89,11 @@ RSpec.describe EnvironmentsController, type: :controller do
         region: 'us-east-1'
       )
     end
-    let(:aws_mock) { instance_double(AwsService) }
+    let(:aws_mock) { instance_double(MockAwsService) }
 
     before do
-      allow(AwsService).to receive(:new).and_return(aws_mock)
+      allow(MockAwsService).to receive(:new).and_return(aws_mock)
+      allow(aws_mock).to receive(:active_environment_count).and_return(0)
     end
 
     it 'returns the environment' do
@@ -117,10 +122,11 @@ RSpec.describe EnvironmentsController, type: :controller do
         region: 'us-east-1'
       )
     end
-    let(:aws_mock) { instance_double(AwsService) }
+    let(:aws_mock) { instance_double(MockAwsService) }
 
     before do
-      allow(AwsService).to receive(:new).and_return(aws_mock)
+      allow(MockAwsService).to receive(:new).and_return(aws_mock)
+      allow(aws_mock).to receive(:active_environment_count).and_return(0)
     end
 
     it 'creates an environment' do
@@ -143,10 +149,11 @@ RSpec.describe EnvironmentsController, type: :controller do
         region: 'us-east-1'
       )
     end
-    let(:aws_mock) { instance_double(AwsService) }
+    let(:aws_mock) { instance_double(MockAwsService) }
 
     before do
-      allow(AwsService).to receive(:new).and_return(aws_mock)
+      allow(MockAwsService).to receive(:new).and_return(aws_mock)
+      allow(aws_mock).to receive(:active_environment_count).and_return(0)
     end
 
     it 'terminates the environment' do
@@ -169,10 +176,11 @@ RSpec.describe EnvironmentsController, type: :controller do
         region: 'us-east-1'
       )
     end
-    let(:aws_mock) { instance_double(AwsService) }
+    let(:aws_mock) { instance_double(MockAwsService) }
 
     before do
-      allow(AwsService).to receive(:new).and_return(aws_mock)
+      allow(MockAwsService).to receive(:new).and_return(aws_mock)
+      allow(aws_mock).to receive(:active_environment_count).and_return(0)
     end
 
     it 'refreshes the environment state' do

@@ -1,10 +1,23 @@
 # frozen_string_literal: true
 
 class ApplicationController < ActionController::API
-  before_action :authenticate_request!
   around_action :set_current_context
+  before_action :authenticate_request!
+  before_action :require_session_token!
 
   private
+
+  def require_session_token!
+    return unless Current.service_account == true
+    unless SeeoConfig.mock_aws?
+      return render json: { error: 'API-key lifecycle access is limited to mock mode' }, status: :forbidden
+    end
+
+    payload = SessionTokenService.verify!(request.headers['X-Session-Token'])
+    Current.session_id = payload['session_id']
+  rescue SessionTokenService::InvalidToken => e
+    render json: { error: e.message }, status: :unauthorized
+  end
 
   def authenticate_request!
     if request.headers['Authorization'].present?
@@ -23,7 +36,7 @@ class ApplicationController < ActionController::API
 
   def set_current_context
     Thread.current[:request_user_agent] = request.user_agent
-    Current.session_id = request.headers['X-Session-ID'].presence || 'default'
+    Current.session_id = 'default'
     yield
   ensure
     Current.reset
