@@ -55,19 +55,31 @@ jobs:
           print(f"Filtered {removed} reviewed Brakeman suppression(s)")
           PY
 
+      - name: Build Guardrail v1.1.0
+        run: docker build --tag seeo-guardrail:v1.1.0 https://github.com/samueladegnan/ai-cicd-security-guardrail.git#v1.1.0
+
       - name: Run AI Guardrail triage
-        uses: samueladegnan/ai-cicd-security-guardrail@v1.1.0
-        with:
-          report-path: /github/workspace/seeo-brakeman-active.sarif
-          repo-root: /github/workspace
-          provider: ${{ secrets.GUARDRAIL_LLM_PROVIDER || 'mock' }}
-          # Keep maintenance/tooling warnings visible without blocking the build.
-          # High-priority security findings still fail the guardrail.
-          fail-on-unclear: "false"
-          llm-api-key: ${{ secrets.GUARDRAIL_LLM_API_KEY }}
-          llm-model: ${{ secrets.GUARDRAIL_LLM_MODEL }}
-          output-markdown: /github/workspace/guardrail-report.md
-          output-json: /github/workspace/guardrail-report.json
+        env:
+          GUARDRAIL_PROVIDER: ${{ secrets.GUARDRAIL_LLM_PROVIDER || 'mock' }}
+          GUARDRAIL_API_KEY: ${{ secrets.GUARDRAIL_LLM_API_KEY }}
+          GUARDRAIL_MODEL: ${{ secrets.GUARDRAIL_LLM_MODEL }}
+        run: |
+          docker run --rm \
+            --volume "${GITHUB_WORKSPACE}:/workspace" \
+            --env "GUARDRAIL_LLM_PROVIDER=${GUARDRAIL_PROVIDER}" \
+            --env "GUARDRAIL_LLM_API_KEY=${GUARDRAIL_API_KEY}" \
+            --env "GUARDRAIL_LLM_MODEL=${GUARDRAIL_MODEL}" \
+            --env GUARDRAIL_FAIL_ON_UNCLEAR=false \
+            seeo-guardrail:v1.1.0 \
+            /workspace/seeo-brakeman-active.sarif \
+            --repo-root /workspace \
+            --provider "${GUARDRAIL_PROVIDER}" \
+            --max-concurrency 3 \
+            --format sarif \
+            --language auto \
+            --no-fail-on-unclear \
+            --output-json /workspace/guardrail-report.json \
+            --output-markdown /workspace/guardrail-report.md
 
       - name: Upload guardrail reports
         uses: actions/upload-artifact@v7
