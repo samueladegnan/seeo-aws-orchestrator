@@ -28,10 +28,37 @@ jobs:
         # when it reports warnings so the next step can review them.
         run: brakeman --format sarif --no-exit-on-warn --output seeo-brakeman.sarif backend
 
+      - name: Filter reviewed Brakeman suppressions
+        # Keep the complete scan as an artifact, but do not send explicitly
+        # suppressed maintenance findings to the blocking triage step.
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          source = Path("seeo-brakeman.sarif")
+          target = Path("seeo-brakeman-active.sarif")
+          report = json.loads(source.read_text(encoding="utf-8"))
+          removed = 0
+
+          for run in report.get("runs", []):
+              active_results = []
+              for result in run.get("results", []):
+                  suppressions = result.get("suppressions", [])
+                  if any(item.get("kind") == "external" for item in suppressions):
+                      removed += 1
+                  else:
+                      active_results.append(result)
+              run["results"] = active_results
+
+          target.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+          print(f"Filtered {removed} reviewed Brakeman suppression(s)")
+          PY
+
       - name: Run AI Guardrail triage
         uses: samueladegnan/ai-cicd-security-guardrail@v1.1.0
         with:
-          report-path: ./seeo-brakeman.sarif
+          report-path: ./seeo-brakeman-active.sarif
           repo-root: .
           provider: ${{ secrets.GUARDRAIL_LLM_PROVIDER || 'mock' }}
           # Keep maintenance/tooling warnings visible without blocking the build.
@@ -51,3 +78,4 @@ jobs:
             guardrail-report.md
             guardrail-report.json
             seeo-brakeman.sarif
+            seeo-brakeman-active.sarif
