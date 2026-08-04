@@ -58,16 +58,16 @@ jobs:
       - name: Run AI Guardrail triage
         uses: samueladegnan/ai-cicd-security-guardrail@v1.1.0
         with:
-          report-path: ./seeo-brakeman-active.sarif
-          repo-root: .
+          report-path: /github/workspace/seeo-brakeman-active.sarif
+          repo-root: /github/workspace
           provider: ${{ secrets.GUARDRAIL_LLM_PROVIDER || 'mock' }}
           # Keep maintenance/tooling warnings visible without blocking the build.
           # High-priority security findings still fail the guardrail.
           fail-on-unclear: "false"
           llm-api-key: ${{ secrets.GUARDRAIL_LLM_API_KEY }}
           llm-model: ${{ secrets.GUARDRAIL_LLM_MODEL }}
-          output-markdown: guardrail-report.md
-          output-json: guardrail-report.json
+          output-markdown: /github/workspace/guardrail-report.md
+          output-json: /github/workspace/guardrail-report.json
 
       - name: Upload guardrail reports
         uses: actions/upload-artifact@v7
