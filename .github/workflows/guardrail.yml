@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout SEEO
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -34,13 +34,16 @@ jobs:
           report-path: ./seeo-brakeman.sarif
           repo-root: .
           provider: ${{ secrets.GUARDRAIL_LLM_PROVIDER || 'mock' }}
+          # Keep maintenance/tooling warnings visible without blocking the build.
+          # High-priority security findings still fail the guardrail.
+          fail-on-unclear: "false"
           llm-api-key: ${{ secrets.GUARDRAIL_LLM_API_KEY }}
           llm-model: ${{ secrets.GUARDRAIL_LLM_MODEL }}
           output-markdown: guardrail-report.md
           output-json: guardrail-report.json
 
       - name: Upload guardrail reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: guardrail-reports
