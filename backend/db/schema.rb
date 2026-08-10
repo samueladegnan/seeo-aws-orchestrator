@@ -35,7 +35,6 @@ ActiveRecord::Schema[7.2].define(version: 2026_01_03_000000) do
     t.string "provider_resource_id"
     t.string "provider_resource_type"
     t.string "status", null: false
-    t.datetime "created_at", null: false
     t.datetime "expires_at", null: false
     t.string "instance_id"
     t.string "public_ip"
@@ -54,10 +53,11 @@ ActiveRecord::Schema[7.2].define(version: 2026_01_03_000000) do
     t.string "ssh_key_name"
     t.string "idempotency_key"
     t.string "request_fingerprint"
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["expires_at"], name: "index_environment_records_on_expires_at"
     t.index ["id"], name: "index_environment_records_on_id", unique: true
-    t.index ["idempotency_key", "provider"], name: "index_environment_records_on_idempotency_and_provider"
+    t.index ["idempotency_key", "provider"], name: "index_environment_records_on_idempotency_key_and_provider", unique: true
     t.index ["provider"], name: "index_environment_records_on_provider"
     t.index ["status"], name: "index_environment_records_on_status"
   end

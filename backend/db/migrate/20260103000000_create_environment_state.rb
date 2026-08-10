@@ -15,7 +15,6 @@ class CreateEnvironmentState < ActiveRecord::Migration[7.1]
       t.string :provider_resource_id
       t.string :provider_resource_type
       t.string :status, null: false
-      t.datetime :created_at, null: false
       t.datetime :expires_at, null: false
       t.string :instance_id
       t.string :public_ip
