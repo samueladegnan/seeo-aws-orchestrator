@@ -57,3 +57,10 @@ C:/
 /storage/
 
 # Jekyll build artifacts (per-directory rules live in docs/.gitignore)
+_site/
+
+# CI security reports
+seeo-brakeman.sarif
+seeo-brakeman-active.sarif
+guardrail-report.json
+guardrail-report.md

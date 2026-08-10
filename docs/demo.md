@@ -1,31 +1,37 @@
 ---
-title: Live Demo | SEEO AWS Environment Dashboard
-description: Try the SEEO React dashboard to request, monitor, and terminate short-lived AWS environments in a safe mock AWS demo.
+title: Demo | SEEO Environment Dashboard
+description: Try the SEEO environment dashboard live, or run the mock demo locally with the Rails API and React frontend.
 layout: demo
 permalink: /demo/
 ---
 
 ## SEEO Dashboard
 
-The SEEO Dashboard is a React and Vite application for requesting, monitoring, and terminating short-lived environments.
+SEEO is a React and Vite dashboard for requesting, monitoring, and terminating short-lived environments. This page gives you two ways to try it.
 
-### Live Demo
+<div class="demo-launch-card">
+  <div>
+    <span class="demo-eyebrow">Hosted experience</span>
+    <h2>Launch the live demo</h2>
+    <p>The hosted dashboard uses the multi-cloud mock provider. It lets you select AWS, Azure, Google Cloud, or OCI, creates no real cloud resources, and gives each browser its own signed sandbox session.
+</p>
+  </div>
+  <a class="btn" href="https://seeo-dashboard.vercel.app/" target="_blank" rel="noopener noreferrer">Launch Live Demo</a>
+</div>
 
-The live demo runs the backend in **Mock AWS Mode**, so no AWS credentials are required. Because it is hosted on Render's free tier, the backend may take **30–50 seconds** to wake up after a period of inactivity. The dashboard shows a loading message while the server starts.
+> **Wake-up time:** the free Render backend may need **30–50 seconds** after a quiet period. The dashboard displays a wake-up state while it retries the health check.
 
-> **Note:** Some ad blockers and privacy extensions block requests to `.onrender.com` domains, which can prevent the dashboard from waking the backend or connecting to WebSocket updates. If the dashboard seems stuck or shows **Live updates: disconnected**, try disabling your ad blocker or opening the demo in an incognito/private window.
+> **If it looks stuck:** ad blockers and privacy extensions sometimes block `.onrender.com` requests or WebSocket connections. Try a private window or temporarily disable the extension.
 
-> **Is it shared?** No. Each visitor receives a separate sandbox through a server-issued signed session token. The backend stores the session ownership, and ActionCable receives a separate short-lived token tied to that same session. A different browser or cleared local storage starts a fresh session.
+## Run the mock demo locally
 
-### Run it locally
-
-If the live backend is down or you want to explore the source, run the demo locally. Make sure the backend is running on [http://localhost:3000](http://localhost:3000), then:
+The local path is useful when you want fast feedback or want to read the code while you use it. The backend defaults to multi-cloud mock mode, so no provider credentials or billable resources are required. That safety boundary is deliberate: visitors can exercise the lifecycle and UX without billing risk or secret exposure, while the real provider path remains credential-gated and is not disguised as a live demo.
 
 <p class="local-demo-cta">
   <a class="btn" href="http://localhost:5173" target="_blank" rel="noopener noreferrer">Open Local Demo</a>
 </p>
 
-#### 1. Start the backend
+### 1. Start the backend
 
 ```bash
 cd backend
@@ -34,9 +40,9 @@ docker build -t seeo-backend .
 docker run --rm -p 3000:3000 --env-file .env seeo-backend
 ```
 
-The backend runs in **Mock AWS Mode** by default, so no AWS credentials are required.
+The Rails API will be available at [http://localhost:3000](http://localhost:3000). Multi-cloud mock mode is enabled by default.
 
-#### 2. Start the frontend
+### 2. Start the frontend
 
 In a second terminal:
 
@@ -47,15 +53,12 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) to use the dashboard.
+Open [http://localhost:5173](http://localhost:5173) to use the local dashboard.
 
 ## What to try
 
-- Create an environment for a project and TTL.
-- Watch the estimated cost update in real time.
-- Terminate an environment and see it reflected in the table.
-- Open two browser windows to confirm each session receives only its own ActionCable updates.
-
-## Source code
-
-The dashboard source is in the [`frontend/`](https://github.com/samueladegnan/seeo-aws-orchestrator/tree/main/frontend) directory of the repository.
+- Create an environment with a project name, provider, region, and short TTL.
+- Open **Show advanced** to inspect volume, tag, SSH key, and note handling.
+- Watch the mock environment move from provisioning to ready.
+- Open the details panel, then terminate the environment.
+- Open two browser windows to see that session-scoped updates stay separate.

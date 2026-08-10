@@ -1,61 +1,61 @@
 # SEEO Backend (Ruby on Rails)
 
-This is the Rails API that orchestrates secure, TTL-bound ephemeral AWS environments for SEEO.
+The Rails API is the control plane for short-lived environments across AWS, Azure, Google Cloud, and OCI. It authenticates tenants, evaluates provider-aware policy, persists provider-neutral lifecycle state, delegates VM operations to a cloud adapter, streams updates, estimates cost, and expires resources through a scheduled cleanup job.
 
 ## Requirements
 
 - Ruby 3.3+
 - Bundler
 - Docker, or Ruby and the project dependencies installed locally
-- AWS credentials only when running with `SEEO_MOCK_AWS=false`
+- A selected provider CLI runner (`aws`, `az`, `gcloud`, or `oci`) and short-lived credentials/workload identity for adapters used outside mock mode
 
 ## Setup
 
 ```bash
 cd backend
 cp .env.example .env
-# Edit .env with local settings and strong development secrets
 bundle install
 bin/rails db:create db:migrate
 bin/rails db:seed   # optional: creates a default team, project, and admin user
 bin/rails server
 ```
 
-## Configuration
+## Provider configuration
 
 | Variable | Description | Default |
 |---|---|---|
+| `SEEO_DEFAULT_PROVIDER` | Provider selected when a request omits `provider` | `aws` |
+| `SEEO_ALLOWED_PROVIDERS` | Comma-separated provider allow-list | `aws,azure,gcp,oci` |
+| `SEEO_MOCK_MODE` | Use the in-memory adapter for every configured provider | `true` in development |
+| `SEEO_APP_VERSION` | Version reported by `GET /health` | `0.3.0` |
+| `SEEO_<PROVIDER>_REGION` | Default region for `AWS`, `AZURE`, `GCP`, or `OCI` | provider catalog |
+| `SEEO_<PROVIDER>_PROJECT` | Provider account, subscription, project, or compartment reference | none |
+| `SEEO_<PROVIDER>_NETWORK_ID` | Terraform-created network identifier | none |
+| `SEEO_<PROVIDER>_SUBNET_ID` | Terraform-created subnet identifier | none |
+| `SEEO_<PROVIDER>_CREDENTIALS` | Reference to provider credentials or workload identity | none |
+| `SEEO_AWS_IMAGE_ID` | AWS image used by the AWS CLI adapter | none in mock mode |
+| `SEEO_AWS_SECURITY_GROUP_ID` | AWS security group used by the AWS CLI adapter | none in mock mode |
+| `SEEO_AZURE_RESOURCE_GROUP` | Azure resource group for VM operations | none in mock mode |
+| `SEEO_GCP_PROJECT` | Google Cloud project for VM operations | none in mock mode |
+| `SEEO_GCP_ZONE` | Explicit Google Cloud zone; regions do not imply a zone | none in mock mode |
+| `SEEO_OCI_COMPARTMENT_ID` | OCI compartment for compute operations | none in mock mode |
+| `SEEO_OCI_AVAILABILITY_DOMAIN` | OCI availability domain for instance launch | none in mock mode |
+| `SEEO_OCI_IMAGE_ID` | OCI image OCID for instance launch | none in mock mode |
 | `SEEO_API_KEY` | API key for local/mock service-account requests | local development only |
 | `SEEO_JWT_SECRET` | Secret used to sign/verify JWT tenant tokens | local development only |
-| `AWS_REGION` | AWS region | `us-east-1` |
-| `AWS_PROFILE` | AWS CLI profile | none |
-| `SEEO_EC2_KEY_PAIR` | EC2 key pair name | none |
-| `SEEO_EC2_AMI_ID` | AMI to launch (falls back to the latest Amazon Linux 2023 image) | none |
-| `SEEO_EC2_INSTANCE_TYPE` | Default EC2 instance type | `t3.micro` |
-| `SEEO_EC2_SUBNET_ID` | Subnet for new instances | none |
-| `SEEO_EC2_SECURITY_GROUP_ID` | Security group for new instances | none |
-| `SEEO_IAM_INSTANCE_PROFILE` | IAM instance profile for new instances | none |
-| `SEEO_ENVIRONMENTS_TABLE` | DynamoDB environments table | `seeo-environments` |
-| `SEEO_AUDIT_LOG_TABLE` | DynamoDB audit log table | `seeo-audit-logs` |
-| `SEEO_SECRETS_SECRET_NAME` | Secrets Manager secret name | `seeo/runtime/credentials` |
-| `SEEO_TTL_CHECK_INTERVAL_SECONDS` | TTL scan interval (used by the monitor job) | `60` |
-| `SEEO_MOCK_AWS` | Use the in-memory provider instead of real AWS APIs | `true` in development |
-| `CORS_ALLOW_ORIGINS` | Comma-separated allowed origins | `*` |
-| `CORS_ALLOW_CREDENTIALS` | Whether CORS allows credentials | `false` |
+| `DATABASE_URL` | Rails control-plane database | `storage/development.sqlite3` |
+| `SEEO_TTL_CHECK_INTERVAL_SECONDS` | TTL scan interval | `60` |
+
+Provider adapters implement the same lifecycle methods: create, list, refresh, terminate, and cleanup. The public demo uses `MockCloudService`, which simulates all four providers without creating billable resources. Real mode uses the selected provider CLI and requires its credentials through workload identity or a secret manager, the CLI binary, network outputs, image settings, and provider-specific integration tests before disabling mock mode. The browser-visible demo key is never valid for real mode.
 
 ## Authentication
 
-The API supports two authentication methods:
+The API supports:
 
-- **JWT tenant token**: `Authorization: Bearer <jwt>`
-  - Used by users who belong to a team/project.
-  - Tokens are issued by `AuthorizationService.issue_token(user)` and expire after 24 hours.
-- **API key**: `X-API-Key: <key>`
-  - Used for local service-account and public mock-demo requests.
-  - In real AWS mode, API-key lifecycle access is rejected. Use a JWT tenant token for real tenant operations.
-  - Demo records remain scoped to the server-issued browser session. Internal TTL cleanup uses a separate job context and is not exposed through this key.
+- **JWT tenant tokens:** `Authorization: Bearer <jwt>` for team-backed requests.
+- **API key plus signed browser session:** local/mock demo access only. The browser session scopes records without exposing a real cloud credential.
 
-Mock clients first call `GET /session-token` with the API key, then send the returned `X-Session-Token` on later requests. ActionCable clients call `GET /cable-token` next. The backend returns a short-lived signed token, and the channel derives the authorized team or session stream instead of trusting a client-selected stream.
+ActionCable receives a separate signed token and derives the authorized team or browser-session stream on the server.
 
 ## Running locally
 
@@ -76,30 +76,23 @@ docker build -t seeo-backend .
 docker run --rm -p 3000:3000 --env-file .env seeo-backend
 ```
 
-Or use Docker Compose:
+The default image is intended for the safe mock deployment. `Dockerfile.runner` provides a credential-free runner image with AWS CLI, Azure CLI, Google Cloud CLI, and OCI CLI installed. Authenticate that image only at runtime with workload identity, short-lived credentials, or mounted provider configuration; never add credentials to the image or repository.
+
+## Provider contract tests
+
+The adapter contract spec uses checked-in provider response fixtures and stubs `Open3.capture3`. It verifies command arguments and normalization for all four provider CLIs without contacting a cloud or requiring credentials:
 
 ```bash
-docker compose up --build
+bundle exec rspec spec/services/provider_adapter_contract_spec.rb
 ```
 
-## Running tests
+## Running tests and linting
 
 ```bash
 bundle exec rspec
-```
-
-Inside Docker:
-
-```bash
-docker run --rm -e RAILS_ENV=test -e SEEO_JWT_SECRET=test-secret seeo-backend sh -c "bundle exec rails db:create db:migrate && bundle exec rspec"
-```
-
-## Linting
-
-```bash
 bundle exec rubocop
 ```
 
 ## Background jobs
 
-TTL monitoring is handled by `TtlMonitorJob`, scheduled via Solid Queue recurring tasks or your scheduler of choice. The job sets an internal cleanup context, scans expired records across tenants, attempts each provider cleanup independently, and preserves failed records for a later retry.
+`TtlMonitorJob` scans every enabled provider through the shared adapter contract. A provider that is not configured is logged and skipped; one failed cleanup does not prevent other expired environments from being processed.

@@ -3,7 +3,7 @@
 
 /*!
  * SEEO documentation theme
- * Visual language matched to the ZK Fitness portfolio project.
+ * Shared visual language across Samuel Degnan's portfolio projects.
  */
 
 @import url("https://fonts.googleapis.com/css?family=Open+Sans:400,600,700&display=swap");
@@ -19,6 +19,7 @@
   --green-pale: #eef8f3;
   --green-border: #d8ebe0;
   --teal: #0f766e;
+  --text-light: #d8eee3;
   --warning-bg: #fff8e7;
   --warning-border: #f0d58a;
   --warning-text: #79530b;
@@ -71,14 +72,12 @@ textarea:focus-visible {
 
 /* Shared navigation */
 .site-nav {
-  position: sticky;
-  top: 0;
-  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   padding: 1rem 1.5rem 0.5rem;
+  border-bottom: 1px solid rgba(167, 243, 208, 0.12);
   background: linear-gradient(110deg, var(--green-deep) 0%, #104638 55%, #0d382e 100%);
 }
 
@@ -235,6 +234,19 @@ textarea:focus-visible {
   transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
+.btn-secondary {
+  border-color: var(--green-border);
+  background: var(--surface);
+  color: var(--green-dark);
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus {
+  border-color: var(--green-dark);
+  background: var(--green-pale);
+  color: var(--green-deep);
+}
+
 .btn:hover,
 .btn:focus {
   border-color: #14532d;
@@ -242,6 +254,17 @@ textarea:focus-visible {
   color: #fff;
   text-decoration: none;
   transform: translateY(-1px);
+}
+
+.project-hero-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.project-hero-links .btn {
+  margin: 0;
 }
 
 /* Badges sit at the top of the content, below the page header, like the reference layout. */
@@ -340,7 +363,7 @@ textarea:focus-visible {
   background: transparent;
 }
 
-.main-content table:not(.seeo-demo__table) {
+.main-content table:not(.guardrail-table) {
   display: block;
   width: 100%;
   margin-bottom: 1rem;
@@ -350,29 +373,29 @@ textarea:focus-visible {
   -webkit-overflow-scrolling: touch;
 }
 
-.main-content table:not(.seeo-demo__table) th,
-.main-content table:not(.seeo-demo__table) td {
+.main-content table:not(.guardrail-table) th,
+.main-content table:not(.guardrail-table) td {
   padding: 0.5rem 1rem;
   border: 1px solid var(--green-border);
   text-align: left;
   white-space: nowrap;
 }
 
-.main-content table:not(.seeo-demo__table) th {
+.main-content table:not(.guardrail-table) th {
   color: var(--green-dark);
   font-weight: 700;
 }
 
-.main-content table:not(.seeo-demo__table) tr:nth-child(2n) {
+.main-content table:not(.guardrail-table) tr:nth-child(2n) {
   background: #f3faf6;
 }
 
 .main-content hr {
   height: 2px;
-  margin: 2rem 0;
+  margin: 1rem 0;
   padding: 0;
   border: 0;
-  background: #dcefe4;
+  background: #eff0f1;
 }
 
 /* Overview */
@@ -414,10 +437,9 @@ textarea:focus-visible {
 /* Shared footer */
 .site-footer {
   margin-top: 2rem;
-  padding: 2rem 1.5rem;
-  border-top: 1px solid #dcefe4;
-  background: #f3faf6;
-  color: var(--text-muted);
+  padding: 2.5rem 1.5rem 3rem;
+  background: #0d241e;
+  color: var(--text-light);
   font-size: 0.95rem;
   text-align: center;
 }
@@ -436,20 +458,293 @@ textarea:focus-visible {
 }
 
 .site-footer a {
-  color: var(--teal);
+  color: #a7f3d0;
   font-weight: 600;
 }
 
-/* Security report */
+/* Architecture diagram */
+.architecture-diagram {
+  margin: 1.5rem 0 2rem;
+  padding: 1.25rem;
+  border: 1px solid var(--green-border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  box-shadow: 0 8px 18px -12px rgba(16, 74, 54, 0.28);
+}
+
+.architecture-diagram__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--green-border);
+}
+
+.architecture-diagram__header h3 {
+  margin: 0.15rem 0 0;
+  color: var(--text-main);
+  font-size: 1.2rem;
+}
+
+.architecture-diagram__header p {
+  max-width: 25rem;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.architecture-diagram__eyebrow {
+  color: var(--green-dark);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.architecture-lane {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--green-border);
+  border-radius: 0.6rem;
+  background: var(--green-pale);
+}
+
+.architecture-lane__label {
+  margin-bottom: 0.75rem;
+  color: var(--green-dark);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.architecture-flow {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0.65rem;
+}
+
+.architecture-flow--terraform {
+  align-items: center;
+}
+
+.architecture-arrow {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  color: var(--green-dark);
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.architecture-arrow--dashed {
+  color: var(--teal);
+}
+
+.architecture-node-grid,
+.architecture-provider-grid {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.architecture-node-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.architecture-provider-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.architecture-node {
+  display: flex;
+  min-width: 0;
+  min-height: 5.75rem;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0.8rem;
+  border: 1px solid var(--green-border);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  box-shadow: 0 3px 8px -6px rgba(16, 74, 54, 0.3);
+}
+
+.architecture-node strong {
+  color: var(--text-main);
+  font-size: 0.88rem;
+  line-height: 1.25;
+}
+
+.architecture-node span {
+  margin-top: 0.35rem;
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.architecture-node--external {
+  flex: 1 1 0;
+  max-width: 15rem;
+}
+
+.architecture-node--primary {
+  border-color: #86efac;
+  background: #ecfdf5;
+}
+
+.architecture-node--provider {
+  min-height: 4.8rem;
+  border-top: 3px solid var(--teal);
+}
+
+.architecture-node--mock {
+  min-height: 4.8rem;
+  border-top: 3px solid #f59e0b;
+  background: #fffbeb;
+}
+
+.architecture-node--terraform {
+  flex: 1 1 0;
+  max-width: 24rem;
+  min-height: 4.8rem;
+}
+
+/* Demo and security report */
+.demo-launch-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin: 1.5rem 0;
+  padding: 1.35rem 1.5rem;
+  border: 1px solid var(--green-border);
+  border-radius: 0.75rem;
+  background: linear-gradient(120deg, #f0fdf4, #ffffff);
+  box-shadow: 0 8px 18px -12px rgba(16, 74, 54, 0.3);
+}
+
+.demo-launch-card h2 {
+  margin: 0 0 0.35rem;
+  color: var(--text-main);
+  font-size: 1.25rem;
+}
+
+.demo-launch-card p {
+  max-width: 40rem;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.demo-eyebrow {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--green-dark);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.local-demo-cta {
+  margin: 1rem 0 1.5rem;
+}
+
+.local-demo-cta .btn {
+  margin: 0;
+}
+
 .security-report-content {
-  max-width: 72rem;
-  padding-right: 1.5rem;
-  padding-left: 1.5rem;
+  max-width: 64rem;
 }
 
 .security-report-page {
-  max-width: 72rem;
-  margin: 0 auto;
+  margin: 0;
+}
+
+.security-report-page > h2 {
+  margin-top: 0;
+}
+
+.security-report-intro {
+  max-width: 48rem;
+  color: var(--text-muted);
+}
+
+.security-report-context {
+  margin: 1.5rem 0;
+  padding: 1.25rem;
+  border: 1px solid var(--green-border);
+  border-left: 4px solid var(--green);
+  border-radius: 0.4rem;
+  background: #f3faf6;
+}
+
+.security-report-context .security-report-lead {
+  margin-bottom: 1.25rem;
+}
+
+.security-report-context .security-report-timestamp {
+  margin-bottom: 0;
+}
+
+.live-scan-success,
+.live-scan-findings {
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.1rem;
+  border-radius: 0.5rem;
+  line-height: 1.55;
+}
+
+.live-scan-success {
+  border: 1px solid #bbf7d0;
+  border-left: 4px solid #16a34a;
+  background: #f0fdf4;
+  color: #14532d;
+}
+
+.live-scan-findings {
+  border: 1px solid #fecaca;
+  border-left: 4px solid #dc2626;
+  background: #fff7f7;
+  color: #7f1d1d;
+}
+
+.live-scan-success h2,
+.live-scan-findings h2 {
+  margin: 0 0 0.4rem;
+  font-size: 1.15rem;
+}
+
+.live-scan-success p,
+.live-scan-findings p {
+  margin: 0;
+}
+
+.live-scan-success__label,
+.live-scan-findings__label {
+  display: inline-block;
+  margin-bottom: 0.55rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.live-scan-success__label {
+  border: 1px solid #86efac;
+  background: #dcfce7;
+  color: #166534;
+}
+
+.live-scan-findings__label {
+  border: 1px solid #fca5a5;
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 .security-report-header {
@@ -788,10 +1083,6 @@ textarea:focus-visible {
     padding-left: 6rem;
   }
 
-  .security-report-content {
-    padding-right: 1.5rem;
-    padding-left: 1.5rem;
-  }
 }
 
 @media screen and (max-width: 42em) {
@@ -827,8 +1118,13 @@ textarea:focus-visible {
     min-width: 0;
   }
 
+  .site-nav-links li:first-child,
   .site-nav-links li:last-child {
     grid-column: 1 / -1;
+  }
+
+  .site-nav-links li:nth-last-child(2) {
+    grid-column: span 2;
   }
 
   .site-nav-links a {
@@ -848,13 +1144,29 @@ textarea:focus-visible {
     padding: 1.5rem 1rem;
   }
 
-  .security-report-content {
-    padding-right: 1rem;
-    padding-left: 1rem;
-  }
 
   .security-report-header {
     padding: 1.25rem 1rem;
+  }
+
+  .project-hero-links {
+    flex-direction: column;
+  }
+
+  .project-hero-links .btn {
+    width: 100%;
+  }
+
+  .demo-launch-card {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.15rem;
+  }
+
+  .demo-launch-card .btn {
+    width: 100%;
+    margin: 0;
   }
 
   .project-badges {
@@ -863,6 +1175,52 @@ textarea:focus-visible {
 
   .report-status {
     margin-bottom: 1.25rem;
+  }
+
+  .architecture-diagram {
+    padding: 1rem;
+  }
+
+  .architecture-diagram__header {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .architecture-diagram__header p {
+    max-width: none;
+  }
+
+  .architecture-flow {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .architecture-flow--terraform {
+    align-items: stretch;
+  }
+
+  .architecture-arrow {
+    justify-content: center;
+    min-height: 1.25rem;
+    transform: rotate(90deg);
+  }
+
+  .architecture-arrow--dashed {
+    transform: rotate(90deg);
+  }
+
+  .architecture-node--external,
+  .architecture-node--terraform {
+    max-width: none;
+  }
+
+  .architecture-node-grid,
+  .architecture-provider-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .architecture-node-grid .architecture-node:last-child {
+    grid-column: 1 / -1;
   }
 
   .security-report-details {

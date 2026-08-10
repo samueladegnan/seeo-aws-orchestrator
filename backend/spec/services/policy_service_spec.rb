@@ -5,49 +5,30 @@ require 'rails_helper'
 RSpec.describe PolicyService do
   let(:team) { Team.create!(name: 'Acme', slug: 'acme') }
 
-  describe '.check_provision!' do
-    it 'allows valid provisioning requests' do
-      expect do
-        described_class.check_provision!(
-          project_name: 'my-api',
-          ttl_minutes: 60,
-          instance_type: 't3.micro',
-          team: team
-        )
-      end.not_to raise_error
-    end
+  def valid_request(overrides = {})
+    {
+      project_name: 'my-api', provider: 'gcp', ttl_minutes: 60, compute_tier: 'small',
+      region: 'us-central1', storage_tier: 'balanced', volume_size: 10, team: team,
+      active_environment_count: 0
+    }.merge(overrides)
+  end
 
-    it 'rejects TTLs that exceed the maximum' do
-      expect do
-        described_class.check_provision!(
-          project_name: 'my-api',
-          ttl_minutes: (24 * 60) + 1,
-          instance_type: 't3.micro',
-          team: team
-        )
-      end.to raise_error(PolicyService::PolicyViolation, /TTL exceeds maximum/)
-    end
+  it 'allows a valid provider-specific request' do
+    expect { described_class.check_provision!(**valid_request) }.not_to raise_error
+  end
 
-    it 'rejects instance types that are not on the allow list' do
-      expect do
-        described_class.check_provision!(
-          project_name: 'my-api',
-          ttl_minutes: 60,
-          instance_type: 'x1.large',
-          team: team
-        )
-      end.to raise_error(PolicyService::PolicyViolation, /not allowed/)
-    end
+  it 'rejects TTLs that exceed the maximum' do
+    expect { described_class.check_provision!(**valid_request(ttl_minutes: 1441)) }
+      .to raise_error(PolicyService::PolicyViolation, /TTL exceeds maximum/)
+  end
 
-    it 'rejects requests that violate both TTL and instance type policies' do
-      expect do
-        described_class.check_provision!(
-          project_name: 'my-api',
-          ttl_minutes: 99_999,
-          instance_type: 'x1.large',
-          team: team
-        )
-      end.to raise_error(PolicyService::PolicyViolation)
-    end
+  it 'rejects a region belonging to another provider' do
+    expect { described_class.check_provision!(**valid_request(provider: 'azure', region: 'us-central1')) }
+      .to raise_error(PolicyService::PolicyViolation, /not allowed for azure/)
+  end
+
+  it 'rejects unsupported compute tiers' do
+    expect { described_class.check_provision!(**valid_request(compute_tier: 'xlarge')) }
+      .to raise_error(PolicyService::PolicyViolation, /not allowed/)
   end
 end

@@ -1,153 +1,149 @@
 ---
-title: API Documentation | SEEO Environment Lifecycle
-description: Reference the SEEO Rails REST API, JWT and API-key authentication, RBAC, environment lifecycle endpoints, and ActionCable WebSockets.
+title: API Documentation | SEEO Multi-cloud Environment Lifecycle
+description: Reference the SEEO Rails API, authentication, provider selection, normalized environment lifecycle, policy, and ActionCable WebSockets.
 layout: default
 permalink: /api/
 ---
 
 # SEEO API Documentation
 
-The SEEO backend exposes a REST API built with Ruby on Rails.
+The Rails backend exposes one environment lifecycle API across AWS, Azure, Google Cloud, OCI, and mock mode.
 
 ## Authentication
 
-The API accepts a JWT tenant token or an API key in local/mock mode. The public mock demo uses the API key to obtain a signed browser session token. Real AWS lifecycle actions require JWT tenant authentication.
-
-### JWT tenant token
+The API accepts a JWT tenant token or an API key in mock mode. The public demo uses the API key to obtain a signed browser session token. Real provider operations require JWT tenant authentication and configured provider credentials.
 
 ```bash
 curl -H "Authorization: Bearer <token>" http://localhost:3000/environments
 ```
 
-JWT tokens are issued by `AuthorizationService.issue_token(user)` and expire after 24 hours. They are associated with a user, team, and role.
-
-### API key for service accounts
-
-```bash
-curl -H "X-API-Key: your-api-key" http://localhost:3000/session-token
-```
-
-API-key requests authenticate as a transient service account in local/mock mode. The public frontend uses this route to obtain a signed browser session token. Environment records created without a team are scoped to that verified session, and the key alone does not grant access to another session. API-key lifecycle access is rejected when real AWS mode is enabled.
-
-### Mock demo session token
-
-The public mock demo first requests `GET /session-token` with the API key. The backend returns a signed session token and opaque session identifier. Subsequent mock requests send `X-Session-Token: <token>`. A client-chosen `X-Session-ID` is not accepted as identity.
-
-### Ownership and idempotency
-
-Tenant-backed records persist `team_id` and `owner_user_id`. Team requests are filtered by `team_id`. Mock/demo records are filtered by their session scope. Clients should send `X-Idempotency-Key` on create requests. Repeating a request with the same key returns the existing active environment instead of provisioning another one.
+Mock clients first request `GET /session-token` with `X-API-Key`, then send `X-Session-Token` on later requests. The server owns the session identity.
 
 ## Authorization
-
-Endpoints require one of the following roles:
 
 | Role | Permissions |
 |---|---|
 | `viewer` | List and show environments |
-| `operator` | Create and destroy environments (also includes viewer) |
-| `admin` | Full access (also includes operator and viewer) |
+| `operator` | Create and terminate environments |
+| `admin` | Full access |
 
-## Endpoints
-
-### Health check
-
-```text
-GET /health
-```
-
-Response:
-
-```json
-{
-  "status": "ok",
-  "version": "0.1.0",
-  "mock_mode": true
-}
-```
-
-### Create environment
+## Create an environment
 
 ```text
 POST /environments
 ```
 
-Request body:
-
 ```json
 {
-  "project_name": "my-api",
+  "project_name": "preview-api",
+  "provider": "gcp",
+  "region": "us-central1",
+  "compute_tier": "small",
+  "storage_tier": "balanced",
+  "volume_size": 10,
   "ttl_minutes": 60,
-  "instance_type": "t3.micro"
+  "tags": { "purpose": "preview" },
+  "notes": "Integration test environment"
 }
 ```
 
-- `project_name` is required.
-- `ttl_minutes` is required and must not exceed the policy maximum (default 24 hours).
-- `instance_type` is optional and defaults to the configured default (e.g., `t3.micro`).
-- Optional fields: `region`, `volume_size`, `volume_type`, `ssh_key_name`, `tags`, `notes`.
+Required fields are `project_name` and `ttl_minutes`. `provider` defaults to `SEEO_DEFAULT_PROVIDER`; `compute_tier` defaults to `small`; `storage_tier` defaults to `balanced`; and the provider catalog supplies the default region.
 
-Response: `201 Created`
+Supported providers:
+
+- `aws`
+- `azure`
+- `gcp`
+- `oci`
+
+The selected region must belong to the selected provider. Policy checks the provider allow-list, compute/storage tiers, TTL, volume size, and capacity before any provider call. Invalid requests fail early rather than creating infrastructure that must be rolled back. OPA/Rego is supported with a Ruby fallback when OPA is unavailable; the trade-off is that provider catalogs and policy definitions must remain synchronized.
+
+Clients should send `X-Idempotency-Key` on create requests. Repeating an active request with the same key and provider returns the existing environment.
+
+## Response
 
 ```json
 {
-  "id": "my-api-abc123",
-  "project_name": "my-api",
+  "id": "preview-api-20260809000000-abc123",
+  "project_name": "preview-api",
+  "provider": "gcp",
+  "provider_label": "Google Cloud",
+  "provider_resource_id": "gcp-vm-a1b2c3d4",
+  "provider_resource_type": "virtual_machine",
   "status": "provisioning",
+  "region": "us-central1",
+  "compute_tier": "small",
+  "instance_type": "e2-micro",
+  "storage_tier": "balanced",
+  "volume_type": "pd-balanced",
+  "volume_size": 10,
   "ttl_minutes": 60,
-  "instance_type": "t3.micro",
-  "instance_id": "i-0123456789abcdef0",
   "public_ip": null,
-  "created_at": "2026-07-27T00:00:00Z",
-  "expires_at": "2026-07-27T01:00:00Z"
+  "created_at": "2026-08-09T00:00:00Z",
+  "expires_at": "2026-08-09T01:00:00Z"
 }
 ```
 
-Policy checks run before provisioning. If a rule is violated, the response is `422 Unprocessable Content`.
-
-### List environments
+## List environments
 
 ```text
 GET /environments
+GET /environments?status=ready
 ```
 
-Optional query parameter: `status` (e.g., `ready`, `provisioning`, `terminated`).
-
-Response:
+The response contains normalized environments and provider-specific cost estimates:
 
 ```json
 {
-  "environments": [...],
+  "environments": [],
   "cost": {
-    "total": 0.42,
-    "environments_count": 3
+    "total": 0.0123,
+    "currency": "USD",
+    "environments_count": 1
   }
 }
 ```
 
-### Get environment
+## Refresh an environment
 
 ```text
 GET /environments/{environment_id}
-```
-
-Refreshes state from AWS and returns the full environment record.
-
-### Refresh environment state
-
-```text
 POST /environments/{environment_id}/refresh
 ```
 
-Polls AWS and updates the stored environment state.
+The selected adapter refreshes the provider resource and updates the normalized state.
 
-### Delete environment
+## Terminate an environment
 
 ```text
 DELETE /environments/{environment_id}
 ```
 
-Terminates the EC2 instance, detaches/deletes the EBS volume, marks the environment as terminated, and writes an audit record.
+The selected adapter terminates the VM and attached storage using provider-specific cleanup, then marks the control-plane record as terminated. The action is recorded in the audit log.
+
+## Health check
+
+```text
+GET /health
+```
+
+The response identifies the configured multi-cloud catalog without exposing credentials:
+
+```json
+{
+  "status": "ok",
+  "version": "0.3.0",
+  "mock_mode": true,
+  "default_provider": "aws",
+  "providers": [
+    { "id": "aws", "label": "Amazon Web Services" },
+    { "id": "azure", "label": "Microsoft Azure" },
+    { "id": "gcp", "label": "Google Cloud" },
+    { "id": "oci", "label": "Oracle Cloud Infrastructure" }
+  ]
+}
+```
 
 ## Real-time updates
 
-The Rails server mounts a WebSocket endpoint at `/cable`. Request `GET /cable-token` with normal API authentication and, in mock mode, the verified `X-Session-Token`. The response is a short-lived signed token. Pass its `token` value to ActionCable as the `token` query parameter and subscribe with `stream_key`. The server rejects arbitrary stream keys and derives the authorized stream from the signed team or session context.
+The Rails server mounts a WebSocket endpoint at `/cable`. Request `GET /cable-token` with normal authentication and the verified mock session token when using mock mode. ActionCable rejects arbitrary stream keys and derives the authorized team or session stream on the server.

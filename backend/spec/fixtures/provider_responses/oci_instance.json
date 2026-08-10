@@ -1,0 +1,8 @@
+{
+  "data": {
+    "id": "ocid1.instance.oc1.iad.example",
+    "lifecycle-state": "RUNNING",
+    "public-ip": "198.51.100.30",
+    "private-ip": "10.40.1.10"
+  }
+}

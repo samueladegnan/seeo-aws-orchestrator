@@ -7,19 +7,17 @@ class PolicyService
 
   DEFAULT_POLICIES = {
     'max_ttl_minutes' => 24 * 60,
-    'allowed_instance_types' => %w[t3.micro t3.small t3.medium t2.micro t2.small m6i.large m5.large m5.xlarge c5.large],
-    'allowed_regions' => %w[us-east-1 us-west-2 eu-west-1 ap-southeast-1],
+    'allowed_compute_tiers' => CloudProvider::TIERS,
     'max_concurrent_environments' => 10,
     'max_volume_size_gb' => 1000,
-    'allowed_volume_types' => %w[gp3 io2 st1]
+    'allowed_storage_tiers' => CloudProvider::STORAGE_TIERS
   }.freeze
 
   REGO_PATH = Rails.root.join('policies/provision.rego').freeze
 
   class << self
     def check_provision!(**options)
-      result = evaluate('data.seeo.provision', provision_input(options))
-
+      result = evaluate('data.seeo.allow', provision_input(options))
       return if result['allow']
 
       raise PolicyViolation, result['deny']&.first || 'Provisioning denied by policy'
@@ -35,20 +33,16 @@ class PolicyService
     private
 
     def evaluate(query, input)
-      if opa_available?
-        evaluate_with_opa(query, input)
-      else
-        evaluate_fallback(input)
-      end
+      opa_available? ? evaluate_with_opa(query, input) : evaluate_fallback(input)
     end
 
     def evaluate_with_opa(query, input)
       args = %w[opa eval -d] + [REGO_PATH.to_s, '-f', 'value', '-I', query]
       stdout, _stderr, status = Open3.capture3(*args, stdin_data: input.to_json)
-
       raise 'OPA evaluation failed' unless status.success?
 
-      JSON.parse(stdout)
+      parsed = JSON.parse(stdout)
+      parsed.is_a?(Hash) ? parsed : { 'allow' => parsed == true, 'deny' => parsed == true ? [] : ['Provisioning denied by policy'] }
     rescue StandardError => e
       Rails.logger.warn "[PolicyService] OPA evaluation failed: #{e.message}. Falling back to built-in policies."
       evaluate_fallback(input)
@@ -62,22 +56,26 @@ class PolicyService
     end
 
     def evaluate_fallback(input)
-      policies = DEFAULT_POLICIES
       violations = []
+      provider = input['provider'].to_s
+      definition = CloudProvider.definition(provider) if CloudProvider.valid?(provider)
 
-      if input['ttl_minutes'].to_i < 1
-        violations << 'TTL must be at least 1 minute'
-      elsif input['ttl_minutes'].to_i > policies['max_ttl_minutes']
-        violations << "TTL exceeds maximum of #{policies['max_ttl_minutes']} minutes"
+      violations << "Provider #{provider} is not allowed" unless SeeoConfig.allowed_providers.include?(provider)
+      violations << 'TTL must be at least 1 minute' if input['ttl_minutes'].to_i < 1
+      violations << "TTL exceeds maximum of #{DEFAULT_POLICIES['max_ttl_minutes']} minutes" if input['ttl_minutes'].to_i > DEFAULT_POLICIES['max_ttl_minutes']
+      violations << "Compute tier #{input['compute_tier']} is not allowed" unless DEFAULT_POLICIES['allowed_compute_tiers'].include?(input['compute_tier'])
+      if input['region'].present? && (!definition || !definition[:regions].key?(input['region']))
+        violations << "Region #{input['region']} is not allowed for #{provider}"
       end
-
-      unless policies['allowed_instance_types'].include?(input['instance_type'])
-        violations << "Instance type #{input['instance_type']} is not allowed"
+      if input['storage_tier'].present? && !DEFAULT_POLICIES['allowed_storage_tiers'].include?(input['storage_tier'])
+        violations << "Storage tier #{input['storage_tier']} is not allowed"
       end
-
-      check_region_policy(input, policies, violations)
-      check_volume_policy(input, policies, violations)
-      check_concurrency_policy(input, policies, violations)
+      if input['volume_size'].present? && input['volume_size'].to_i > DEFAULT_POLICIES['max_volume_size_gb']
+        violations << "Volume size exceeds maximum of #{DEFAULT_POLICIES['max_volume_size_gb']} GB"
+      end
+      if input['active_environment_count'].to_i >= DEFAULT_POLICIES['max_concurrent_environments']
+        violations << "Concurrent environment limit of #{DEFAULT_POLICIES['max_concurrent_environments']} reached"
+      end
 
       { 'allow' => violations.empty?, 'deny' => violations }
     end
@@ -85,55 +83,21 @@ class PolicyService
     def provision_input(options)
       {
         'project_name' => options[:project_name],
+        'provider' => options[:provider],
         'ttl_minutes' => options[:ttl_minutes],
-        'instance_type' => options[:instance_type],
+        'compute_tier' => options[:compute_tier],
         'region' => options[:region],
-        'volume_size' => options[:volume_size],
-        'volume_type' => options[:volume_type],
+        'volume_size' => options[:volume_size].presence || 10,
+        'storage_tier' => options[:storage_tier].presence || 'balanced',
         'active_environment_count' => options[:active_environment_count].to_i,
         'team' => team_payload(options[:team])
       }
     end
 
-    def check_region_policy(input, policies, violations)
-      return if input['region'].blank?
-      return if policies['allowed_regions'].include?(input['region'])
-
-      violations << "Region #{input['region']} is not allowed"
-    end
-
-    def check_volume_policy(input, policies, violations)
-      check_volume_type(input, policies, violations)
-      check_volume_size(input, policies, violations)
-    end
-
-    def check_volume_type(input, policies, violations)
-      return if input['volume_type'].blank?
-      return if policies['allowed_volume_types'].include?(input['volume_type'])
-
-      violations << "Volume type #{input['volume_type']} is not allowed"
-    end
-
-    def check_volume_size(input, policies, violations)
-      return if input['volume_size'].blank?
-      return unless input['volume_size'].to_i > policies['max_volume_size_gb']
-
-      violations << "Volume size exceeds maximum of #{policies['max_volume_size_gb']} GB"
-    end
-
-    def check_concurrency_policy(input, policies, violations)
-      return if input['active_environment_count'].to_i < policies['max_concurrent_environments']
-
-      violations << "Concurrent environment limit of #{policies['max_concurrent_environments']} reached"
-    end
-
     def team_payload(team)
       return {} unless team
 
-      {
-        'id' => team.id,
-        'settings' => team.settings || {}
-      }
+      { 'id' => team.id, 'settings' => team.settings || {} }
     end
   end
 end

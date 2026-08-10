@@ -1,0 +1,9 @@
+{
+  "vmId": "azure-vm-0123",
+  "instanceView": {
+    "statuses": [
+      { "code": "ProvisioningState/succeeded" },
+      { "code": "PowerState/running" }
+    ]
+  }
+}

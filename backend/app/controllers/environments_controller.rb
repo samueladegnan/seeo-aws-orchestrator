@@ -5,7 +5,7 @@ class EnvironmentsController < ApplicationController
   before_action :set_project, only: %i[create]
 
   def index
-    environments = aws_service.list_environments(params[:status])
+    environments = cloud_service.list_environments(params[:status])
     render json: {
       environments: environments.map(&:to_summary),
       cost: CostTrackingService.summary(environments)
@@ -13,19 +13,21 @@ class EnvironmentsController < ApplicationController
   end
 
   def show
-    environment = aws_service.refresh_environment_state(params[:id])
+    environment = cloud_service.refresh_environment_state(params[:id])
     if environment
       render json: environment.to_h
     else
       render json: { error: "Environment #{params[:id]} not found" }, status: :not_found
     end
+  rescue CloudAdapter::UnsupportedProviderError => e
+    render json: { error: e.message }, status: :unprocessable_content
   end
 
   def create
     environment = create_environment
     status = environment.reused ? :ok : :created
     render json: environment.to_h, status: status
-  rescue PolicyService::PolicyViolation => e
+  rescue PolicyService::PolicyViolation, CloudAdapter::UnsupportedProviderError => e
     render json: { error: e.message }, status: :unprocessable_content
   rescue ActionController::ParameterMissing
     render json: { error: 'project_name and ttl_minutes are required' }, status: :unprocessable_content
@@ -35,7 +37,7 @@ class EnvironmentsController < ApplicationController
   end
 
   def destroy
-    environment = aws_service.terminate_environment(params[:id])
+    environment = cloud_service.terminate_environment(params[:id])
 
     AuditLogService.record(
       action: 'environment.destroy',
@@ -46,18 +48,22 @@ class EnvironmentsController < ApplicationController
     render json: environment.to_h
   rescue ArgumentError
     render json: { error: "Environment #{params[:id]} not found" }, status: :not_found
+  rescue CloudAdapter::UnsupportedProviderError => e
+    render json: { error: e.message }, status: :unprocessable_content
   rescue StandardError => e
     Rails.logger.error "[EnvironmentsController#destroy] #{e.class}: #{e.message}"
     render json: { error: 'Failed to terminate environment' }, status: :internal_server_error
   end
 
   def refresh
-    environment = aws_service.refresh_environment_state(params[:id])
+    environment = cloud_service.refresh_environment_state(params[:id])
     if environment
       render json: environment.to_h
     else
       render json: { error: "Environment #{params[:id]} not found" }, status: :not_found
     end
+  rescue CloudAdapter::UnsupportedProviderError => e
+    render json: { error: e.message }, status: :unprocessable_content
   end
 
   private
@@ -65,11 +71,13 @@ class EnvironmentsController < ApplicationController
   def create_environment
     project_name = @project&.name || environment_params.require(:project_name)
     ttl_minutes = environment_params.require(:ttl_minutes).to_i
-    instance_type = environment_params[:instance_type] || SeeoConfig.ec2_instance_type
-    options = build_create_options
+    requested_compute = environment_params[:compute_tier].presence || environment_params[:instance_type].presence || 'small'
+    provider = environment_params[:provider].presence || SeeoConfig.default_provider
+    options = build_create_options.merge(provider: provider)
 
-    validate_create_policy!(project_name, ttl_minutes, instance_type, options)
-    environment = aws_service.create_environment(@project || project_name, ttl_minutes, instance_type, options)
+    service = CloudService.for(provider: provider)
+    validate_create_policy!(service, project_name, ttl_minutes, provider, requested_compute, options)
+    environment = service.create_environment(@project || project_name, ttl_minutes, requested_compute, options)
 
     record_create_audit(environment)
     environment
@@ -106,20 +114,20 @@ class EnvironmentsController < ApplicationController
 
   def environment_params
     @environment_params ||= params.permit(
-      :project_name, :ttl_minutes, :instance_type, :region, :volume_size,
-      :volume_type, :notes, :ssh_key_name, tags: {}
+      :project_name, :provider, :ttl_minutes, :compute_tier, :instance_type, :region, :volume_size,
+      :storage_tier, :volume_type, :notes, :ssh_key_name, tags: {}
     )
   end
 
-  def aws_service
-    @aws_service ||= SeeoConfig.mock_aws? ? MockAwsService.new : AwsService.new
+  def cloud_service
+    @cloud_service ||= CloudService.for
   end
 
   def build_create_options
     {
       region: environment_params[:region],
       volume_size: environment_params[:volume_size]&.to_i,
-      volume_type: environment_params[:volume_type],
+      storage_tier: environment_params[:storage_tier].presence || legacy_storage_tier(environment_params[:volume_type]),
       tags: environment_params[:tags],
       notes: environment_params[:notes],
       ssh_key_name: environment_params[:ssh_key_name],
@@ -127,16 +135,28 @@ class EnvironmentsController < ApplicationController
     }
   end
 
-  def validate_create_policy!(project_name, ttl_minutes, instance_type, options)
+  def validate_create_policy!(service, project_name, ttl_minutes, provider, requested_compute, options)
     PolicyService.check_provision!(
       project_name: project_name,
       ttl_minutes: ttl_minutes,
-      instance_type: instance_type,
+      provider: provider,
+      compute_tier: normalize_compute_tier(requested_compute),
       region: options[:region],
       volume_size: options[:volume_size],
-      volume_type: options[:volume_type],
-      active_environment_count: aws_service.active_environment_count,
+      storage_tier: options[:storage_tier],
+      active_environment_count: service.active_environment_count,
       team: Current.team
     )
+  end
+
+  def normalize_compute_tier(value)
+    return value.to_s if CloudProvider::TIERS.include?(value.to_s)
+
+    { 't3.micro' => 'small', 't3.small' => 'medium', 't3.medium' => 'large', 'm6i.large' => 'large',
+      'm5.large' => 'large', 'm5.xlarge' => 'large', 'c5.large' => 'large' }.fetch(value.to_s, 'small')
+  end
+
+  def legacy_storage_tier(value)
+    { 'gp3' => 'balanced', 'io2' => 'performance', 'st1' => 'throughput' }.fetch(value.to_s, 'balanced')
   end
 end

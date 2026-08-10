@@ -2,8 +2,8 @@
 
 require 'spec_helper'
 ENV['RAILS_ENV'] ||= 'test'
-# Keep the real AwsService in tests so existing stubs continue to work.
-ENV['SEEO_MOCK_AWS'] = 'false'
+ENV['SEEO_MOCK_MODE'] = 'true'
+ENV['SEEO_ALLOWED_PROVIDERS'] = 'aws,azure,gcp,oci'
 
 require_relative '../config/environment'
 

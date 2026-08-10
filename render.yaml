@@ -12,8 +12,12 @@ services:
         value: "true"
       - key: RAILS_SERVE_STATIC_FILES
         value: "true"
-      - key: SEEO_MOCK_AWS
+      - key: SEEO_MOCK_MODE
         value: "true"
+      - key: SEEO_DEFAULT_PROVIDER
+        value: "aws"
+      - key: SEEO_ALLOWED_PROVIDERS
+        value: "aws,azure,gcp,oci"
       - key: RAILS_ALLOW_ALL_HOSTS
         value: "false"
       - key: RAILS_ALLOWED_HOSTS

@@ -9,9 +9,7 @@ ruby '~> 3.3'
 gem 'puma', '~> 6.0'
 gem 'rails', '~> 7.1'
 
-gem 'aws-sdk-dynamodb', '~> 1.0'
-gem 'aws-sdk-ec2', '~> 1.0'
-gem 'aws-sdk-secretsmanager', '~> 1.0'
+# Provider adapters use a CLI/API boundary; the control plane remains provider-neutral.
 
 gem 'rack-cors', '~> 2.0'
 gem 'solid_queue', '~> 1.0'

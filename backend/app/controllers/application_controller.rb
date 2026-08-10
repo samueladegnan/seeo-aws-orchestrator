@@ -9,7 +9,7 @@ class ApplicationController < ActionController::API
 
   def require_session_token!
     return unless Current.service_account == true
-    unless SeeoConfig.mock_aws?
+    unless SeeoConfig.mock_mode?
       return render json: { error: 'API-key lifecycle access is limited to mock mode' }, status: :forbidden
     end
 

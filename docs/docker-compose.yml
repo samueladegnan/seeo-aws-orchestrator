@@ -5,4 +5,5 @@ services:
       - "4000:4000"
     volumes:
       - .:/srv/jekyll
-    command: jekyll serve --host 0.0.0.0 --watch --force_polling --incremental
+    # GitHub Pages needs /seeo-aws-orchestrator; local preview should open at /
+    command: jekyll serve --host 0.0.0.0 --baseurl "" --watch --force_polling --incremental

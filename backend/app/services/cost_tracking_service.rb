@@ -1,66 +1,56 @@
 # frozen_string_literal: true
 
 class CostTrackingService
-  # Approximate on-demand hourly rates for us-east-1 (USD).
-  RATES = {
-    't3.micro' => 0.0104,
-    't3.small' => 0.0208,
-    't3.medium' => 0.0416,
-    't3.large' => 0.0832,
-    't2.micro' => 0.0116,
-    't2.small' => 0.0230,
-    't2.medium' => 0.0464,
-    'm5.large' => 0.0960,
-    'm5.xlarge' => 0.1920,
-    'c5.large' => 0.0850
+  COMPUTE_RATES = {
+    'aws' => { 'small' => 0.0104, 'medium' => 0.0208, 'large' => 0.0416 },
+    'azure' => { 'small' => 0.0100, 'medium' => 0.0200, 'large' => 0.0830 },
+    'gcp' => { 'small' => 0.0084, 'medium' => 0.0168, 'large' => 0.0335 },
+    'oci' => { 'small' => 0.0075, 'medium' => 0.0150, 'large' => 0.0300 }
   }.freeze
 
-  # Storage rates per GB-month (USD).
   STORAGE_RATES = {
-    'gp3' => 0.08,
-    'io2' => 0.125,
-    'st1' => 0.045
+    'aws' => { 'balanced' => 0.08, 'performance' => 0.125, 'throughput' => 0.045 },
+    'azure' => { 'balanced' => 0.075, 'performance' => 0.15, 'throughput' => 0.05 },
+    'gcp' => { 'balanced' => 0.10, 'performance' => 0.17, 'throughput' => 0.04 },
+    'oci' => { 'balanced' => 0.0255, 'performance' => 0.0425, 'throughput' => 0.01 }
   }.freeze
 
-  DEFAULT_RATE = 0.05
+  DEFAULT_RATE = 0.02
   DEFAULT_STORAGE_RATE = 0.08
 
   class << self
-    def estimate(instance_type:, ttl_minutes:, volume_size: nil, volume_type: 'gp3')
-      rate = RATES.fetch(instance_type, DEFAULT_RATE)
+    def estimate(provider:, compute_tier:, ttl_minutes:, volume_size: nil, storage_tier: 'balanced')
+      compute_rate = COMPUTE_RATES.dig(provider.to_s, compute_tier.to_s) || DEFAULT_RATE
+      storage_rate = STORAGE_RATES.dig(provider.to_s, storage_tier.to_s) || DEFAULT_STORAGE_RATE
       hours = ttl_minutes.to_f / 60.0
-      compute_cost = rate * hours
-      storage_cost = storage_estimate(volume_size: volume_size, volume_type: volume_type, ttl_minutes: ttl_minutes)
+      compute_cost = compute_rate * hours
+      storage_cost = volume_size.to_i.positive? ? storage_rate * volume_size.to_i * hours / 730.0 : 0.0
       (compute_cost + storage_cost).round(4)
     end
 
-    def storage_estimate(volume_size:, volume_type:, ttl_minutes:)
-      return 0.0 if volume_size.blank? || volume_size.to_i <= 0
-
-      rate = STORAGE_RATES.fetch(volume_type, DEFAULT_STORAGE_RATE)
-      hours = ttl_minutes.to_f / 60.0
-      (rate * volume_size.to_i * hours / 730.0).round(4)
-    end
-
     def summary(environments)
-      total = environments.sum do |env|
-        estimate(
-          instance_type: env.instance_type || SeeoConfig.ec2_instance_type,
-          ttl_minutes: env.ttl_minutes,
-          volume_size: env.volume_size,
-          volume_type: env.volume_type || 'gp3'
-        )
-      end
+      total = environments.sum { |environment| environment_cost(environment) }
       { total: total.round(4), currency: 'USD', environments_count: environments.size }
     end
 
     def environment_cost(environment)
       estimate(
-        instance_type: environment.instance_type || SeeoConfig.ec2_instance_type,
+        provider: environment.provider,
+        compute_tier: environment.compute_tier || tier_for_shape(environment.instance_type),
         ttl_minutes: environment.ttl_minutes,
         volume_size: environment.volume_size,
-        volume_type: environment.volume_type || 'gp3'
+        storage_tier: environment.storage_tier || 'balanced'
       )
+    end
+
+    private
+
+    def tier_for_shape(shape)
+      return 'small' if shape.blank?
+      return 'large' if shape.to_s.match?(/large|medium|4$/i)
+      return 'medium' if shape.to_s.match?(/small|2$/i)
+
+      'small'
     end
   end
 end

@@ -7,15 +7,17 @@ services:
       - RAILS_ENV=development
       - SEEO_API_KEY=${SEEO_API_KEY:-local-development-only}
       - SEEO_JWT_SECRET=${SEEO_JWT_SECRET:-local-jwt-development-only}
-      - AWS_REGION=${AWS_REGION:-us-east-1}
-      - AWS_PROFILE=${AWS_PROFILE:-}
-      - SEEO_ENVIRONMENTS_TABLE=${SEEO_ENVIRONMENTS_TABLE:-seeo-environments}
-      - SEEO_AUDIT_LOG_TABLE=${SEEO_AUDIT_LOG_TABLE:-seeo-audit-logs}
-      - SEEO_SECRETS_SECRET_NAME=${SEEO_SECRETS_SECRET_NAME:-seeo/runtime/credentials}
+      - SEEO_DEFAULT_PROVIDER=${SEEO_DEFAULT_PROVIDER:-aws}
+      - SEEO_ALLOWED_PROVIDERS=${SEEO_ALLOWED_PROVIDERS:-aws,azure,gcp,oci}
+      - SEEO_MOCK_MODE=${SEEO_MOCK_MODE:-true}
+      - SEEO_AWS_REGION=${SEEO_AWS_REGION:-us-east-1}
+      - SEEO_AZURE_REGION=${SEEO_AZURE_REGION:-eastus}
+      - SEEO_GCP_REGION=${SEEO_GCP_REGION:-us-central1}
+      - SEEO_OCI_REGION=${SEEO_OCI_REGION:-us-ashburn-1}
+      - DATABASE_URL=${DATABASE_URL:-storage/development.sqlite3}
       - SEEO_TTL_CHECK_INTERVAL_SECONDS=${SEEO_TTL_CHECK_INTERVAL_SECONDS:-60}
       - CORS_ALLOW_ORIGINS=${CORS_ALLOW_ORIGINS:-*}
       - CORS_ALLOW_CREDENTIALS=${CORS_ALLOW_CREDENTIALS:-false}
-      - SEEO_MOCK_AWS=${SEEO_MOCK_AWS:-true}
     volumes:
       - .:/app
     command: sh -c "bundle exec rails db:prepare && bundle exec rails server -b 0.0.0.0"
@@ -26,11 +28,14 @@ services:
       - RAILS_ENV=development
       - SEEO_API_KEY=${SEEO_API_KEY:-local-development-only}
       - SEEO_JWT_SECRET=${SEEO_JWT_SECRET:-local-jwt-development-only}
-      - AWS_REGION=${AWS_REGION:-us-east-1}
-      - AWS_PROFILE=${AWS_PROFILE:-}
-      - SEEO_ENVIRONMENTS_TABLE=${SEEO_ENVIRONMENTS_TABLE:-seeo-environments}
-      - SEEO_AUDIT_LOG_TABLE=${SEEO_AUDIT_LOG_TABLE:-seeo-audit-logs}
-      - SEEO_SECRETS_SECRET_NAME=${SEEO_SECRETS_SECRET_NAME:-seeo/runtime/credentials}
+      - SEEO_DEFAULT_PROVIDER=${SEEO_DEFAULT_PROVIDER:-aws}
+      - SEEO_ALLOWED_PROVIDERS=${SEEO_ALLOWED_PROVIDERS:-aws,azure,gcp,oci}
+      - SEEO_MOCK_MODE=${SEEO_MOCK_MODE:-true}
+      - SEEO_AWS_REGION=${SEEO_AWS_REGION:-us-east-1}
+      - SEEO_AZURE_REGION=${SEEO_AZURE_REGION:-eastus}
+      - SEEO_GCP_REGION=${SEEO_GCP_REGION:-us-central1}
+      - SEEO_OCI_REGION=${SEEO_OCI_REGION:-us-ashburn-1}
+      - DATABASE_URL=${DATABASE_URL:-storage/development.sqlite3}
       - SEEO_TTL_CHECK_INTERVAL_SECONDS=${SEEO_TTL_CHECK_INTERVAL_SECONDS:-60}
     volumes:
       - .:/app

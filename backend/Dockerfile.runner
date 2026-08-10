@@ -1,0 +1,72 @@
+# syntax=docker/dockerfile:1
+FROM ruby:3.3-slim
+
+# This image contains provider tooling, not provider credentials. Authenticate at
+# runtime with workload identity, short-lived environment variables, or mounted
+# provider config supplied by the deployment platform.
+ARG TARGETARCH
+ENV DEBIAN_FRONTEND=noninteractive \
+    PATH="/root/google-cloud-sdk/bin:/root/bin:${PATH}"
+
+RUN apt-get update -qq && apt-get install -y --no-install-recommends \
+      build-essential \
+      ca-certificates \
+      curl \
+      gnupg \
+      jq \
+      libsqlite3-dev \
+      python3 \
+      unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# AWS CLI v2 publishes architecture-specific archives. Verify the archive
+# before installation; no credentials enter this layer.
+RUN set -eux; \
+    case "${TARGETARCH:-amd64}" in \
+      amd64) aws_arch="x86_64" ;; \
+      arm64) aws_arch="aarch64" ;; \
+      *) echo "Unsupported AWS CLI architecture: ${TARGETARCH}" >&2; exit 1 ;; \
+    esac; \
+    curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-${aws_arch}.zip" -o /tmp/awscliv2.zip; \
+    curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-${aws_arch}.zip.sha256" -o /tmp/awscliv2.zip.sha256; \
+    (cd /tmp && sha256sum -c awscliv2.zip.sha256); \
+    unzip -q /tmp/awscliv2.zip -d /tmp; \
+    /tmp/aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli; \
+    rm -rf /tmp/aws /tmp/awscliv2.zip /tmp/awscliv2.zip.sha256
+
+# Azure CLI via Microsoft's signed package repository.
+RUN set -eux; \
+    curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft.gpg; \
+    chmod a+r /usr/share/keyrings/microsoft.gpg; \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/azure-cli/ bookworm main" > /etc/apt/sources.list.d/azure-cli.list; \
+    apt-get update -qq; \
+    apt-get install -y --no-install-recommends azure-cli; \
+    rm -rf /var/lib/apt/lists/*
+
+# Google Cloud CLI via Google's signed APT repository.
+RUN set -eux; \
+    curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg; \
+    chmod a+r /usr/share/keyrings/cloud.google.gpg; \
+    echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" > /etc/apt/sources.list.d/google-cloud-sdk.list; \
+    apt-get update -qq; \
+    apt-get install -y --no-install-recommends google-cloud-cli; \
+    rm -rf /var/lib/apt/lists/*
+
+# OCI CLI is installed without initializing a profile. Credentials are supplied
+# by the runtime environment or an external workload identity mechanism.
+RUN set -eux; \
+    oci_install_url="https://raw.githubusercontent.com/oracle/oci-cli/95950b1a2d148eab83993d64c2e0cfe5c185d3ae/scripts/install/install.sh"; \
+    curl -fsSL "$oci_install_url" -o /tmp/install-oci.sh; \
+    echo "079dcc9a3e2a61ec692400e30169c9996b2998ac8c4e205198ed5863283fcb76  /tmp/install-oci.sh" | sha256sum -c -; \
+    bash /tmp/install-oci.sh --accept-all-defaults --install-dir /opt/oci-cli --exec-dir /usr/local/bin; \
+    rm -f /tmp/install-oci.sh
+
+WORKDIR /app
+COPY Gemfile Gemfile.lock* ./
+RUN bundle install --jobs=4 --retry=3
+COPY . .
+RUN useradd -m seeo && chown -R seeo:seeo /app
+USER seeo
+
+EXPOSE 3000
+CMD ["sh", "-c", "bundle exec rails db:prepare && bundle exec rails server -b 0.0.0.0"]

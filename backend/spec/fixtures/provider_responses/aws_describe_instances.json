@@ -1,0 +1,14 @@
+{
+  "Reservations": [
+    {
+      "Instances": [
+        {
+          "InstanceId": "i-0123456789abcdef0",
+          "State": { "Name": "running" },
+          "PublicIpAddress": "198.51.100.10",
+          "PrivateIpAddress": "10.0.1.10"
+        }
+      ]
+    }
+  ]
+}

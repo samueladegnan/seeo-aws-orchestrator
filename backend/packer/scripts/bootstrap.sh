@@ -1,19 +1,17 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 exec > >(tee /var/log/seeo-packer-bootstrap.log) 2>&1
 
-echo "=== SEEO AMI Bootstrap Starting ==="
+echo "=== SEEO provider-neutral image bootstrap starting ==="
 
-# Update the system
-dnf update -y
+# Install only baseline tooling here. Provider CLIs and workload identity are
+# supplied by the selected adapter image or deployment environment.
+if command -v dnf >/dev/null 2>&1; then
+  dnf update -y
+  dnf install -y curl jq
+elif command -v apt-get >/dev/null 2>&1; then
+  apt-get update -y
+  apt-get install -y curl jq
+fi
 
-# Install required tooling
-dnf install -y aws-cli amazon-cloudwatch-agent
-
-# Hardening examples (expand as needed)
-# - Enable automatic security updates
-# - Configure CloudWatch agent
-# - Restrict file permissions
-# - Disable unnecessary services
-
-echo "=== SEEO AMI Bootstrap Complete ==="
+echo "=== SEEO provider-neutral image bootstrap complete ==="

@@ -14,36 +14,69 @@ module SeeoConfig
       end
     end
 
+    def default_provider
+      CloudProvider.default_provider
+    end
+
+    def allowed_providers
+      ENV.fetch('SEEO_ALLOWED_PROVIDERS', CloudProvider.provider_names.join(',')).split(',').map(&:strip).select { |provider| CloudProvider.valid?(provider) }
+    end
+
+    def mock_mode?
+      value = ENV.fetch('SEEO_MOCK_MODE', Rails.env.production? ? 'false' : 'true')
+      value == 'true'
+    end
+
+    def provider_region(provider = default_provider)
+      ENV.fetch("SEEO_#{provider.to_s.upcase}_REGION", CloudProvider.definition(provider)[:default_region])
+    end
+
     def aws_region
-      ENV.fetch('AWS_REGION', 'us-east-1')
+      provider_region('aws')
     end
 
     def aws_profile
       ENV.fetch('AWS_PROFILE', nil).presence
     end
 
+    def provider_project(provider = default_provider)
+      ENV.fetch("SEEO_#{provider.to_s.upcase}_PROJECT", nil).presence
+    end
+
+    def provider_network_id(provider = default_provider)
+      ENV.fetch("SEEO_#{provider.to_s.upcase}_NETWORK_ID", nil).presence
+    end
+
+    def provider_subnet_id(provider = default_provider)
+      ENV.fetch("SEEO_#{provider.to_s.upcase}_SUBNET_ID", nil).presence
+    end
+
+    def provider_credentials(provider = default_provider)
+      ENV.fetch("SEEO_#{provider.to_s.upcase}_CREDENTIALS", nil).presence
+    end
+
     def ec2_key_pair
-      ENV.fetch('SEEO_EC2_KEY_PAIR', nil).presence
+      ENV.fetch('SEEO_AWS_KEY_PAIR', ENV.fetch('SEEO_EC2_KEY_PAIR', nil)).presence
     end
 
     def ec2_ami_id
-      ENV.fetch('SEEO_EC2_AMI_ID', nil).presence
+      ENV.fetch('SEEO_AWS_IMAGE_ID', ENV.fetch('SEEO_EC2_AMI_ID', nil)).presence
     end
 
     def ec2_instance_type
-      ENV.fetch('SEEO_EC2_INSTANCE_TYPE', 't3.micro')
+      ENV.fetch('SEEO_AWS_INSTANCE_TYPE', ENV.fetch('SEEO_EC2_INSTANCE_TYPE', 't3.micro'))
     end
 
     def ec2_subnet_id
-      ENV.fetch('SEEO_EC2_SUBNET_ID', nil).presence
+      provider_subnet_id('aws') || ENV.fetch('SEEO_EC2_SUBNET_ID', nil).presence
     end
 
     def ec2_security_group_id
-      ENV.fetch('SEEO_EC2_SECURITY_GROUP_ID', nil).presence
+      ENV.fetch('SEEO_AWS_SECURITY_GROUP_ID', ENV.fetch('SEEO_EC2_SECURITY_GROUP_ID', nil)).presence
     end
 
     def iam_instance_profile
-      ENV.fetch('SEEO_IAM_INSTANCE_PROFILE', nil).presence
+      ENV.fetch('SEEO_AWS_INSTANCE_PROFILE', ENV.fetch('SEEO_IAM_INSTANCE_PROFILE', nil)).presence
     end
 
     def environments_table
@@ -51,7 +84,7 @@ module SeeoConfig
     end
 
     def secrets_secret_name
-      ENV.fetch('SEEO_SECRETS_SECRET_NAME', 'seeo/runtime/credentials')
+      ENV.fetch('SEEO_AWS_SECRET_NAME', ENV.fetch('SEEO_SECRETS_SECRET_NAME', 'seeo/runtime/credentials'))
     end
 
     def ttl_check_interval_seconds
@@ -70,17 +103,16 @@ module SeeoConfig
       ENV.fetch('ACTION_CABLE_ALLOWED_ORIGINS', cors_allow_origins.join(',')).split(',').map(&:strip)
     end
 
-    def mock_aws?
-      value = ENV.fetch('SEEO_MOCK_AWS', Rails.env.production? ? 'false' : 'true')
-      value == 'true'
-    end
-
     def mock_env_limit
       ENV.fetch('SEEO_MOCK_ENV_LIMIT', '20').to_i
     end
 
     def mock_provisioning_delay_seconds
       ENV.fetch('SEEO_MOCK_PROVISIONING_DELAY_SECONDS', '2').to_i
+    end
+
+    def app_version
+      ENV.fetch('SEEO_APP_VERSION', '0.3.0')
     end
   end
 end

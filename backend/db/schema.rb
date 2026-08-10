@@ -1,16 +1,57 @@
-# This file is auto-generated from the current state of the database. Instead
-# of editing this file, please use the migrations feature of Active Record to
-# incrementally modify your database, and then regenerate this schema definition.
-#
-# This file is the source Rails uses to define your schema when running `bin/rails
-# db:schema:load`. When creating a new database, `bin/rails db:schema:load` tends to
-# be faster and is potentially less error prone than running all of your
-# migrations from scratch. Old migrations may fail to apply correctly if those
-# migrations use external dependencies or application code.
-#
-# It's strongly recommended that you check this file into your version control system.
+# This file is auto-generated from the current state of the database.
 
-ActiveRecord::Schema[7.2].define(version: 2026_01_02_000000) do
+ActiveRecord::Schema[7.2].define(version: 2026_01_03_000000) do
+  create_table "audit_events", force: :cascade do |t|
+    t.string "action", null: false
+    t.string "target", null: false
+    t.string "actor"
+    t.integer "team_id"
+    t.text "details"
+    t.string "user_agent"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["action"], name: "index_audit_events_on_action"
+    t.index ["created_at"], name: "index_audit_events_on_created_at"
+  end
+
+  create_table "environment_records", id: false, force: :cascade do |t|
+    t.string "id", null: false
+    t.string "project_name", null: false
+    t.integer "project_id"
+    t.integer "team_id"
+    t.integer "owner_user_id"
+    t.string "session_id"
+    t.string "provider", null: false
+    t.string "provider_resource_id"
+    t.string "provider_resource_type"
+    t.string "status", null: false
+    t.datetime "created_at", null: false
+    t.datetime "expires_at", null: false
+    t.string "instance_id"
+    t.string "public_ip"
+    t.string "private_ip"
+    t.string "volume_id"
+    t.integer "ttl_minutes", null: false
+    t.string "compute_tier", default: "small", null: false
+    t.string "instance_type"
+    t.string "message"
+    t.string "region", null: false
+    t.integer "volume_size"
+    t.string "storage_tier", default: "balanced", null: false
+    t.string "volume_type"
+    t.text "tags"
+    t.text "notes"
+    t.string "ssh_key_name"
+    t.string "idempotency_key"
+    t.string "request_fingerprint"
+    t.datetime "updated_at", null: false
+    t.index ["id"], name: "index_environment_records_on_id", unique: true
+    t.index ["expires_at"], name: "index_environment_records_on_expires_at"
+    t.index ["idempotency_key", "provider"], name: "index_environment_records_on_idempotency_and_provider"
+    t.index ["provider"], name: "index_environment_records_on_provider"
+    t.index ["status"], name: "index_environment_records_on_status"
+  end
+
   create_table "projects", force: :cascade do |t|
     t.integer "team_id", null: false
     t.string "name", null: false

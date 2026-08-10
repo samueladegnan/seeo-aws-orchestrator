@@ -2,7 +2,7 @@
 
 class SessionTokenService
   PURPOSE = 'seeo-demo-session'
-  TTL = 30.days
+  TTL = 30.minutes
 
   class InvalidToken < StandardError; end
 

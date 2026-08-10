@@ -1,49 +1,34 @@
-packer {
-  required_plugins {
-    amazon = {
-      version = ">= 1.0.0"
-      source  = "github.com/hashicorp/amazon"
-    }
-  }
+# This Packer template is intentionally provider-neutral. Provider-specific image
+# baking is performed by the selected cloud adapter's image pipeline.
+
+variable "provider" {
+  description = "Cloud provider image pipeline to use"
+  type        = string
+  default     = "aws"
 }
 
 variable "region" {
-  default = "us-east-1"
+  description = "Provider region"
+  type        = string
+  default     = "us-east-1"
 }
 
-variable "instance_type" {
-  default = "t3.micro"
-}
-
-data "amazon-ami" "al2023" {
-  filters = {
-    name                = "al2023-ami-*"
-    virtualization-type = "hvm"
-    architecture        = "x86_64"
-  }
-  owners      = ["amazon"]
-  most_recent = true
-  region      = var.region
-}
-
-source "amazon-ebs" "seeo" {
-  ami_name      = "seeo-hardened-{{timestamp}}"
-  instance_type = var.instance_type
-  region        = var.region
-  source_ami    = data.amazon-ami.al2023.id
-  ssh_username  = "ec2-user"
-
-  tags = {
-    Name        = "seeo-hardened"
-    ManagedBy   = "packer"
-    Project     = "seeo"
-  }
+variable "compute_tier" {
+  description = "Normalized SEEO compute tier"
+  type        = string
+  default     = "small"
 }
 
 build {
-  sources = ["source.amazon-ebs.seeo"]
+  name    = "seeo-${var.provider}-${var.compute_tier}"
+  sources = []
 
-  provisioner "shell" {
-    script = "scripts/bootstrap.sh"
+  provisioner "shell-local" {
+    inline = [
+      "echo Provider image pipeline selected: ${var.provider}",
+      "echo Region: ${var.region}",
+      "echo Compute tier: ${var.compute_tier}",
+      "echo Use the provider-specific image builder for the selected cloud."
+    ]
   }
 }

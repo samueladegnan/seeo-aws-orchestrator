@@ -18,6 +18,11 @@ build/
 *.key
 .git
 .gitignore
+.git/
+coverage/
+log/
+storage/
+tmp/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/

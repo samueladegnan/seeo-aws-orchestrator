@@ -1,46 +1,30 @@
 # SEEO Dashboard (React)
 
-A React dashboard for requesting, monitoring, and expiring short-lived environments through the SEEO API.
+A React dashboard for requesting, monitoring, and expiring short-lived environments across AWS, Azure, Google Cloud, and OCI through the SEEO API.
 
-## Quick Start
+## Quick start
 
 ```bash
 cd frontend
-copy .env.example .env
+cp .env.example .env
 npm install
 npm run dev
 ```
 
-The dev server runs on `http://localhost:5173` and talks directly to the Rails backend on `http://localhost:3000` via the `VITE_API_BASE` environment variable. The dashboard defaults to mock AWS mode when used with the included local backend, so exploring the lifecycle does not create real cloud resources.
+The dev server runs on `http://localhost:5173` and talks to the Rails backend on `http://localhost:3000` via `VITE_API_BASE`. The included backend defaults to multi-cloud mock mode, so selecting any supported provider does not create real cloud resources.
 
-> **Note:** If the page looks unstyled, make sure `tailwind.config.js` and `postcss.config.js` exist and that you ran `npm install` after any dependency changes.
-
-## Environment Variables
-
-Copy `.env.example` to `.env` and adjust as needed:
+## Environment variables
 
 | Variable | Description | Default |
 |---|---|---|
 | `VITE_API_BASE` | Backend base URL | `http://localhost:3000` |
-| `VITE_SEEO_API_KEY` | API key used for local development | `local-development-only` |
+| `VITE_SEEO_API_KEY` | Public mock-demo API key | `local-development-only` |
 
-The dashboard uses the API key for the local/mock demo. Make sure it matches `SEEO_API_KEY` in `backend/.env`. Because Vite embeds `VITE_*` values in the browser bundle, treat this as a public demo credential. Real AWS deployments should use JWT tenant authentication rather than exposing an API key in the frontend.
+Because Vite embeds `VITE_*` values in the browser bundle, the API key is public and only appropriate for mock mode. The frontend stores the short-lived demo session in `sessionStorage`, while real provider lifecycle access uses JWT tenant authentication on the backend. Never place cloud credentials in frontend variables.
 
 ## Build
 
 ```bash
 npm run lint
 npm run build
-```
-
-I built and reviewed this dashboard with AI assistance. AI tools helped with exploration, implementation, documentation, and testing. I remain responsible for the architecture and final code.
-
-## Windows quick start
-
-In Command Prompt:
-
-```cmd
-cd C:\Users\sammd\Documents\GitProjects\seeo-aws-orchestrator\frontend
-npm install
-npm run dev
 ```

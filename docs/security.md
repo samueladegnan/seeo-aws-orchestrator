@@ -1,70 +1,66 @@
 ---
-title: Security Report | Brakeman and Guardrail v1.1.0
-description: Learn how SEEO uses Brakeman and AI CI/CD Security Guardrail v1.1.0 to review Rails security findings with clearly labeled example data.
+title: Security Report | SEEO
+description: Automated Brakeman and AI CI/CD Security Guardrail review context for the SEEO Rails backend.
 layout: default
 permalink: /security/
 security_report: true
 ---
 
 <div class="security-report-page">
-  <section class="security-report-header" aria-labelledby="security-report-title">
-    <div class="report-status-label"><span class="status-dot status-dot--example" aria-hidden="true"></span> Example report. Live scan unavailable</div>
-    <h1 id="security-report-title">Security Report</h1>
-    <p class="security-report-lead">This page shows the report format used by SEEO's security workflow. CI runs Brakeman against the Rails backend, then passes the SARIF output to AI CI/CD Security Guardrail v1.1.0 for triage. The workflow preserves the reports as build artifacts for engineering review.</p>
+  <h2>Security report</h2>
+  <p class="security-report-intro">An automated review of the SEEO backend, presented with the same engineering notes and practical context as the rest of this case study.</p>
+
+  <div class="security-report-context">
+    <div class="report-status-label"><span class="status-dot status-dot--example" aria-hidden="true"></span> Automated <code>backend/</code> self-assessment</div>
+    <p class="security-report-lead">This page explains the report produced by Brakeman and AI CI/CD Security Guardrail v1.1.0 for the SEEO Rails backend. It is an automated review aid, not a substitute for engineering judgment.</p>
     <dl class="security-report-details">
       <div>
         <dt>Source scan</dt>
-        <dd>Brakeman SARIF from <code>backend/</code><br><a href="https://github.com/samueladegnan/ai-cicd-security-guardrail/releases/tag/v1.1.0">AI Guardrail v1.1.0</a></dd>
+        <dd>Brakeman SARIF generated from <code>backend/</code> · <a href="https://github.com/samueladegnan/ai-cicd-security-guardrail/releases/tag/v1.1.0">AI Guardrail v1.1.0</a></dd>
       </div>
       <div>
         <dt>Triage provider</dt>
-        <dd>Deterministic mock provider. Source stays in CI.</dd>
+        <dd>Mock provider is the default demo configuration. Source stays in CI.</dd>
       </div>
       <div>
         <dt>Report scope</dt>
         <dd>SEEO <code>backend/</code> tree</dd>
       </div>
     </dl>
-    <p class="security-report-meta security-report-timestamp">Guardrail v1.1.0 is pinned in the GitHub Actions workflow. This page is a portfolio presentation of the workflow, not a live scan result.</p>
-  </section>
-
-  <div class="report-disclaimer" role="note">
-    <strong>How to read this report:</strong> these are automated triage results, not a guarantee that the repository is vulnerability-free. Findings should be verified by an engineer before they are accepted or dismissed.
+    <p class="security-report-meta security-report-timestamp">Published with the Pages build. The current build presents workflow context and illustrative data rather than a live scan artifact.</p>
   </div>
 
-  <div class="empty-state" role="status">
-    <span class="empty-icon" aria-hidden="true">&#8987;</span>
-    <h2>Live report pending</h2>
-    <p>The latest CI artifact is not embedded in this Pages build. The report below uses clearly labeled sample data so the page remains useful. The source SARIF and Guardrail outputs remain available from the GitHub Actions run artifacts.</p>
+  <div class="report-disclaimer" role="note">
+    <strong>How to read this report:</strong> these are automated triage results, not a guarantee that the repository is vulnerability-free. Findings should be verified by an engineer before being accepted or dismissed.
   </div>
 
   <div class="example-report-notice" role="status">
-    <span class="example-report-notice__label">Example report</span>
+    <span class="example-report-notice__label">Example report · live scan unavailable</span>
     <h2>Illustrative findings are shown below</h2>
-    <p>The latest CI artifact is not embedded in this page. The findings below are sample data used to demonstrate the report interface. They are not issues found in the SEEO repository.</p>
+    <p>The live CI report is not embedded in this Pages build, so this page uses a committed synthetic report to demonstrate the review format. Every finding below is sample data and is <strong>not a real issue in this repository</strong>.</p>
   </div>
 
   <section class="summary-card" aria-labelledby="summary-title">
     <div class="summary-header">
       <div>
-        <h2 id="summary-title" class="summary-title">Example triage summary</h2>
+        <h2 id="summary-title" class="summary-title">Illustrative triage summary</h2>
         <p class="summary-subtitle">Sample values only. Check the CI artifact for a specific run.</p>
       </div>
       <span class="example-badge">Example data</span>
     </div>
     <div class="summary-metrics">
-      <div class="metric-card metric-total"><span class="metric-value">2</span><span class="metric-label">Total examples</span></div>
+      <div class="metric-card metric-total"><span class="metric-value">2</span><span class="metric-label">Example items</span></div>
       <div class="metric-card metric-high"><span class="metric-value">0</span><span class="metric-label">High priority</span></div>
       <div class="metric-card metric-fp"><span class="metric-value">0</span><span class="metric-label">False positives</span></div>
-      <div class="metric-card metric-unclear"><span class="metric-value">2</span><span class="metric-label">Review needed</span></div>
+      <div class="metric-card metric-unclear"><span class="metric-value">2</span><span class="metric-label">Review examples</span></div>
     </div>
   </section>
 
   <section class="results-card" aria-labelledby="results-title">
     <div class="summary-header">
       <div>
-        <h2 id="results-title" class="summary-title">Example findings</h2>
-        <p class="summary-subtitle">Each result is clearly marked as sample data.</p>
+        <h2 id="results-title" class="summary-title">Illustrative findings</h2>
+        <p class="summary-subtitle">Each result is sample data, not a live scan result.</p>
       </div>
       <span class="example-badge">Not a live scan</span>
     </div>
@@ -82,16 +78,16 @@ security_report: true
         </thead>
         <tbody>
           <tr>
-            <td><strong>Audit log metadata exposure</strong><br><small>Example finding</small></td>
+            <td><strong>Audit log metadata exposure</strong><br><small>Illustrative finding</small></td>
             <td class="finding-loc"><code>backend/app/services/audit_log_service.rb</code><br><small>Example line 42</small></td>
             <td>Information disclosure</td>
             <td><span class="guardrail-badge verdict-unclear">Low</span></td>
             <td><span class="guardrail-badge verdict-unclear">Review</span></td>
           </tr>
           <tr>
-            <td><strong>WebSocket subscription identity</strong><br><small>Example finding</small></td>
-            <td class="finding-loc"><code>frontend/src/App.jsx</code><br><small>Example line 365</small></td>
-            <td>Authentication</td>
+            <td><strong>Provider command boundary</strong><br><small>Illustrative finding</small></td>
+            <td class="finding-loc"><code>backend/app/services/cli_cloud_service.rb</code><br><small>Example line 118</small></td>
+            <td>Command execution</td>
             <td><span class="guardrail-badge verdict-unclear">Low</span></td>
             <td><span class="guardrail-badge verdict-unclear">Review</span></td>
           </tr>
@@ -102,20 +98,20 @@ security_report: true
 
   <hr>
 
-  <h2>Example finding details</h2>
+  <h2>Illustrative finding details</h2>
 
   <section class="detail-block" aria-labelledby="finding-one-title">
     <h3 id="finding-one-title">Example 1. Audit log metadata exposure</h3>
     <p><strong>Risk:</strong> a hypothetical serializer that records an entire environment object could expose infrastructure metadata that operators do not need for forensics.</p>
     <p><strong>Recommendation:</strong> keep the audit schema explicit. Log the environment ID, project, actor, action, and timestamp. Redact provider-specific identifiers unless an operational use case requires them.</p>
-    <p class="muted"><strong>Example finding.</strong> This is not a Brakeman result from the current repository.</p>
+    <p class="muted"><strong>Illustrative example.</strong> This is not a Brakeman result from the current repository.</p>
   </section>
 
   <section class="detail-block" aria-labelledby="finding-two-title">
-    <h3 id="finding-two-title">Example 2. WebSocket subscription identity</h3>
-    <p><strong>Risk:</strong> a hypothetical client subscription without server-side identity checks could expose environment updates to an unauthorized connection.</p>
-    <p><strong>Recommendation:</strong> authenticate the ActionCable connection and authorize the requested tenant before subscribing. SEEO now uses a short-lived signed connection token and a server-issued signed demo-session token instead of treating client-provided identifiers as proof of identity.</p>
-    <p class="muted"><strong>Example finding.</strong> This is not a confirmed issue in the current repository.</p>
+    <h3 id="finding-two-title">Example 2. Provider command boundary</h3>
+    <p><strong>Risk:</strong> a hypothetical command runner that interpolates untrusted request data into a shell string could allow argument injection across a provider boundary.</p>
+    <p><strong>Recommendation:</strong> pass provider commands as argv arrays, validate policy before execution, and keep credentials outside request data. SEEO's adapters use structured subprocess arguments and contract fixtures.</p>
+    <p class="muted"><strong>Illustrative example.</strong> This is not a confirmed issue in the current repository.</p>
   </section>
 
   <hr>
@@ -123,7 +119,7 @@ security_report: true
   <h2>Verification workflow</h2>
 
   <ol>
-    <li>Static analysis produces a machine-readable SARIF report.</li>
+    <li>Brakeman produces a machine-readable SARIF report for the Rails backend.</li>
     <li>Guardrail v1.1.0 adds repository context and maps relevant controls.</li>
     <li>Triage classifies each result as high priority, review, or false positive.</li>
     <li>Engineering review confirms exploitability and updates the code or report disposition.</li>
@@ -131,6 +127,4 @@ security_report: true
   </ol>
 
   <p><a href="https://github.com/samueladegnan/ai-cicd-security-guardrail">Read the Guardrail project</a> or <a href="https://github.com/samueladegnan/seeo-aws-orchestrator/blob/main/.github/workflows/guardrail.yml">view the workflow</a>.</p>
-
-  <p class="ai-disclosure">I built and reviewed this portfolio project with AI assistance. AI tools helped with exploration, implementation, documentation, and testing. I remain responsible for the architecture, engineering decisions, testing, and final code.</p>
 </div>

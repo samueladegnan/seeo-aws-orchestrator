@@ -12,35 +12,58 @@ function getWsUrl(token) {
   return `${base}/cable?${new URLSearchParams({ token }).toString()}`
 }
 
-const REGIONS = [
-  { value: 'us-east-1', label: 'US East (N. Virginia)' },
-  { value: 'us-west-2', label: 'US West (Oregon)' },
-  { value: 'eu-west-1', label: 'Europe (Ireland)' },
-  { value: 'ap-southeast-1', label: 'Asia Pacific (Singapore)' },
+const PROVIDERS = [
+  { value: 'aws', label: 'Amazon Web Services', shortLabel: 'AWS' },
+  { value: 'azure', label: 'Microsoft Azure', shortLabel: 'Azure' },
+  { value: 'gcp', label: 'Google Cloud', shortLabel: 'GCP' },
+  { value: 'oci', label: 'Oracle Cloud Infrastructure', shortLabel: 'OCI' },
 ]
 
-const INSTANCE_TYPES = [
-  { value: 't3.micro', label: 't3.micro (2 vCPU, 1 GiB)' },
-  { value: 't3.small', label: 't3.small (2 vCPU, 2 GiB)' },
-  { value: 't3.medium', label: 't3.medium (2 vCPU, 4 GiB)' },
-  { value: 'm6i.large', label: 'm6i.large (2 vCPU, 8 GiB)' },
-  { value: 'm5.large', label: 'm5.large (2 vCPU, 8 GiB)' },
-  { value: 'm5.xlarge', label: 'm5.xlarge (4 vCPU, 16 GiB)' },
-  { value: 'c5.large', label: 'c5.large (2 vCPU, 4 GiB)' },
+const PROVIDER_REGIONS = {
+  aws: [
+    { value: 'us-east-1', label: 'US East (N. Virginia)' },
+    { value: 'us-west-2', label: 'US West (Oregon)' },
+    { value: 'eu-west-1', label: 'Europe (Ireland)' },
+    { value: 'ap-southeast-1', label: 'Asia Pacific (Singapore)' },
+  ],
+  azure: [
+    { value: 'eastus', label: 'East US' },
+    { value: 'westus2', label: 'West US 2' },
+    { value: 'westeurope', label: 'West Europe' },
+    { value: 'southeastasia', label: 'Southeast Asia' },
+  ],
+  gcp: [
+    { value: 'us-central1', label: 'Iowa' },
+    { value: 'us-east1', label: 'South Carolina' },
+    { value: 'europe-west1', label: 'Belgium' },
+    { value: 'asia-southeast1', label: 'Singapore' },
+  ],
+  oci: [
+    { value: 'us-ashburn-1', label: 'Ashburn' },
+    { value: 'us-phoenix-1', label: 'Phoenix' },
+    { value: 'uk-london-1', label: 'London' },
+    { value: 'ap-singapore-1', label: 'Singapore' },
+  ],
+}
+
+const COMPUTE_TIERS = [
+  { value: 'small', label: 'Small - light preview workloads' },
+  { value: 'medium', label: 'Medium - application workloads' },
+  { value: 'large', label: 'Large - heavier integration work' },
 ]
 
-const VOLUME_TYPES = [
-  { value: 'gp3', label: 'gp3 - General purpose SSD' },
-  { value: 'io2', label: 'io2 - Provisioned IOPS SSD' },
-  { value: 'st1', label: 'st1 - Throughput optimized HDD' },
+const STORAGE_TIERS = [
+  { value: 'balanced', label: 'Balanced storage' },
+  { value: 'performance', label: 'Performance storage' },
+  { value: 'throughput', label: 'Throughput storage' },
 ]
 
 let SESSION_ID = null
 let SESSION_TOKEN = null
 let SESSION_REFRESH = null
 try {
-  SESSION_ID = localStorage.getItem('seeo_session_id')
-  SESSION_TOKEN = localStorage.getItem('seeo_session_token')
+  SESSION_ID = sessionStorage.getItem('seeo_session_id')
+  SESSION_TOKEN = sessionStorage.getItem('seeo_session_token')
 } catch {
   // Storage may be unavailable in privacy-restricted browsers.
 }
@@ -53,8 +76,8 @@ async function ensureSessionToken(forceRefresh = false) {
     SESSION_ID = null
     SESSION_TOKEN = null
     try {
-      localStorage.removeItem('seeo_session_id')
-      localStorage.removeItem('seeo_session_token')
+      sessionStorage.removeItem('seeo_session_id')
+      sessionStorage.removeItem('seeo_session_token')
     } catch {
       // Storage may be unavailable in privacy-restricted browsers.
     }
@@ -69,8 +92,8 @@ async function ensureSessionToken(forceRefresh = false) {
     SESSION_ID = data.session_id
     SESSION_TOKEN = data.token
     try {
-      localStorage.setItem('seeo_session_id', SESSION_ID)
-      localStorage.setItem('seeo_session_token', SESSION_TOKEN)
+      sessionStorage.setItem('seeo_session_id', SESSION_ID)
+      sessionStorage.setItem('seeo_session_token', SESSION_TOKEN)
     } catch {
       // Keep the token in memory for this tab when storage is unavailable.
     }
@@ -120,7 +143,7 @@ function Button({ children, variant = 'primary', disabled, ...props }) {
     ghost: 'text-slate-600 hover:bg-slate-100 focus:ring-slate-500',
   }
   return (
-    <button className={`${base} ${variants[variant]}`} disabled={disabled} {...props}>
+    <button type="button" className={`${base} ${variants[variant]}`} disabled={disabled} {...props}>
       {children}
     </button>
   )
@@ -177,11 +200,12 @@ function App() {
   const [error, setError] = useState(null)
   const [form, setForm] = useState({
     project_name: '',
+    provider: 'aws',
     ttl_minutes: 60,
-    instance_type: 't3.micro',
+    compute_tier: 'small',
     region: 'us-east-1',
     volume_size: 10,
-    volume_type: 'gp3',
+    storage_tier: 'balanced',
     notes: '',
     tags: '',
     ssh_key_name: '',
@@ -194,6 +218,7 @@ function App() {
   const [cableToken, setCableToken] = useState(null)
   const [wsReconnectAttempt, setWsReconnectAttempt] = useState(0)
   const [mockMode, setMockMode] = useState(true)
+  const [availableProviders, setAvailableProviders] = useState(PROVIDERS)
   const [coldStarting, setColdStarting] = useState(false)
   const [serverUnreachable, setServerUnreachable] = useState(false)
   const [showAdBlockerTip, setShowAdBlockerTip] = useState(false)
@@ -209,12 +234,28 @@ function App() {
   const mounted = useRef(true)
   const statusFilterRef = useRef(statusFilter)
   statusFilterRef.current = statusFilter
+  const providerOptions = availableProviders.map((provider) => ({
+    value: provider.value || provider.id,
+    label: provider.label,
+  }))
 
   useEffect(() => {
     return () => {
       mounted.current = false
     }
   }, [])
+
+  useEffect(() => {
+    const enabled = new Set(availableProviders.map((provider) => provider.value || provider.id))
+    if (enabled.has(form.provider)) return
+
+    const nextProvider = availableProviders[0]?.value || availableProviders[0]?.id || 'aws'
+    setForm((previous) => ({
+      ...previous,
+      provider: nextProvider,
+      region: PROVIDER_REGIONS[nextProvider]?.[0]?.value || previous.region,
+    }))
+  }, [availableProviders, form.provider])
 
   const fetchEnvironments = useCallback(async () => {
     const query = statusFilter ? `?status=${encodeURIComponent(statusFilter)}` : ''
@@ -255,6 +296,7 @@ function App() {
       if (!res.ok) return { ok: false, error: new Error(`HTTP ${res.status}`) }
       const data = await res.json()
       setMockMode(data.mock_mode === true)
+      if (Array.isArray(data.providers) && data.providers.length > 0) setAvailableProviders(data.providers)
       setColdStarting(false)
       return { ok: true }
     } catch (err) {
@@ -475,7 +517,7 @@ function App() {
         if (!cancelled) setWsStatus('disconnected')
       })
     return () => { cancelled = true }
-  }, [])
+  }, [wsReconnectAttempt])
 
   useEffect(() => {
     mounted.current = true
@@ -506,8 +548,6 @@ function App() {
     setWsReconnectAttempt((prev) => prev + 1)
   }
 
-
-
   const parseTags = (input) => {
     const tags = {}
     if (!input.trim()) return tags
@@ -524,10 +564,11 @@ function App() {
     const payload = {
       project_name: formData.project_name,
       ttl_minutes: formData.ttl_minutes,
-      instance_type: formData.instance_type,
+      provider: formData.provider,
+      compute_tier: formData.compute_tier,
       region: formData.region,
       volume_size: formData.volume_size,
-      volume_type: formData.volume_type,
+      storage_tier: formData.storage_tier,
       notes: formData.notes,
       tags: parseTags(formData.tags),
       ssh_key_name: formData.ssh_key_name,
@@ -566,10 +607,11 @@ function App() {
       setForm({
         project_name: '',
         ttl_minutes: 60,
-        instance_type: 't3.micro',
+        provider: 'aws',
+        compute_tier: 'small',
         region: 'us-east-1',
         volume_size: 10,
-        volume_type: 'gp3',
+        storage_tier: 'balanced',
         notes: '',
         tags: '',
         ssh_key_name: '',
@@ -620,6 +662,7 @@ function App() {
       return (
         env.project_name?.toLowerCase().includes(term) ||
         env.id?.toLowerCase().includes(term) ||
+        env.provider?.toLowerCase().includes(term) ||
         env.instance_type?.toLowerCase().includes(term) ||
         env.region?.toLowerCase().includes(term)
       )
@@ -657,8 +700,8 @@ function App() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       {mockMode && (
-        <div className="bg-amber-100 px-4 py-2 text-center text-sm font-medium text-amber-900">
-          Demo Mode. No real AWS resources are provisioned.
+        <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-sm font-medium text-amber-900" role="status">
+          <span className="font-bold">Safe demo mode:</span> every provider is simulated in memory; no credentials, billable resources, or cloud API calls are used.
         </div>
       )}
 
@@ -672,7 +715,10 @@ function App() {
               <span aria-hidden="true">←</span>
               Back to portfolio
             </a>
-            <h1 className="text-lg font-bold tracking-tight text-slate-900 sm:text-xl" aria-label="SEEO dashboard">SEEO</h1>
+            <div>
+              <h1 className="text-lg font-bold tracking-tight text-slate-900 sm:text-xl" aria-label="SEEO dashboard">SEEO</h1>
+              <p className="hidden text-xs text-slate-500 sm:block">Ephemeral environments · multi-cloud control plane</p>
+            </div>
           </div>
           <button
             type="button"
@@ -732,11 +778,33 @@ function App() {
           </div>
         )}
 
+        <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">Environment control plane</p>
+            <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Build a safe, short-lived workspace</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">Choose a provider, set an expiry window, and watch the lifecycle move through the same normalized contract used by the Rails API.</p>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-slate-500" aria-label={`${availableProviders.length} cloud providers enabled`}>
+            <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
+            {availableProviders.length} providers enabled
+          </div>
+        </div>
+
         <div className="mb-8 grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
           <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 lg:col-span-2">
             <h2 className="mb-4 text-lg font-semibold">Create environment</h2>
             <form onSubmit={handleCreate} className="space-y-4" aria-label="Create environment form">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <Select
+                  label="Cloud provider"
+                  id="provider"
+                  value={form.provider}
+                  onChange={(e) => {
+                    const provider = e.target.value
+                    setForm({ ...form, provider, region: PROVIDER_REGIONS[provider][0].value })
+                  }}
+                  options={providerOptions}
+                />
                 <Input
                   label="Project name"
                   id="project-name"
@@ -752,19 +820,19 @@ function App() {
                   id="region"
                   value={form.region}
                   onChange={(e) => setForm({ ...form, region: e.target.value })}
-                  options={REGIONS}
+                  options={PROVIDER_REGIONS[form.provider]}
                 />
                 <Select
-                  label="Instance type"
-                  id="instance-type"
-                  value={form.instance_type}
-                  onChange={(e) => setForm({ ...form, instance_type: e.target.value })}
-                  options={INSTANCE_TYPES}
+                  label="Compute tier"
+                  id="compute-tier"
+                  value={form.compute_tier}
+                  onChange={(e) => setForm({ ...form, compute_tier: e.target.value })}
+                  options={COMPUTE_TIERS}
                 />
               </div>
 
               {showAdvanced && (
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div id="advanced-environment-options" className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <Input
                       label="TTL (minutes)"
@@ -786,11 +854,11 @@ function App() {
                       onChange={(e) => setForm({ ...form, volume_size: parseInt(e.target.value, 10) || 10 })}
                     />
                     <Select
-                      label="Volume type"
-                      id="volume-type"
-                      value={form.volume_type}
-                      onChange={(e) => setForm({ ...form, volume_type: e.target.value })}
-                      options={VOLUME_TYPES}
+                      label="Storage tier"
+                      id="storage-tier"
+                      value={form.storage_tier}
+                      onChange={(e) => setForm({ ...form, storage_tier: e.target.value })}
+                      options={STORAGE_TIERS}
                     />
                     <Input
                       label="Tags"
@@ -827,8 +895,10 @@ function App() {
               <div className="flex flex-wrap items-center gap-3 sm:justify-end">
                 <button
                   type="button"
+                  aria-expanded={showAdvanced}
+                  aria-controls="advanced-environment-options"
                   onClick={() => setShowAdvanced((prev) => !prev)}
-                  className="text-sm font-medium text-slate-600 hover:text-slate-900"
+                  className="text-sm font-medium text-slate-600 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                 >
                   {showAdvanced ? 'Hide advanced' : 'Show advanced'}
                 </button>
@@ -839,13 +909,20 @@ function App() {
             </form>
           </div>
 
-          <div className="rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-700 p-6 text-white shadow-sm">
+          <div className="rounded-2xl bg-gradient-to-br from-emerald-700 to-teal-800 p-6 text-white shadow-sm">
             <h2 className="text-sm font-medium text-indigo-100">Estimated monthly cost</h2>
             <p className="mt-2 text-4xl font-bold">${cost?.total?.toFixed(2) || '0.00'}</p>
             <p className="mt-1 text-sm text-indigo-200">{cost?.environments_count || 0} environments</p>
             <p className="mt-4 text-xs text-indigo-200">
               Based on on-demand compute + storage rates for the configured TTL.
             </p>
+            <div className="mt-5 flex flex-wrap gap-2" aria-label="Enabled cloud providers">
+              {availableProviders.map((provider) => (
+                <span key={provider.id || provider.value} className="rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-xs font-semibold text-white">
+                  {provider.short_label || provider.shortLabel || provider.label || provider.id}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -853,14 +930,18 @@ function App() {
           <div className="flex flex-col gap-4 border-b border-slate-200 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-lg font-semibold">Environments</h2>
             <div className="flex flex-col gap-2 sm:flex-row">
+              <label htmlFor="environment-search" className="sr-only">Search environments</label>
               <input
-                type="text"
-                placeholder="Search..."
+                id="environment-search"
+                type="search"
+                placeholder="Search environments…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               />
+              <label htmlFor="status-filter" className="sr-only">Filter by status</label>
               <select
+                id="status-filter"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
@@ -876,7 +957,11 @@ function App() {
           {loading ? (
             <div className="p-8 text-center text-slate-500">Loading environments…</div>
           ) : filteredEnvironments.length === 0 ? (
-            <div className="p-8 text-center text-slate-500">No environments found.</div>
+            <div className="p-10 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-2xl" aria-hidden="true">⌁</div>
+              <h3 className="mt-4 font-semibold text-slate-900">No environments match this view</h3>
+              <p className="mx-auto mt-1 max-w-sm text-sm text-slate-500">Create a workspace above, or clear the search and status filters to see more lifecycle activity.</p>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-slate-200 text-left text-sm" aria-label="Environments">
@@ -884,17 +969,18 @@ function App() {
                 <thead className="bg-slate-50">
                   <tr>
                     <th scope="col" className="px-6 py-3 font-semibold text-slate-700">
-                      <button onClick={() => handleSort('project_name')} className="flex items-center font-semibold">
+                      <button type="button" onClick={() => handleSort('project_name')} className="flex items-center font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                         Project <SortIcon column="project_name" />
                       </button>
                     </th>
                     <th scope="col" className="px-6 py-3 font-semibold text-slate-700">
-                      <button onClick={() => handleSort('status')} className="flex items-center font-semibold">
+                      <button type="button" onClick={() => handleSort('status')} className="flex items-center font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                         Status <SortIcon column="status" />
                       </button>
                     </th>
+                    <th scope="col" className="px-6 py-3 font-semibold text-slate-700">Provider</th>
                     <th scope="col" className="px-6 py-3 font-semibold text-slate-700">Region</th>
-                    <th scope="col" className="px-6 py-3 font-semibold text-slate-700">Type</th>
+                    <th scope="col" className="px-6 py-3 font-semibold text-slate-700">Tier</th>
                     <th scope="col" className="px-6 py-3 font-semibold text-slate-700">TTL</th>
                     <th scope="col" className="px-6 py-3 font-semibold text-slate-700">Cost</th>
                     <th scope="col" className="px-6 py-3 font-semibold text-slate-700">IP</th>
@@ -912,8 +998,9 @@ function App() {
                         <td className="px-6 py-4">
                           <StatusBadge status={env.status} />
                         </td>
+                        <td className="px-6 py-4 text-slate-600">{env.provider_label || env.provider}</td>
                         <td className="px-6 py-4 text-slate-600">{env.region}</td>
-                        <td className="px-6 py-4 text-slate-600">{env.instance_type}</td>
+                        <td className="px-6 py-4 text-slate-600">{env.compute_tier || env.instance_type}</td>
                         <td className="px-6 py-4 text-slate-600">{env.ttl_minutes} min</td>
                         <td className="px-6 py-4 text-slate-600">{formatCost(env.cost)}</td>
                         <td className="px-6 py-4 text-slate-600">
@@ -923,12 +1010,15 @@ function App() {
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <button
+                              type="button"
+                              aria-expanded={expandedId === env.id}
                               onClick={() => toggleExpand(env.id)}
-                              className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                              className="text-sm font-medium text-indigo-600 hover:text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                             >
                               {expandedId === env.id ? 'Hide' : 'Details'}
                             </button>
                             <button
+                              type="button"
                               onClick={() => setTerminateTarget(env)}
                               disabled={destroyingId === env.id || env.status === 'terminating'}
                               aria-label={`Terminate environment ${env.project_name}`}
@@ -941,7 +1031,7 @@ function App() {
                       </tr>
                       {expandedId === env.id && (
                         <tr className="bg-slate-50">
-                          <td colSpan={8} className="px-6 py-4">
+                          <td colSpan={9} className="px-6 py-4">
                             <EnvironmentDetails env={env} mockMode={mockMode} />
                           </td>
                         </tr>
@@ -997,7 +1087,7 @@ function App() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
               >
-                Open local demo
+                Open Local Demo
               </a>
             </div>
           </div>
@@ -1021,6 +1111,7 @@ function App() {
             </p>
             <div className="mt-6 flex justify-end gap-3">
               <button
+                type="button"
                 ref={cancelButtonRef}
                 onClick={() => setTerminateTarget(null)}
                 className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
@@ -1028,6 +1119,7 @@ function App() {
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleDestroy}
                 disabled={!!destroyingId}
                 className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
@@ -1041,7 +1133,7 @@ function App() {
 
       <footer className="border-t border-slate-200 bg-white py-6">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-sm leading-relaxed text-slate-500">Built with Ruby on Rails, Terraform & AWS.<br />AI assistance helped with development. Final engineering decisions and review remain with Samuel Degnan.</p>
+          <p className="text-center text-sm leading-relaxed text-slate-500">Built with Ruby on Rails and Terraform across AWS, Azure, Google Cloud, and OCI.<br />Samuel Degnan made the final engineering decisions and reviewed the code.</p>
         </div>
       </footer>
     </div>
@@ -1049,24 +1141,23 @@ function App() {
 }
 
 function EnvironmentDetails({ env, mockMode }) {
-  const sshCommand = env.ssh_key_name
-    ? `ssh -i ~/.ssh/${env.ssh_key_name}.pem ec2-user@${env.public_ip || 'x.x.x.x'}`
-    : `ssh ec2-user@${env.public_ip || 'x.x.x.x'}`
+  const endpoint = env.public_ip || 'x.x.x.x'
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <DetailBlock title="Metadata">
         <DetailRow label="ID" value={env.id} />
         <DetailRow label="Project" value={env.project_name} />
+        <DetailRow label="Provider" value={env.provider_label || env.provider} />
         <DetailRow label="Region" value={env.region} />
-        <DetailRow label="Instance type" value={env.instance_type} />
+        <DetailRow label="Compute tier" value={env.compute_tier || env.instance_type} />
         <DetailRow label="Status" value={<StatusBadge status={env.status} />} />
       </DetailBlock>
       <DetailBlock title="Network & Storage">
         <DetailRow label="Public IP" value={env.public_ip || '-'} />
         <DetailRow label="Private IP" value={env.private_ip || '-'} />
         <DetailRow label="Instance ID" value={env.instance_id || '-'} />
-        <DetailRow label="Volume" value={`${env.volume_size || 10} GB ${env.volume_type || 'gp3'}`} />
+        <DetailRow label="Storage" value={`${env.volume_size || 10} GB ${env.storage_tier || env.volume_type || 'balanced'}`} />
         <DetailRow label="Volume ID" value={env.volume_id || '-'} />
       </DetailBlock>
       <DetailBlock title="Lifecycle">
@@ -1078,8 +1169,9 @@ function EnvironmentDetails({ env, mockMode }) {
       <DetailBlock title="Connection">
         {env.public_ip ? (
           <>
-            <DetailRow label="SSH command" value={sshCommand} code />
-            {mockMode && <p className="mt-2 text-xs text-amber-700">Mock mode. This IP is not real.</p>}
+            <DetailRow label="Provider resource" value={env.provider_resource_id || env.instance_id || '-'} code />
+            <DetailRow label="Endpoint" value={endpoint} code />
+            {mockMode && <p className="mt-2 text-xs text-amber-700">Mock mode. This endpoint is illustrative and not reachable.</p>}
           </>
         ) : (
           <p className="text-sm text-slate-500">No public IP assigned.</p>
