@@ -49,7 +49,7 @@ class CliCloudService < CloudAdapter
   def list_expired_environments
     raise AuthorizationService::AuthenticationError, 'Cleanup context required' unless Current.internal_cleanup
 
-    EnvironmentRecord.where(provider: @provider).where('expires_at <= ?', Time.current)
+    EnvironmentRecord.where(provider: @provider).where(expires_at: ..Time.current)
                      .where(status: %w[pending provisioning ready error terminating])
                      .map(&:to_environment)
   end
@@ -93,7 +93,15 @@ class CliCloudService < CloudAdapter
     raise CloudAdapter::UnsupportedProviderError, "#{@provider} adapter is missing configuration: #{missing.join(', ')}"
   end
 
-  def required_environment_variables = []
+  def required_environment_variables
+    {
+      'aws' => %w[SEEO_AWS_SUBNET_ID SEEO_AWS_SECURITY_GROUP_ID SEEO_AWS_IMAGE_ID],
+      'azure' => %w[SEEO_AZURE_RESOURCE_GROUP SEEO_AZURE_SUBNET_ID],
+      'gcp' => %w[SEEO_GCP_PROJECT SEEO_GCP_SUBNET_ID SEEO_GCP_ZONE],
+      'oci' => %w[SEEO_OCI_COMPARTMENT_ID SEEO_OCI_SUBNET_ID SEEO_OCI_AVAILABILITY_DOMAIN SEEO_OCI_IMAGE_ID]
+    }.fetch(@provider, [])
+  end
+
   def launch_command(_) = raise(NotImplementedError)
   def inspect_command(_) = raise(NotImplementedError)
   def terminate_command(_) = raise(NotImplementedError)
@@ -103,10 +111,10 @@ class CliCloudService < CloudAdapter
   end
 
   def provider_state(result)
-    state = result['state'] || result['status'] || result['lifecycle-state'] || result['powerState']
-    state = result.dig('instanceView', 'statuses')&.last&.fetch('code', nil) if state.blank?
-    state_text = state.to_s.downcase
-    state_text.include?('running') || state_text.include?('succeeded') ? 'running' : state_text
+    state = %w[state status lifecycle-state powerState].filter_map { |key| result[key] }.first
+    state ||= result.dig('instanceView', 'statuses')&.last&.fetch('code', nil)
+    normalized_state = state.to_s.downcase
+    normalized_state.match?(/running|succeeded/) ? 'running' : normalized_state
   end
 
   def provider_resource_id(result)
@@ -115,12 +123,19 @@ class CliCloudService < CloudAdapter
 
   def apply_provider_result(environment, result)
     environment.provider_resource_id = provider_resource_id(result) || environment.provider_resource_id
-    environment.public_ip = result['publicIpAddress'] || result['public_ip'] || result.dig('network', 'publicIp') || result['primaryPublicIp']
-    environment.private_ip = result['privateIpAddress'] || result['private_ip'] || result.dig('network', 'privateIp') || result['primaryPrivateIp']
+    environment.public_ip = provider_ip(
+      result, 'publicIpAddress', 'public_ip', 'primaryPublicIp', 'publicIp'
+    )
+    environment.private_ip = provider_ip(result, 'privateIpAddress', 'private_ip', 'primaryPrivateIp', 'privateIp')
   end
 
-  def run_command(*args)
-    stdout, stderr, status = Open3.capture3(*args)
+  def provider_ip(result, *keys)
+    keys.filter_map { |key| result[key] }.first ||
+      result.dig('network', keys.first == 'publicIpAddress' ? 'publicIp' : 'privateIp')
+  end
+
+  def run_command(*)
+    stdout, stderr, status = Open3.capture3(*)
     raise "#{@provider} command failed: #{stderr.presence || stdout}" unless status.success?
 
     stdout
@@ -132,6 +147,9 @@ class CliCloudService < CloudAdapter
     raise "#{@provider} command returned invalid JSON: #{e.message}"
   end
 
+  # The normalized environment is intentionally assembled in one place so every
+  # provider adapter persists the same control-plane shape.
+  # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
   def build_environment(project, ttl_minutes, tier, options, fingerprint)
     project_name = project.is_a?(Project) ? project.name : project
     created_at = Time.current.utc
@@ -145,11 +163,16 @@ class CliCloudService < CloudAdapter
       ttl_minutes: ttl_minutes.to_i, compute_tier: tier, instance_type: CloudProvider.compute_shape(@provider, tier),
       session_id: Current.session_id.presence || 'default', idempotency_key: options[:idempotency_key],
       request_fingerprint: fingerprint, region: CloudProvider.region(@provider, options[:region]),
-      volume_size: options[:volume_size].presence || 10, storage_tier: storage_tier,
-      volume_type: CloudProvider.storage_shape(@provider, storage_tier), tags: options[:tags] || {},
-      notes: options[:notes].presence || '', ssh_key_name: options[:ssh_key_name].presence
+      volume_size: options[:volume_size].presence || 10,
+      storage_tier: storage_tier,
+      volume_type: CloudProvider.storage_shape(@provider, storage_tier),
+      tags: options[:tags] || {},
+      notes: options[:notes].presence || '',
+      ssh_key_name: options[:ssh_key_name].presence
     )
   end
+
+  # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
   def terminate_existing_environment(environment)
     environment.status = 'terminating'
@@ -170,13 +193,18 @@ class CliCloudService < CloudAdapter
     record = EnvironmentRecord.find_or_initialize_by(id: environment.id)
     record.assign_attributes(
       project_name: environment.project_name, project_id: environment.project_id, team_id: environment.team_id,
-      owner_user_id: environment.owner_user_id, session_id: environment.session_id, provider: environment.provider,
-      provider_resource_id: environment.provider_resource_id, provider_resource_type: environment.provider_resource_type || 'virtual_machine',
+      owner_user_id: environment.owner_user_id,
+      session_id: environment.session_id,
+      provider: environment.provider,
+      provider_resource_id: environment.provider_resource_id,
+      provider_resource_type: environment.provider_resource_type || 'virtual_machine',
       status: environment.status, created_at: environment.created_at, expires_at: environment.expires_at,
       instance_id: environment.instance_id, public_ip: environment.public_ip, private_ip: environment.private_ip,
       volume_id: environment.volume_id, ttl_minutes: environment.ttl_minutes, compute_tier: environment.compute_tier,
       instance_type: environment.instance_type, message: environment.message, region: environment.region,
-      volume_size: environment.volume_size, storage_tier: environment.storage_tier, volume_type: environment.volume_type,
+      volume_size: environment.volume_size,
+      storage_tier: environment.storage_tier,
+      volume_type: environment.volume_type,
       tags: environment.tags || {}, notes: environment.notes, ssh_key_name: environment.ssh_key_name,
       idempotency_key: environment.idempotency_key, request_fingerprint: environment.request_fingerprint
     )
@@ -226,7 +254,12 @@ class CliCloudService < CloudAdapter
   end
 
   def generate_id(project_name, options)
-    suffix = options[:idempotency_key].present? ? Digest::SHA256.hexdigest(options[:idempotency_key])[0, 16] : SecureRandom.hex(4)
+    suffix = if options[:idempotency_key].present?
+               Digest::SHA256.hexdigest(options[:idempotency_key])[0,
+                                                                   16]
+             else
+               SecureRandom.hex(4)
+             end
     "#{project_name}-#{Time.current.utc.strftime('%Y%m%d%H%M%S')}-#{suffix}"
   end
 

@@ -14,12 +14,13 @@ module SeeoConfig
       end
     end
 
-    def default_provider
-      CloudProvider.default_provider
-    end
+    delegate :default_provider, to: :CloudProvider
 
     def allowed_providers
-      ENV.fetch('SEEO_ALLOWED_PROVIDERS', CloudProvider.provider_names.join(',')).split(',').map(&:strip).select { |provider| CloudProvider.valid?(provider) }
+      ENV.fetch('SEEO_ALLOWED_PROVIDERS',
+                CloudProvider.provider_names.join(',')).split(',').map(&:strip).select do |provider|
+        CloudProvider.valid?(provider)
+      end
     end
 
     def mock_mode?

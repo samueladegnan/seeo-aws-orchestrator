@@ -18,7 +18,6 @@ RSpec.configure do |config|
 
   config.before do
     Current.reset
-    allow(AuditLogService).to receive(:record)
     allow(EnvironmentChannel).to receive(:broadcast)
   end
 end

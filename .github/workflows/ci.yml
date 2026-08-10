@@ -12,6 +12,10 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      RAILS_ENV: test
+      SEEO_API_KEY: local-development-only
+      SEEO_JWT_SECRET: local-jwt-development-only
     defaults:
       run:
         working-directory: backend
@@ -26,9 +30,7 @@ jobs:
           working-directory: backend
 
       - name: Set up database
-        env:
-          RAILS_ENV: test
-        run: bundle exec rails db:create db:migrate
+        run: mkdir -p storage && bundle exec rails db:create db:migrate
 
       - name: Run RuboCop
         run: bundle exec rubocop

@@ -2,6 +2,6 @@
 
 class MockAwsService < MockCloudService
   def initialize(provider: 'aws')
-    super(provider: provider)
+    super
   end
 end

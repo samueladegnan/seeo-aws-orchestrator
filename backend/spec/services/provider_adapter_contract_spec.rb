@@ -2,8 +2,9 @@
 
 require 'rails_helper'
 
-RSpec.describe 'provider adapter contracts' do
-  FIXTURE_ROOT = Rails.root.join('spec/fixtures/provider_responses')
+# rubocop:disable RSpec/SpecFilePathFormat -- one contract spec intentionally covers all provider adapters
+RSpec.describe CloudAdapter do
+  FIXTURE_ROOT = Rails.root.join('spec/fixtures/provider_responses') # rubocop:disable Lint/ConstantDefinitionInBlock, RSpec/LeakyConstantDeclaration -- shared fixture root for this contract group
 
   def fixture(name)
     JSON.parse(File.read(FIXTURE_ROOT.join(name)))
@@ -11,10 +12,10 @@ RSpec.describe 'provider adapter contracts' do
 
   def stub_command(output)
     allow(Open3).to receive(:capture3).and_return([
-      JSON.generate(output),
-      '',
-      instance_double(Process::Status, success?: true)
-    ])
+                                                    JSON.generate(output),
+                                                    '',
+                                                    instance_double(Process::Status, success?: true)
+                                                  ])
   end
 
   def stub_persistence
@@ -75,7 +76,8 @@ RSpec.describe 'provider adapter contracts' do
 
   it 'executes the GCP create contract with argv and normalizes the response' do
     service = GcpService.new(provider: 'gcp')
-    ENV.update('SEEO_GCP_PROJECT' => 'project-demo', 'SEEO_GCP_SUBNET_ID' => 'subnet-demo', 'SEEO_GCP_ZONE' => 'us-central1-a')
+    ENV.update('SEEO_GCP_PROJECT' => 'project-demo', 'SEEO_GCP_SUBNET_ID' => 'subnet-demo',
+               'SEEO_GCP_ZONE' => 'us-central1-a')
     stub_command(fixture('gcp_instance.json'))
     stub_persistence
 
@@ -87,7 +89,8 @@ RSpec.describe 'provider adapter contracts' do
     expect(Open3).to have_received(:capture3).with(
       'gcloud', 'compute', 'instances', 'create', environment.id,
       '--project', 'project-demo', '--zone', 'us-central1-a', '--machine-type', 'e2-micro',
-      '--subnet', 'subnet-demo', '--boot-disk-size', '10', '--boot-disk-type', 'pd-balanced', '--format=json'
+      '--subnet', 'subnet-demo', '--tags', 'seeo-managed', '--boot-disk-size', '10',
+      '--boot-disk-type', 'pd-balanced', '--format=json'
     )
   end
 
@@ -125,3 +128,4 @@ RSpec.describe 'provider adapter contracts' do
     expect(Open3).to have_received(:capture3).with('gcloud', 'compute', 'instances', 'describe', 'demo; echo unsafe')
   end
 end
+# rubocop:enable RSpec/SpecFilePathFormat

@@ -42,7 +42,12 @@ class PolicyService
       raise 'OPA evaluation failed' unless status.success?
 
       parsed = JSON.parse(stdout)
-      parsed.is_a?(Hash) ? parsed : { 'allow' => parsed == true, 'deny' => parsed == true ? [] : ['Provisioning denied by policy'] }
+      if parsed.is_a?(Hash)
+        parsed
+      else
+        { 'allow' => parsed == true,
+          'deny' => parsed == true ? [] : ['Provisioning denied by policy'] }
+      end
     rescue StandardError => e
       Rails.logger.warn "[PolicyService] OPA evaluation failed: #{e.message}. Falling back to built-in policies."
       evaluate_fallback(input)
@@ -55,6 +60,8 @@ class PolicyService
       @opa_available = status.success?
     end
 
+    # The fallback mirrors the policy document when OPA is unavailable.
+    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def evaluate_fallback(input)
       violations = []
       provider = input['provider'].to_s
@@ -62,12 +69,15 @@ class PolicyService
 
       violations << "Provider #{provider} is not allowed" unless SeeoConfig.allowed_providers.include?(provider)
       violations << 'TTL must be at least 1 minute' if input['ttl_minutes'].to_i < 1
-      violations << "TTL exceeds maximum of #{DEFAULT_POLICIES['max_ttl_minutes']} minutes" if input['ttl_minutes'].to_i > DEFAULT_POLICIES['max_ttl_minutes']
-      violations << "Compute tier #{input['compute_tier']} is not allowed" unless DEFAULT_POLICIES['allowed_compute_tiers'].include?(input['compute_tier'])
-      if input['region'].present? && (!definition || !definition[:regions].key?(input['region']))
-        violations << "Region #{input['region']} is not allowed for #{provider}"
+      if input['ttl_minutes'].to_i > DEFAULT_POLICIES['max_ttl_minutes']
+        violations << "TTL exceeds maximum of #{DEFAULT_POLICIES['max_ttl_minutes']} minutes"
       end
-      if input['storage_tier'].present? && !DEFAULT_POLICIES['allowed_storage_tiers'].include?(input['storage_tier'])
+      unless DEFAULT_POLICIES['allowed_compute_tiers'].include?(input['compute_tier'])
+        violations << "Compute tier #{input['compute_tier']} is not allowed"
+      end
+      violations << "Region #{input['region']} is not allowed for #{provider}" \
+        if input['region'].present? && (!definition || !definition[:regions].key?(input['region']))
+      if input['storage_tier'].present? && DEFAULT_POLICIES['allowed_storage_tiers'].exclude?(input['storage_tier'])
         violations << "Storage tier #{input['storage_tier']} is not allowed"
       end
       if input['volume_size'].present? && input['volume_size'].to_i > DEFAULT_POLICIES['max_volume_size_gb']
@@ -79,6 +89,8 @@ class PolicyService
 
       { 'allow' => violations.empty?, 'deny' => violations }
     end
+
+    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     def provision_input(options)
       {

@@ -10,7 +10,9 @@ class HealthController < ApplicationController
       version: SeeoConfig.app_version,
       mock_mode: SeeoConfig.mock_mode?,
       default_provider: SeeoConfig.default_provider,
-      providers: SeeoConfig.allowed_providers.map { |provider| { id: provider, label: CloudProvider.definition(provider)[:label] } }
+      providers: SeeoConfig.allowed_providers.map do |provider|
+        { id: provider, label: CloudProvider.definition(provider)[:label] }
+      end
     }
   end
 end

@@ -4,26 +4,41 @@ module CloudProvider
   PROVIDERS = {
     'aws' => {
       label: 'Amazon Web Services', short_label: 'AWS', default_region: 'us-east-1',
-      regions: { 'us-east-1' => 'US East (N. Virginia)', 'us-west-2' => 'US West (Oregon)', 'eu-west-1' => 'Europe (Ireland)', 'ap-southeast-1' => 'Asia Pacific (Singapore)' },
+      regions: {
+        'us-east-1' => 'US East (N. Virginia)', 'us-west-2' => 'US West (Oregon)',
+        'eu-west-1' => 'Europe (Ireland)', 'ap-southeast-1' => 'Asia Pacific (Singapore)'
+      },
       compute: { 'small' => 't3.micro', 'medium' => 't3.small', 'large' => 't3.medium' },
       storage: { 'balanced' => 'gp3', 'performance' => 'io2', 'throughput' => 'st1' }
     },
     'azure' => {
       label: 'Microsoft Azure', short_label: 'Azure', default_region: 'eastus',
-      regions: { 'eastus' => 'East US', 'westus2' => 'West US 2', 'westeurope' => 'West Europe', 'southeastasia' => 'Southeast Asia' },
+      regions: {
+        'eastus' => 'East US', 'westus2' => 'West US 2',
+        'westeurope' => 'West Europe', 'southeastasia' => 'Southeast Asia'
+      },
       compute: { 'small' => 'Standard_B1s', 'medium' => 'Standard_B2s', 'large' => 'Standard_D2s_v5' },
       storage: { 'balanced' => 'StandardSSD_LRS', 'performance' => 'Premium_LRS', 'throughput' => 'Standard_LRS' }
     },
     'gcp' => {
       label: 'Google Cloud', short_label: 'Google Cloud', default_region: 'us-central1',
-      regions: { 'us-central1' => 'Iowa', 'us-east1' => 'South Carolina', 'europe-west1' => 'Belgium', 'asia-southeast1' => 'Singapore' },
+      regions: {
+        'us-central1' => 'Iowa', 'us-east1' => 'South Carolina',
+        'europe-west1' => 'Belgium', 'asia-southeast1' => 'Singapore'
+      },
       compute: { 'small' => 'e2-micro', 'medium' => 'e2-small', 'large' => 'e2-medium' },
       storage: { 'balanced' => 'pd-balanced', 'performance' => 'pd-ssd', 'throughput' => 'pd-standard' }
     },
     'oci' => {
       label: 'Oracle Cloud Infrastructure', short_label: 'OCI', default_region: 'us-ashburn-1',
-      regions: { 'us-ashburn-1' => 'Ashburn', 'us-phoenix-1' => 'Phoenix', 'uk-london-1' => 'London', 'ap-singapore-1' => 'Singapore' },
-      compute: { 'small' => 'VM.Standard.E4.Flex', 'medium' => 'VM.Standard.E4.Flex', 'large' => 'VM.Standard.E4.Flex' },
+      regions: {
+        'us-ashburn-1' => 'Ashburn', 'us-phoenix-1' => 'Phoenix',
+        'uk-london-1' => 'London', 'ap-singapore-1' => 'Singapore'
+      },
+      compute: {
+        'small' => 'VM.Standard.E4.Flex', 'medium' => 'VM.Standard.E4.Flex',
+        'large' => 'VM.Standard.E4.Flex'
+      },
       storage: { 'balanced' => 'balanced', 'performance' => 'higher_performance', 'throughput' => 'lower_cost' }
     }
   }.freeze
@@ -53,18 +68,24 @@ module CloudProvider
   end
 
   def region(provider, requested)
-    definition = definition(provider)
-    selected = requested.presence || definition[:default_region]
-    raise ArgumentError, "Region #{selected} is not available in #{provider}" unless definition[:regions].key?(selected)
+    provider_definition = definition(provider)
+    selected = requested.presence || provider_definition[:default_region]
+    unless provider_definition[:regions].key?(selected)
+      raise ArgumentError, "Region #{selected} is not available in #{provider}"
+    end
 
     selected
   end
 
   def compute_shape(provider, tier)
-    definition(provider)[:compute].fetch(tier.to_s) { raise ArgumentError, "Unsupported compute tier #{tier} for #{provider}" }
+    definition(provider)[:compute].fetch(tier.to_s) do
+      raise ArgumentError, "Unsupported compute tier #{tier} for #{provider}"
+    end
   end
 
   def storage_shape(provider, tier)
-    definition(provider)[:storage].fetch(tier.to_s) { raise ArgumentError, "Unsupported storage tier #{tier} for #{provider}" }
+    definition(provider)[:storage].fetch(tier.to_s) do
+      raise ArgumentError, "Unsupported storage tier #{tier} for #{provider}"
+    end
   end
 end

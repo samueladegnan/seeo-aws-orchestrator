@@ -7,7 +7,10 @@ RSpec.describe 'Environments API', type: :request do
   let(:project) { Project.create!(team: team, name: 'api', slug: 'api') }
   let(:admin) { User.create!(team: team, email: 'admin@example.com', role: 'admin') }
 
-  before { project; admin }
+  before do
+    project
+    admin
+  end
 
   it 'requires authentication' do
     get '/environments'
@@ -22,7 +25,8 @@ RSpec.describe 'Environments API', type: :request do
 
   it 'creates a provider-specific environment for an operator' do
     post '/environments',
-         params: { project_name: 'api', provider: 'gcp', region: 'us-central1', compute_tier: 'small', ttl_minutes: 60 },
+         params: { project_name: 'api', provider: 'gcp', region: 'us-central1', compute_tier: 'small',
+                   ttl_minutes: 60 },
          headers: auth_headers(admin)
 
     expect(response).to have_http_status(:created)
@@ -32,7 +36,8 @@ RSpec.describe 'Environments API', type: :request do
   it 'denies viewers' do
     viewer = User.create!(team: team, email: 'viewer@example.com', role: 'viewer')
 
-    post '/environments', params: { project_name: 'api', provider: 'aws', ttl_minutes: 60 }, headers: auth_headers(viewer)
+    post '/environments', params: { project_name: 'api', provider: 'aws', ttl_minutes: 60 },
+                          headers: auth_headers(viewer)
     expect(response).to have_http_status(:forbidden)
   end
 

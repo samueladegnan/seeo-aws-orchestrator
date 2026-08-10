@@ -15,16 +15,19 @@ class GcpService < CliCloudService
     ['gcloud', 'compute', 'instances', 'create', environment.id,
      '--project', ENV.fetch('SEEO_GCP_PROJECT'), '--zone', zone_for(environment),
      '--machine-type', environment.instance_type, '--subnet', ENV.fetch('SEEO_GCP_SUBNET_ID'),
-     '--boot-disk-size', environment.volume_size.to_i.to_s, '--boot-disk-type', environment.volume_type,
+     '--tags', 'seeo-managed', '--boot-disk-size', environment.volume_size.to_i.to_s,
+     '--boot-disk-type', environment.volume_type,
      '--format=json']
   end
 
   def inspect_command(environment)
-    ['gcloud', 'compute', 'instances', 'describe', environment.id, '--project', ENV.fetch('SEEO_GCP_PROJECT'), '--zone', ENV.fetch('SEEO_GCP_ZONE'), '--format=json']
+    ['gcloud', 'compute', 'instances', 'describe', environment.id, '--project', ENV.fetch('SEEO_GCP_PROJECT'),
+     '--zone', ENV.fetch('SEEO_GCP_ZONE'), '--format=json']
   end
 
   def terminate_command(environment)
-    ['gcloud', 'compute', 'instances', 'delete', environment.id, '--project', ENV.fetch('SEEO_GCP_PROJECT'), '--zone', ENV.fetch('SEEO_GCP_ZONE'), '--delete-disks=all', '--quiet', '--format=json']
+    ['gcloud', 'compute', 'instances', 'delete', environment.id, '--project', ENV.fetch('SEEO_GCP_PROJECT'), '--zone',
+     ENV.fetch('SEEO_GCP_ZONE'), '--delete-disks=all', '--quiet', '--format=json']
   end
 
   def normalize_result(result)

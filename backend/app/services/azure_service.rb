@@ -20,11 +20,13 @@ class AzureService < CliCloudService
   end
 
   def inspect_command(environment)
-    ['az', 'vm', 'get-instance-view', '--resource-group', ENV.fetch('SEEO_AZURE_RESOURCE_GROUP'), '--name', environment.id, '--output', 'json']
+    ['az', 'vm', 'get-instance-view', '--resource-group', ENV.fetch('SEEO_AZURE_RESOURCE_GROUP'), '--name',
+     environment.id, '--output', 'json']
   end
 
   def terminate_command(environment)
-    ['az', 'vm', 'delete', '--resource-group', ENV.fetch('SEEO_AZURE_RESOURCE_GROUP'), '--name', environment.id, '--yes', '--output', 'json']
+    ['az', 'vm', 'delete', '--resource-group', ENV.fetch('SEEO_AZURE_RESOURCE_GROUP'), '--name', environment.id,
+     '--yes', '--output', 'json']
   end
 
   def normalize_result(result)

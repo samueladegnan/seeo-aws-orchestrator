@@ -14,7 +14,8 @@ class AwsService < CliCloudService
   def launch_command(environment)
     ['aws', 'ec2', 'run-instances', '--image-id', ENV.fetch('SEEO_AWS_IMAGE_ID'),
      '--instance-type', environment.instance_type, '--subnet-id', ENV.fetch('SEEO_AWS_SUBNET_ID'),
-     '--security-group-ids', ENV.fetch('SEEO_AWS_SECURITY_GROUP_ID'), '--min-count', '1', '--max-count', '1', '--output', 'json']
+     '--security-group-ids', ENV.fetch('SEEO_AWS_SECURITY_GROUP_ID'), '--min-count', '1',
+     '--max-count', '1', '--output', 'json']
   end
 
   def inspect_command(environment)

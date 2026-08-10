@@ -11,7 +11,9 @@ RSpec.describe TtlMonitorJob, type: :job do
     )
     service = instance_double(MockCloudService, list_expired_environments: [expired])
     allow(SeeoConfig).to receive(:allowed_providers).and_return(%w[aws gcp])
-    allow(CloudService).to receive(:for).with(provider: 'aws').and_return(instance_double(MockCloudService, list_expired_environments: []))
+    allow(CloudService).to receive(:for).with(provider: 'aws').and_return(
+      instance_double(MockCloudService, list_expired_environments: [])
+    )
     allow(CloudService).to receive(:for).with(provider: 'gcp').and_return(service)
     allow(service).to receive(:force_terminate_environment).with(expired.id)
 
@@ -22,7 +24,8 @@ RSpec.describe TtlMonitorJob, type: :job do
 
   it 'continues when a configured provider is unavailable' do
     allow(SeeoConfig).to receive(:allowed_providers).and_return(%w[azure])
-    allow(CloudService).to receive(:for).with(provider: 'azure').and_raise(CloudAdapter::UnsupportedProviderError, 'not configured')
+    allow(CloudService).to receive(:for).with(provider: 'azure').and_raise(CloudAdapter::UnsupportedProviderError,
+                                                                           'not configured')
 
     expect { described_class.new.perform }.not_to raise_error
   end

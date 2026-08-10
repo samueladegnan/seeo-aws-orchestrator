@@ -27,11 +27,16 @@ RSpec.describe 'Session isolation', type: :request do
     session_a = SessionTokenService.issue
     session_b = SessionTokenService.issue
 
-    post '/environments', params: { project_name: 'alpha', provider: 'aws', ttl_minutes: 60, compute_tier: 'small' }, headers: headers_for(session_a)
+    post '/environments', params: { project_name: 'alpha', provider: 'aws', ttl_minutes: 60, compute_tier: 'small' },
+                          headers: headers_for(session_a)
     expect(response).to have_http_status(:created)
     alpha_id = response.parsed_body['id']
 
-    post '/environments', params: { project_name: 'beta', provider: 'gcp', region: 'us-central1', ttl_minutes: 60, compute_tier: 'small' }, headers: headers_for(session_b)
+    post '/environments',
+         params: {
+           project_name: 'beta', provider: 'gcp', region: 'us-central1',
+           ttl_minutes: 60, compute_tier: 'small'
+         }, headers: headers_for(session_b)
     expect(response).to have_http_status(:created)
 
     get '/environments', headers: headers_for(session_a)

@@ -25,7 +25,8 @@ class OciService < CliCloudService
   end
 
   def terminate_command(environment)
-    ['oci', 'compute', 'instance', 'terminate', '--instance-id', environment.provider_resource_id, '--preserve-boot-volume', 'false', '--force', '--output', 'json']
+    ['oci', 'compute', 'instance', 'terminate', '--instance-id', environment.provider_resource_id,
+     '--preserve-boot-volume', 'false', '--force', '--output', 'json']
   end
 
   def shape_config_for(environment)

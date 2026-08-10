@@ -10,7 +10,8 @@ class CloudService
   end
 
   def create_environment(project, ttl_minutes, compute_tier = nil, options = {})
-    adapter_for(options[:provider].presence || @provider).create_environment(project, ttl_minutes, compute_tier, options)
+    adapter_for(options[:provider].presence || @provider).create_environment(project, ttl_minutes, compute_tier,
+                                                                             options)
   end
 
   def list_environments(status_filter = nil)
@@ -61,6 +62,8 @@ class CloudService
       return adapter_for(record.provider)
     end
 
-    adapters_for_read.find { |adapter| adapter.get_environment(environment_id) } || adapter_for(@provider || SeeoConfig.default_provider)
+    adapters_for_read.find do |adapter|
+      adapter.get_environment(environment_id)
+    end || adapter_for(@provider || SeeoConfig.default_provider)
   end
 end

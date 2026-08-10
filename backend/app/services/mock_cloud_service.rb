@@ -17,11 +17,15 @@ class MockCloudService < CloudAdapter
     provider = options[:provider].presence || @provider
     fingerprint = request_fingerprint(project, ttl_minutes, compute_tier, options.merge(provider: provider))
     reused = false
+    environment = nil
 
     MUTEX.synchronize do
       existing = find_by_idempotency_locked(options[:idempotency_key], provider)
       if existing
-        raise ArgumentError, 'Idempotency key was already used with different request parameters' if existing.request_fingerprint != fingerprint
+        if existing.request_fingerprint != fingerprint
+          raise ArgumentError,
+                'Idempotency key was already used with different request parameters'
+        end
 
         existing.reused = true
         environment = existing
@@ -41,11 +45,19 @@ class MockCloudService < CloudAdapter
   end
 
   def get_environment(environment_id)
-    MUTEX.synchronize { STORE.find { |env| env.id == environment_id && env.provider == @provider && owned_by_current_context?(env) } }
+    MUTEX.synchronize do
+      STORE.find do |env|
+        env.id == environment_id && env.provider == @provider && owned_by_current_context?(env)
+      end
+    end
   end
 
   def list_environments(status_filter = nil)
-    environments = MUTEX.synchronize { STORE.select { |env| env.provider == @provider && owned_by_current_context?(env) }.dup }
+    environments = MUTEX.synchronize do
+      STORE.select do |env|
+        env.provider == @provider && owned_by_current_context?(env)
+      end.dup
+    end
     status_filter ? environments.select { |env| env.status == status_filter } : environments
   end
 
@@ -69,7 +81,9 @@ class MockCloudService < CloudAdapter
 
   def terminate_environment(environment_id)
     MUTEX.synchronize do
-      original = STORE.find { |env| env.id == environment_id && env.provider == @provider && owned_by_current_context?(env) }
+      original = STORE.find do |env|
+        env.id == environment_id && env.provider == @provider && owned_by_current_context?(env)
+      end
       raise ArgumentError, "Environment #{environment_id} not found" unless original
 
       delete_environment(original)
@@ -89,6 +103,8 @@ class MockCloudService < CloudAdapter
 
   private
 
+  # Provider-neutral mock records intentionally assemble the complete lifecycle shape.
+  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
   def build_environment(project, ttl_minutes, compute_tier, options)
     provider = options[:provider].presence || @provider
     project_name = project.is_a?(Project) ? project.name : project
@@ -131,6 +147,8 @@ class MockCloudService < CloudAdapter
     )
   end
 
+  # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+
   def request_fingerprint(project, ttl_minutes, compute_tier, options)
     Digest::SHA256.hexdigest({
       provider: options[:provider].presence || @provider,
@@ -149,7 +167,10 @@ class MockCloudService < CloudAdapter
   def find_by_idempotency_locked(key, provider)
     return nil if key.blank?
 
-    STORE.find { |env| env.idempotency_key == key && env.provider == provider && owned_by_current_context?(env) && env.status != 'terminated' }
+    STORE.find do |env|
+      env.idempotency_key == key && env.provider == provider &&
+        owned_by_current_context?(env) && env.status != 'terminated'
+    end
   end
 
   def active_environment_count_locked

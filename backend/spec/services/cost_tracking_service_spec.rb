@@ -5,8 +5,10 @@ require 'rails_helper'
 RSpec.describe CostTrackingService do
   describe '.estimate' do
     it 'estimates provider-specific compute and storage' do
-      aws = described_class.estimate(provider: 'aws', compute_tier: 'small', ttl_minutes: 60, volume_size: 10, storage_tier: 'balanced')
-      gcp = described_class.estimate(provider: 'gcp', compute_tier: 'small', ttl_minutes: 60, volume_size: 10, storage_tier: 'balanced')
+      aws = described_class.estimate(provider: 'aws', compute_tier: 'small', ttl_minutes: 60, volume_size: 10,
+                                     storage_tier: 'balanced')
+      gcp = described_class.estimate(provider: 'gcp', compute_tier: 'small', ttl_minutes: 60, volume_size: 10,
+                                     storage_tier: 'balanced')
 
       expect(aws).to be > gcp
       expect(aws).to be > 0

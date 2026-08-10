@@ -71,7 +71,8 @@ class EnvironmentsController < ApplicationController
   def create_environment
     project_name = @project&.name || environment_params.require(:project_name)
     ttl_minutes = environment_params.require(:ttl_minutes).to_i
-    requested_compute = environment_params[:compute_tier].presence || environment_params[:instance_type].presence || 'small'
+    requested_compute = environment_params[:compute_tier].presence ||
+                        environment_params[:instance_type].presence || 'small'
     provider = environment_params[:provider].presence || SeeoConfig.default_provider
     options = build_create_options.merge(provider: provider)
 
@@ -135,6 +136,8 @@ class EnvironmentsController < ApplicationController
     }
   end
 
+  # The policy boundary intentionally receives the complete normalized request.
+  # rubocop:disable Metrics/ParameterLists
   def validate_create_policy!(service, project_name, ttl_minutes, provider, requested_compute, options)
     PolicyService.check_provision!(
       project_name: project_name,
@@ -148,6 +151,7 @@ class EnvironmentsController < ApplicationController
       team: Current.team
     )
   end
+  # rubocop:enable Metrics/ParameterLists
 
   def normalize_compute_tier(value)
     return value.to_s if CloudProvider::TIERS.include?(value.to_s)

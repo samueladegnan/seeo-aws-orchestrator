@@ -14,7 +14,7 @@ RSpec.describe HealthController, type: :controller do
         'mock_mode' => true,
         'default_provider' => 'aws'
       )
-      expect(response.parsed_body['providers'].map { |provider| provider['id'] }).to include('aws', 'azure', 'gcp', 'oci')
+      expect(response.parsed_body['providers'].pluck('id')).to include('aws', 'azure', 'gcp', 'oci')
     end
   end
 end

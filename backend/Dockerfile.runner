@@ -19,20 +19,19 @@ RUN apt-get update -qq && apt-get install -y --no-install-recommends \
       unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# AWS CLI v2 publishes architecture-specific archives. Verify the archive
-# before installation; no credentials enter this layer.
+# AWS CLI v2 archive and checksums are pinned for reproducible builds.
 RUN set -eux; \
     case "${TARGETARCH:-amd64}" in \
-      amd64) aws_arch="x86_64" ;; \
-      arm64) aws_arch="aarch64" ;; \
+      amd64) aws_arch="x86_64"; aws_sha256="f5fbb3304307ce008756356fadf7855d377b4342da9911728669265ec1ec36dc" ;; \
+      arm64) aws_arch="aarch64"; aws_sha256="daec73b304ffafa595172a6a598a85bd92bde145c25acf97270d44430e42bcd6" ;; \
       *) echo "Unsupported AWS CLI architecture: ${TARGETARCH}" >&2; exit 1 ;; \
     esac; \
-    curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-${aws_arch}.zip" -o /tmp/awscliv2.zip; \
-    curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-${aws_arch}.zip.sha256" -o /tmp/awscliv2.zip.sha256; \
-    (cd /tmp && sha256sum -c awscliv2.zip.sha256); \
+    aws_url="https://awscli.amazonaws.com/awscli-exe-linux-${aws_arch}-2.31.0.zip"; \
+    curl -fsSL "$aws_url" -o /tmp/awscliv2.zip; \
+    echo "${aws_sha256}  /tmp/awscliv2.zip" | sha256sum -c -; \
     unzip -q /tmp/awscliv2.zip -d /tmp; \
     /tmp/aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli; \
-    rm -rf /tmp/aws /tmp/awscliv2.zip /tmp/awscliv2.zip.sha256
+    rm -rf /tmp/aws /tmp/awscliv2.zip
 
 # Azure CLI via Microsoft's signed package repository.
 RUN set -eux; \
