@@ -7,48 +7,56 @@ security_report: true
 ---
 
 <div class="security-report-page">
-  <h2>Security report</h2>
-  <p class="security-report-intro">This is the security report for SEEO, a project I built and maintain. It covers the Rails backend and records the scan scope and review notes alongside the rest of this case study.</p>
+  <div class="report-status-label"><span class="status-dot status-dot--example" aria-hidden="true"></span> Pending <code>backend/</code> self-assessment</div>
+  <h1>Security report</h1>
+  <p class="security-report-intro">This is the security report for SEEO, a project built and maintained by Samuel Degnan. It covers the Rails backend and records the scan scope and review notes alongside the rest of this case study.</p>
 
-  <div class="security-report-context">
-    <div class="report-status-label"><span class="status-dot status-dot--example" aria-hidden="true"></span> Samuel Degnan's <code>backend/</code> self-assessment</div>
-    <p class="security-report-lead">I generated this review with Brakeman and AI CI/CD Security Guardrail v1.1.0. It is an automated review aid, not a substitute for engineering judgment.</p>
-    <dl class="security-report-details">
-      <div>
-        <dt>Source scan</dt>
-        <dd>Brakeman SARIF generated from <code>backend/</code> · <a href="https://github.com/samueladegnan/ai-cicd-security-guardrail/releases/tag/v1.1.0">AI Guardrail v1.1.0</a></dd>
-      </div>
-      <div>
-        <dt>Triage provider</dt>
-        <dd>Mock provider is the default demo configuration. Source stays in CI.</dd>
-      </div>
-      <div>
-        <dt>Report scope</dt>
-        <dd>SEEO <code>backend/</code> tree</dd>
-      </div>
-      <div>
-        <dt>Project owner</dt>
-        <dd>Samuel Degnan</dd>
-      </div>
-    </dl>
-    <p class="security-report-meta security-report-timestamp">Published with the Pages build. I configured the workflow, but this Pages site does not embed its CI artifact; the findings below are clearly labeled illustrative data.</p>
-  </div>
+  <dl class="security-report-details">
+    <div>
+      <dt>Source scan</dt>        <dd>Brakeman SARIF from <code>backend/</code> · triaged by <a href="https://github.com/samueladegnan/ai-cicd-security-guardrail/releases/tag/v1.1.0">AI Guardrail v1.1.0</a></dd>
+    </div>
+    <div>
+      <dt>Triage provider</dt>
+      <dd>Deterministic mock provider. Source stays in CI.</dd>
+    </div>
+    <div>
+      <dt>Report scope</dt>
+      <dd>SEEO <code>backend/</code> tree</dd>
+    </div>
+    <div>
+      <dt>Project owner</dt>
+      <dd>Samuel Degnan</dd>
+    </div>
+  </dl>
+
+  <p class="security-report-meta security-report-timestamp">Published with the Pages build. The workflow runs in CI; this page does not embed its generated artifact.</p>
 
   <div class="report-disclaimer" role="note">
-    <strong>How to read this report:</strong> these are automated triage results, not a guarantee that the repository is vulnerability-free. Findings should be verified by an engineer before being accepted or dismissed.
+    <strong>How to read this report:</strong> these are automated triage results, not a guarantee that the repository is vulnerability-free. Verify findings with an engineer before accepting or dismissing them.
+  </div>
+
+  <h2>Scoped scan findings</h2>
+  <p class="security-report-lead">Findings from the SEEO backend self-assessment.</p>
+
+  <div class="live-scan-pending" role="status">
+    <span class="live-scan-pending__icon" aria-hidden="true">⌛</span>
+    <div>
+      <span class="live-scan-pending__label">Live report pending</span>
+      <h3>The latest CI report is not embedded here yet</h3>
+      <p>The generated report remains in the CI artifact for each workflow run. Until a Pages build embeds that artifact, the dashboard below uses clearly labeled example data so the review format remains inspectable. <a href="https://github.com/samueladegnan/seeo-aws-orchestrator/actions/workflows/guardrail.yml">Open the Guardrail workflow and choose a run</a>.</p>
+    </div>
   </div>
 
   <div class="example-report-notice" role="status">
-    <span class="example-report-notice__label">Example report · live scan unavailable</span>
-    <h2>Illustrative findings are shown below</h2>
-    <p>The live CI report is not embedded in this Pages build, so I committed synthetic findings to demonstrate the review format. Every finding below is sample data and is <strong>not a real issue in this repository</strong>.</p>
+    <span class="example-report-notice__label">Illustrative findings are shown below</span>
+    <p>These committed examples are not issues in this repository. They demonstrate how Brakeman and Guardrail results are presented and reviewed.</p>
   </div>
 
   <section class="summary-card" aria-labelledby="summary-title">
     <div class="summary-header">
       <div>
         <h2 id="summary-title" class="summary-title">Illustrative triage summary</h2>
-        <p class="summary-subtitle">Sample values only. Check the CI artifact for a specific run.</p>
+        <p class="summary-subtitle">Example values only. Check the CI artifact for a specific run.</p>
       </div>
       <span class="example-badge">Example data</span>
     </div>
