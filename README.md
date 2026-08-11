@@ -1,6 +1,6 @@
 # SEEO: Secure Ephemeral Environment Orchestrator
 
-SEEO is a full-stack multi-cloud control plane for requesting short-lived environments, watching their lifecycle, and cleaning them up before they become forgotten infrastructure. It is designed to make the safe path easy: every demo request has an expiry, an owner, a policy decision, and a cleanup path. The project combines a Rails API, tenant-aware authorization, provider-aware policy checks, a React dashboard, live updates, cost estimates, and Terraform foundations for AWS, Azure, Google Cloud, and OCI.
+I built SEEO as a full-stack multi-cloud control plane for requesting short-lived environments, watching their lifecycle, and cleaning them up before they become forgotten infrastructure. The safe path is the point: every demo request has an expiry, an owner, a policy decision, and a cleanup path. It combines a Rails API, tenant-aware authorization, provider-aware policy checks, a React dashboard, live updates, cost estimates, and Terraform foundations for AWS, Azure, Google Cloud, and OCI.
 
 > **Project site:** [samueladegnan.github.io/seeo-aws-orchestrator](https://samueladegnan.github.io/seeo-aws-orchestrator/) · [Launch the live mock demo](https://seeo-dashboard.vercel.app/)
 

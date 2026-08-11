@@ -1,6 +1,6 @@
 # SEEO Backend (Ruby on Rails)
 
-The Rails API is the control plane for short-lived environments across AWS, Azure, Google Cloud, and OCI. It authenticates tenants, evaluates provider-aware policy, persists provider-neutral lifecycle state, delegates VM operations to a cloud adapter, streams updates, estimates cost, and expires resources through a scheduled cleanup job.
+I built the Rails API as the control plane for short-lived environments across AWS, Azure, Google Cloud, and OCI. It authenticates tenants, checks each request against provider-aware policy, stores lifecycle state, delegates VM work to an adapter, streams updates, estimates cost, and cleans up expired resources.
 
 ## Requirements
 

@@ -1,6 +1,6 @@
 ---
 title: Security Report | SEEO
-description: Automated Brakeman and AI CI/CD Security Guardrail review context for the SEEO Rails backend.
+description: Samuel Degnan's security report for the SEEO Rails backend, with Brakeman and Guardrail review notes.
 layout: default
 permalink: /security/
 security_report: true
@@ -8,11 +8,11 @@ security_report: true
 
 <div class="security-report-page">
   <h2>Security report</h2>
-  <p class="security-report-intro">An automated review of the SEEO backend, presented with the same engineering notes and practical context as the rest of this case study.</p>
+  <p class="security-report-intro">This is the security report for SEEO, a project I built and maintain. It covers the Rails backend and records the scan scope and review notes alongside the rest of this case study.</p>
 
   <div class="security-report-context">
-    <div class="report-status-label"><span class="status-dot status-dot--example" aria-hidden="true"></span> Automated <code>backend/</code> self-assessment</div>
-    <p class="security-report-lead">This page explains the report produced by Brakeman and AI CI/CD Security Guardrail v1.1.0 for the SEEO Rails backend. It is an automated review aid, not a substitute for engineering judgment.</p>
+    <div class="report-status-label"><span class="status-dot status-dot--example" aria-hidden="true"></span> Samuel Degnan's <code>backend/</code> self-assessment</div>
+    <p class="security-report-lead">I generated this review with Brakeman and AI CI/CD Security Guardrail v1.1.0. It is an automated review aid, not a substitute for engineering judgment.</p>
     <dl class="security-report-details">
       <div>
         <dt>Source scan</dt>
@@ -26,8 +26,12 @@ security_report: true
         <dt>Report scope</dt>
         <dd>SEEO <code>backend/</code> tree</dd>
       </div>
+      <div>
+        <dt>Project owner</dt>
+        <dd>Samuel Degnan</dd>
+      </div>
     </dl>
-    <p class="security-report-meta security-report-timestamp">Published with the Pages build. The current build presents workflow context and illustrative data rather than a live scan artifact.</p>
+    <p class="security-report-meta security-report-timestamp">Published with the Pages build. I configured the workflow, but this Pages site does not embed its CI artifact; the findings below are clearly labeled illustrative data.</p>
   </div>
 
   <div class="report-disclaimer" role="note">
@@ -37,7 +41,7 @@ security_report: true
   <div class="example-report-notice" role="status">
     <span class="example-report-notice__label">Example report · live scan unavailable</span>
     <h2>Illustrative findings are shown below</h2>
-    <p>The live CI report is not embedded in this Pages build, so this page uses a committed synthetic report to demonstrate the review format. Every finding below is sample data and is <strong>not a real issue in this repository</strong>.</p>
+    <p>The live CI report is not embedded in this Pages build, so I committed synthetic findings to demonstrate the review format. Every finding below is sample data and is <strong>not a real issue in this repository</strong>.</p>
   </div>
 
   <section class="summary-card" aria-labelledby="summary-title">

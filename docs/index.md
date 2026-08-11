@@ -1,6 +1,6 @@
 ---
 title: SEEO | Secure Ephemeral Environment Orchestrator
-description: SEEO is a multi-cloud control plane for requesting, observing, and expiring short-lived environments across AWS, Azure, Google Cloud, and OCI.
+description: Samuel Degnan's SEEO project: a multi-cloud control plane for requesting, observing, and expiring short-lived environments.
 layout: default
 permalink: /
 ---
@@ -13,7 +13,7 @@ permalink: /
 
 <h2>A practical multi-cloud platform for short-lived environments</h2>
 
-<p><strong>SEEO</strong> gives developers a dashboard and API for requesting temporary environments across AWS, Azure, Google Cloud, and OCI. A provider-neutral adapter contract keeps the lifecycle consistent while each cloud maps the request to its own region, compute shape, storage class, and resource identifiers.</p>
+<p><strong>SEEO</strong> is my dashboard and API for requesting temporary environments across AWS, Azure, Google Cloud, and OCI. A provider-neutral adapter contract keeps the lifecycle consistent while each cloud maps the request to its own region, compute shape, storage class, and resource identifiers.</p>
 
 <hr>
 

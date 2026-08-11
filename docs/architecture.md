@@ -1,13 +1,13 @@
 ---
 title: Architecture | Rails, React, Terraform, and Multi-cloud Adapters
-description: Explore the SEEO multi-cloud adapter contract, shared Rails control plane, provider-aware policy, and Terraform foundations for AWS, Azure, Google Cloud, and OCI.
+description: How Samuel Degnan structured SEEO's Rails control plane, multi-cloud adapters, policy checks, and Terraform foundations.
 layout: default
 permalink: /architecture/
 ---
 
 # SEEO Architecture
 
-SEEO treats AWS, Azure, Google Cloud, and OCI as first-class providers from the same lifecycle contract. Rails owns authentication, authorization, policy, environment state, audit events, cost estimates, live updates, and TTL cleanup. Provider adapters own only the cloud-specific resource calls.
+I designed SEEO so AWS, Azure, Google Cloud, and OCI share one lifecycle contract. Rails owns authentication, authorization, policy, environment state, audit events, cost estimates, live updates, and TTL cleanup. Provider adapters own only the cloud-specific resource calls.
 
 ## High-level flow
 

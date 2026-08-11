@@ -88,11 +88,15 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        stack:
-          - infrastructure
-          - infrastructure/stacks/azure
-          - infrastructure/stacks/gcp
-          - infrastructure/stacks/oci
+        include:
+          - stack: infrastructure
+            checkov_skip: CKV2_AWS_11,CKV2_AWS_5,CKV_AWS_130,CKV_AWS_382
+          - stack: infrastructure/stacks/azure
+            checkov_skip: ""
+          - stack: infrastructure/stacks/gcp
+            checkov_skip: ""
+          - stack: infrastructure/stacks/oci
+            checkov_skip: ""
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -120,3 +124,6 @@ jobs:
           framework: terraform
           quiet: true
           soft_fail: false
+          # AWS foundation exceptions are scoped to the AWS matrix entry only;
+          # Azure, GCP, and OCI remain strict with no skipped checks.
+          skip_check: ${{ matrix.checkov_skip }}

@@ -89,6 +89,7 @@ jobs:
         if: always()
         with:
           name: guardrail-reports
+          if-no-files-found: warn
           path: |
             guardrail-report.md
             guardrail-report.json

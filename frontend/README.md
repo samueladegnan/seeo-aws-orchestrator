@@ -1,6 +1,6 @@
 # SEEO Dashboard (React)
 
-A React dashboard for requesting, monitoring, and expiring short-lived environments across AWS, Azure, Google Cloud, and OCI through the SEEO API.
+This React dashboard is the browser front end for SEEO. It lets you request, monitor, and expire short-lived environments across AWS, Azure, Google Cloud, and OCI through the API.
 
 ## Quick start
 

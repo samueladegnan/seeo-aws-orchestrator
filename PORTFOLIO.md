@@ -4,7 +4,7 @@ Use these points when discussing SEEO in interviews or on a resume. They describ
 
 ## Short description
 
-Built a Rails and React control plane for short-lived development environments across AWS, Azure, Google Cloud, and OCI, with provider-neutral lifecycle state, policy-as-code, tenant-scoped realtime updates, TTL cleanup, cost estimation, and a credential-free multi-cloud demo.
+I built a Rails and React control plane for short-lived development environments across AWS, Azure, Google Cloud, and OCI. It keeps lifecycle state in one place, checks requests with policy-as-code, pushes tenant-scoped updates, expires old environments, estimates cost, and ships with a credential-free multi-cloud demo.
 
 ## Resume-style bullets
 

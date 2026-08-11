@@ -1,6 +1,6 @@
 title: SEEO
 name: SEEO - Secure Ephemeral Environment Orchestrator
-description: "A full-stack multi-cloud control plane for requesting, observing, and expiring secure TTL-bound environments with Rails, React, policy checks, live updates, and Terraform foundations."
+description: "Samuel Degnan's SEEO project: a Rails and React control plane for requesting, observing, and expiring short-lived environments across four clouds."
 lang: en
 author: Samuel Degnan
 repository: samueladegnan/seeo-aws-orchestrator
