@@ -46,7 +46,7 @@ bin/rails server
 | `DATABASE_URL` | Rails control-plane database | `storage/development.sqlite3` |
 | `SEEO_TTL_CHECK_INTERVAL_SECONDS` | TTL scan interval | `60` |
 
-Provider adapters implement the same lifecycle methods: create, list, refresh, terminate, and cleanup. The public demo uses `MockCloudService`, which simulates all four providers without creating billable resources. Real mode uses the selected provider CLI and requires its credentials through workload identity or a secret manager, the CLI binary, network outputs, image settings, and provider-specific integration tests before disabling mock mode. The browser-visible demo key is never valid for real mode.
+Provider adapters implement the same lifecycle methods: create, list, refresh, terminate, and cleanup. The public demo uses `MockCloudService`, which simulates all four providers without creating billable resources. Real mode uses the selected provider CLI. It requires credentials through workload identity or a secret manager, the CLI binary, network outputs, image settings, and provider-specific integration tests before mock mode is disabled. The browser-visible demo key is never valid for real mode.
 
 ## Authentication
 
@@ -76,7 +76,7 @@ docker build -t seeo-backend .
 docker run --rm -p 3000:3000 --env-file .env seeo-backend
 ```
 
-The default image is intended for the safe mock deployment. `Dockerfile.runner` provides a credential-free runner image with AWS CLI, Azure CLI, Google Cloud CLI, and OCI CLI installed. Authenticate that image only at runtime with workload identity, short-lived credentials, or mounted provider configuration; never add credentials to the image or repository.
+The default image is intended for the safe mock deployment. `Dockerfile.runner` provides a credential-free runner image with AWS CLI, Azure CLI, Google Cloud CLI, and OCI CLI installed. Authenticate that image only at runtime with workload identity, short-lived credentials, or mounted provider configuration. Never add credentials to the image or repository.
 
 ## Provider contract tests
 

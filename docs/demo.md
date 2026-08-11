@@ -19,7 +19,7 @@ SEEO is a React and Vite dashboard for requesting, monitoring, and terminating s
   <a class="btn" href="https://seeo-dashboard.vercel.app/" target="_blank" rel="noopener noreferrer">Launch Live Demo</a>
 </div>
 
-> **Wake-up time:** the free Render backend may need **30–50 seconds** after a quiet period. The dashboard displays a wake-up state while it retries the health check.
+> **Wake-up time:** the free Render backend may need **30 to 50 seconds** after a quiet period. The dashboard displays a wake-up state while it retries the health check.
 
 > **If it looks stuck:** ad blockers and privacy extensions sometimes block `.onrender.com` requests or WebSocket connections. Try a private window or temporarily disable the extension.
 

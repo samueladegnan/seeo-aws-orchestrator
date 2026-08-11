@@ -7,17 +7,18 @@ security_report: true
 ---
 
 <div class="security-report-page">
-  <div class="report-status-label"><span class="status-dot status-dot--example" aria-hidden="true"></span> Pending <code>backend/</code> self-assessment</div>
+  <div class="report-status-label"><span class="status-dot status-dot--success" aria-hidden="true"></span> Guardrail passed <code>backend/</code></div>
   <h1>Security report</h1>
-  <p class="security-report-intro">This is the security report for SEEO, a project built and maintained by Samuel Degnan. It covers the Rails backend and records the scan scope and review notes alongside the rest of this case study.</p>
+  <p class="security-report-intro">This is the security report for SEEO, a project built and maintained by Samuel Degnan. The referenced Guardrail workflow completed successfully with no blocking issues reported for the Rails backend. This page keeps the scan scope and review notes alongside the rest of the case study.</p>
 
   <dl class="security-report-details">
     <div>
-      <dt>Source scan</dt>        <dd>Brakeman SARIF from <code>backend/</code> · triaged by <a href="https://github.com/samueladegnan/ai-cicd-security-guardrail/releases/tag/v1.1.0">AI Guardrail v1.1.0</a></dd>
+      <dt>Source scan</dt>
+      <dd>Brakeman SARIF from <code>backend/</code>, triaged by <a href="https://github.com/samueladegnan/ai-cicd-security-guardrail/releases/tag/v1.1.0">AI Guardrail v1.1.0</a></dd>
     </div>
     <div>
-      <dt>Triage provider</dt>
-      <dd>Deterministic mock provider. Source stays in CI.</dd>
+      <dt>Scan result</dt>
+      <dd>Passed. No blocking issues reported.</dd>
     </div>
     <div>
       <dt>Report scope</dt>
@@ -29,21 +30,21 @@ security_report: true
     </div>
   </dl>
 
-  <p class="security-report-meta security-report-timestamp">Published with the Pages build. The workflow runs in CI; this page does not embed its generated artifact.</p>
+  <p class="security-report-meta security-report-timestamp">Published with the Pages build. The generated reports remain available in <a href="https://github.com/samueladegnan/seeo-aws-orchestrator/actions/runs/31445238166">successful Guardrail run #31445238166</a>. This static page uses example rows to show the report format.</p>
 
   <div class="report-disclaimer" role="note">
-    <strong>How to read this report:</strong> these are automated triage results, not a guarantee that the repository is vulnerability-free. Verify findings with an engineer before accepting or dismissing them.
+    <strong>How to read this report:</strong> the CI workflow completed without a blocking Guardrail result. A passing workflow is not a guarantee that the repository is vulnerability-free. Review future findings with an engineer before accepting or dismissing them.
   </div>
 
   <h2>Scoped scan findings</h2>
-  <p class="security-report-lead">Findings from the SEEO backend self-assessment.</p>
+  <p class="security-report-lead">The referenced Guardrail run completed successfully. The examples below are interface data, not findings from that run.</p>
 
-  <div class="live-scan-pending" role="status">
-    <span class="live-scan-pending__icon" aria-hidden="true">⌛</span>
+  <div class="live-scan-success" role="status">
+    <span class="live-scan-success__icon" aria-hidden="true">✓</span>
     <div>
-      <span class="live-scan-pending__label">Live report pending</span>
-      <h3>The latest CI report is not embedded here yet</h3>
-      <p>The generated report remains in the CI artifact for each workflow run. Until a Pages build embeds that artifact, the dashboard below uses clearly labeled example data so the review format remains inspectable. <a href="https://github.com/samueladegnan/seeo-aws-orchestrator/actions/workflows/guardrail.yml">Open the Guardrail workflow and choose a run</a>.</p>
+      <span class="live-scan-success__label">Guardrail scan complete</span>
+      <h3>No blocking issues reported by the latest CI run</h3>
+      <p>Brakeman generated the source report and Guardrail completed its triage. GitHub Pages does not embed the generated artifact, so the report table below uses clearly labeled examples instead of presenting them as live findings. <a href="https://github.com/samueladegnan/seeo-aws-orchestrator/actions/workflows/guardrail.yml">Open the Guardrail workflow</a>.</p>
     </div>
   </div>
 
@@ -56,7 +57,7 @@ security_report: true
     <div class="summary-header">
       <div>
         <h2 id="summary-title" class="summary-title">Illustrative triage summary</h2>
-        <p class="summary-subtitle">Example values only. Check the CI artifact for a specific run.</p>
+        <p class="summary-subtitle">Example values only. Open the successful CI run for the generated reports.</p>
       </div>
       <span class="example-badge">Example data</span>
     </div>
@@ -90,14 +91,14 @@ security_report: true
         </thead>
         <tbody>
           <tr>
-            <td><strong>Audit log metadata exposure</strong><br><small>Illustrative finding</small></td>
+            <td><strong>Audit log metadata exposure</strong><br><small>Illustrative example</small></td>
             <td class="finding-loc"><code>backend/app/services/audit_log_service.rb</code><br><small>Example line 42</small></td>
             <td>Information disclosure</td>
             <td><span class="guardrail-badge verdict-unclear">Low</span></td>
             <td><span class="guardrail-badge verdict-unclear">Review</span></td>
           </tr>
           <tr>
-            <td><strong>Provider command boundary</strong><br><small>Illustrative finding</small></td>
+            <td><strong>Provider command boundary</strong><br><small>Illustrative example</small></td>
             <td class="finding-loc"><code>backend/app/services/cli_cloud_service.rb</code><br><small>Example line 118</small></td>
             <td>Command execution</td>
             <td><span class="guardrail-badge verdict-unclear">Low</span></td>
@@ -114,7 +115,7 @@ security_report: true
 
   <section class="detail-block" aria-labelledby="finding-one-title">
     <h3 id="finding-one-title">Example 1. Audit log metadata exposure</h3>
-    <p><strong>Risk:</strong> a hypothetical serializer that records an entire environment object could expose infrastructure metadata that operators do not need for forensics.</p>
+    <p><strong>Risk:</strong> a hypothetical serializer that records an entire environment object could expose infrastructure metadata that operators do not need for incident review.</p>
     <p><strong>Recommendation:</strong> keep the audit schema explicit. Log the environment ID, project, actor, action, and timestamp. Redact provider-specific identifiers unless an operational use case requires them.</p>
     <p class="muted"><strong>Illustrative example.</strong> This is not a Brakeman result from the current repository.</p>
   </section>

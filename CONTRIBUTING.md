@@ -57,7 +57,7 @@ Provider adapter contract tests use checked-in JSON fixtures and stubbed subproc
 
 ## Change guidelines
 
-- Keep provider-specific behavior inside an adapter; do not add cloud branching to controllers or the React dashboard.
+- Keep provider-specific behavior inside an adapter. Do not add cloud branching to controllers or the React dashboard.
 - Never commit `.env`, credentials, private keys, Terraform state, or provider configuration files.
 - Update the relevant README or documentation page when behavior or deployment assumptions change.
 - Add a regression test for lifecycle, authorization, policy, idempotency, or cleanup changes.

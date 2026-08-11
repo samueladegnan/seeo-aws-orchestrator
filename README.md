@@ -29,7 +29,7 @@ Temporary environments are useful for previews, debugging, and integration work.
 2. Create a short-lived environment, open **Details**, and inspect normalized provider/resource fields.
 3. Terminate it and observe that the record disappears from the browser-scoped session.
 4. Read [Architecture](https://samueladegnan.github.io/seeo-aws-orchestrator/architecture/), [API documentation](https://samueladegnan.github.io/seeo-aws-orchestrator/api/), and the [Security Report](https://samueladegnan.github.io/seeo-aws-orchestrator/security/) to see the design, lifecycle contract, and security boundaries.
-5. Run `npm run lint`, `npm run build`, and the Terraform validation commands locally; GitHub Actions runs the backend tests/lint, the separate Guardrail security workflow runs Brakeman, and the provider-runner job builds the credential-free CLI image.
+5. Run `npm run lint`, `npm run build`, and the Terraform validation commands locally. GitHub Actions runs the backend tests and lint, the separate Guardrail security workflow runs Brakeman, and the provider-runner job builds the credential-free CLI image.
 
 ## Architecture
 
@@ -72,7 +72,7 @@ Open [http://localhost:5173](http://localhost:5173).
 
 The default backend configuration enables `SEEO_MOCK_MODE=true` and allows all four providers. Select AWS, Azure, Google Cloud, or OCI in the dashboard and the mock adapter will simulate that provider's resource shapes and regions without credentials.
 
-For a real provider deployment, run the backend with the selected cloud CLI (`aws`, `az`, `gcloud`, or `oci`), configure credentials through workload identity or a secret manager, wire Terraform network outputs and image settings, and then set `SEEO_MOCK_MODE=false`. The hosted Render demo intentionally stays in mock mode; its browser-visible key can never authorize real cloud lifecycle actions.
+For a real provider deployment, run the backend with the selected cloud CLI (`aws`, `az`, `gcloud`, or `oci`), configure credentials through workload identity or a secret manager, wire Terraform network outputs and image settings, and then set `SEEO_MOCK_MODE=false`. The hosted Render demo intentionally stays in mock mode. Its browser-visible key can never authorize real cloud lifecycle actions.
 
 ## Demo
 
@@ -87,7 +87,7 @@ The `infrastructure/` directory contains four independent roots:
 - `infrastructure/stacks/gcp/` for Google Cloud
 - `infrastructure/stacks/oci/` for OCI
 
-Each stack exports network identifiers consumed by the matching adapter. Provider state remains separate; Rails stores environment lifecycle state in its own database.
+Each stack exports network identifiers consumed by the matching adapter. Provider state remains separate. Rails stores environment lifecycle state in its own database.
 
 ```bash
 terraform -chdir=infrastructure fmt -check -recursive
@@ -112,7 +112,7 @@ Open [http://localhost:4000](http://localhost:4000).
 
 The control plane is provider-neutral, but provider APIs are not interchangeable. Networking, identity, native VM/storage shapes, CLI output parsing, and lifecycle-state normalization remain behind adapters. That is deliberate: it keeps controllers, policy, persistence, and the UI stable while each cloud evolves independently.
 
-The current repository provides a safe, fully demonstrable multi-cloud mock lifecycle, checked-in provider response contract fixtures for all four CLIs, a credential-free `backend/Dockerfile.runner`, and validated Terraform foundations for all four providers. Real provider execution remains credential-gated because creating VMs, disks, networks, and identities is inherently a cloud API operation; no credentials are stored in this repository.
+The current repository provides a safe, fully demonstrable multi-cloud mock lifecycle, checked-in provider response contract fixtures for all four CLIs, a credential-free `backend/Dockerfile.runner`, and validated Terraform foundations for all four providers. Real provider execution remains credential-gated because creating VMs, disks, networks, and identities is inherently a cloud API operation. No credentials are stored in this repository.
 
 ## Testing
 

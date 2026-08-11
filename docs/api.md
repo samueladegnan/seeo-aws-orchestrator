@@ -47,7 +47,7 @@ POST /environments
 }
 ```
 
-Required fields are `project_name` and `ttl_minutes`. `provider` defaults to `SEEO_DEFAULT_PROVIDER`; `compute_tier` defaults to `small`; `storage_tier` defaults to `balanced`; and the provider catalog supplies the default region.
+Required fields are `project_name` and `ttl_minutes`. The `provider` defaults to `SEEO_DEFAULT_PROVIDER`. The `compute_tier` defaults to `small`. The `storage_tier` defaults to `balanced`. The provider catalog supplies the default region.
 
 Supported providers:
 
@@ -56,7 +56,7 @@ Supported providers:
 - `gcp`
 - `oci`
 
-The selected region must belong to the selected provider. Policy checks the provider allow-list, compute/storage tiers, TTL, volume size, and capacity before any provider call. Invalid requests fail early rather than creating infrastructure that must be rolled back. OPA/Rego is supported with a Ruby fallback when OPA is unavailable; the trade-off is that provider catalogs and policy definitions must remain synchronized.
+The selected region must belong to the selected provider. Policy checks the provider allow-list, compute/storage tiers, TTL, volume size, and capacity before any provider call. Invalid requests fail early rather than creating infrastructure that must be rolled back. OPA/Rego is supported with a Ruby fallback when OPA is unavailable. Provider catalogs and policy definitions must remain synchronized.
 
 Clients should send `X-Idempotency-Key` on create requests. Repeating an active request with the same key and provider returns the existing environment.
 

@@ -97,7 +97,7 @@ This separation is deliberate: a provider outage must not erase the control plan
 
 ## Why the adapters stay separate
 
-The lifecycle is normalized, not the cloud APIs. Each adapter owns its provider's networking, identity, resource shapes, CLI commands, and response parsing. That keeps controllers, policy, persistence, and the dashboard provider-neutral; the cost is some intentional duplication between adapters rather than leaking four clouds into every layer.
+The lifecycle is normalized, not the cloud APIs. Each adapter owns its provider's networking, identity, resource shapes, CLI commands, and response parsing. That keeps controllers, policy, persistence, and the dashboard provider-neutral. The cost is some intentional duplication between adapters rather than leaking four clouds into every layer.
 
 The real adapters currently use CLI boundaries because argv construction and JSON normalization are easy to inspect with checked-in fixtures and subprocess contract tests. A credential-free runner image packages the four CLIs, while direct SDK workers remain a future option if richer typed APIs or higher execution volume justify the added coupling.
 
@@ -110,7 +110,7 @@ Each Terraform root can be initialized and validated without unrelated provider 
 - Google Cloud: VPC network and subnetwork
 - OCI: VCN and subnet
 
-The roots export network identifiers for the matching runtime adapter. AWS, Azure, Google Cloud, and OCI runners normalize their native CLI responses before writing control-plane state. `backend/Dockerfile.runner` packages the four CLIs without credentials; authentication is supplied at runtime through workload identity or standard environment configuration and is never committed.
+The roots export network identifiers for the matching runtime adapter. AWS, Azure, Google Cloud, and OCI runners normalize their native CLI responses before writing control-plane state. `backend/Dockerfile.runner` packages the four CLIs without credentials. Authentication is supplied at runtime through workload identity or standard environment configuration and is never committed.
 
 ## Expiry and recovery
 

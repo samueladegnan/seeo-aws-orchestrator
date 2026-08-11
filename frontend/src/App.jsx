@@ -758,7 +758,7 @@ function App() {
                 showAdBlockerTip ? 'opacity-100' : 'opacity-0'
               }`}
             >
-              Ad blockers and privacy extensions sometimes block <code className="rounded bg-slate-700 px-1">.onrender.com</code> requests. If the dashboard seems stuck or <strong>Live updates</strong> shows disconnected, try disabling your ad blocker or opening this page in an incognito/private window. The backend may also take 30–50 seconds to wake up.
+              Ad blockers and privacy extensions sometimes block <code className="rounded bg-slate-700 px-1">.onrender.com</code> requests. If the dashboard seems stuck or <strong>Live updates</strong> shows disconnected, try disabling your ad blocker or opening this page in an incognito/private window. The backend may also take 30 to 50 seconds to wake up.
             </span>
           </button>
         </div>
@@ -1056,7 +1056,7 @@ function App() {
             <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" aria-hidden="true" />
             <h3 className="text-lg font-semibold text-slate-900">Waking up the server…</h3>
             <p className="mt-2 text-sm text-slate-600">
-              The demo backend sleeps after a period of inactivity. This can take 30–50 seconds.
+              The demo backend sleeps after a period of inactivity. This can take 30 to 50 seconds.
             </p>
             <p className="mt-2 text-xs text-slate-500">
               Still stuck? Ad blockers sometimes block requests to <code className="rounded bg-slate-100 px-1">.onrender.com</code> domains. Try disabling your ad blocker or opening this page in an incognito/private window.

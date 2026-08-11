@@ -677,43 +677,51 @@ textarea:focus-visible {
   color: var(--text-muted);
 }
 
-.live-scan-pending {
+.live-scan-success {
   display: flex;
   align-items: flex-start;
   gap: 0.9rem;
   margin-bottom: 1.25rem;
   padding: 1rem 1.1rem;
-  border: 1px solid #dbeafe;
-  border-left: 4px solid #60a5fa;
+  border: 1px solid #bbf7d0;
+  border-left: 4px solid #16a34a;
   border-radius: 0.5rem;
-  background: #eff6ff;
-  color: #1e3a8a;
+  background: #f0fdf4;
+  color: #14532d;
   line-height: 1.55;
 }
 
-.live-scan-pending__icon {
+.live-scan-success__icon {
+  display: grid;
+  width: 1.5rem;
+  height: 1.5rem;
   flex: 0 0 auto;
-  font-size: 1.35rem;
-  line-height: 1.35;
+  place-items: center;
+  border-radius: 50%;
+  background: #16a34a;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1;
 }
 
-.live-scan-pending__label {
+.live-scan-success__label {
   display: inline-block;
   margin-bottom: 0.35rem;
-  color: #1d4ed8;
+  color: #15803d;
   font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
-.live-scan-pending h3 {
+.live-scan-success h3 {
   margin: 0 0 0.35rem;
-  color: #1e3a8a;
+  color: #166534;
   font-size: 1.05rem;
 }
 
-.live-scan-pending p {
+.live-scan-success p {
   margin: 0;
 }
 
@@ -755,9 +763,9 @@ textarea:focus-visible {
   box-shadow: 0 0 0 3px #d1fae5;
 }
 
-.status-dot--example {
-  background: #f59e0b;
-  box-shadow: 0 0 0 3px #fef3c7;
+.status-dot--success {
+  background: #16a34a;
+  box-shadow: 0 0 0 3px #dcfce7;
 }
 
 .security-report-details {
@@ -1135,10 +1143,6 @@ textarea:focus-visible {
     margin-bottom: 1.75rem;
   }
 
-  .report-status {
-    margin-bottom: 1.25rem;
-  }
-
   .architecture-diagram {
     padding: 1rem;
   }
@@ -1189,7 +1193,7 @@ textarea:focus-visible {
     grid-template-columns: 1fr;
   }
 
-  .live-scan-pending {
+  .live-scan-success {
     align-items: flex-start;
   }
 
