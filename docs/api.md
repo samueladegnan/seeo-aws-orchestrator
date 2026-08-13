@@ -1,13 +1,15 @@
 ---
 title: API Documentation | SEEO Multi-cloud Environment Lifecycle
-description: A practical reference for the SEEO Rails API, authentication, provider selection, policy, lifecycle state, and ActionCable updates.
+description: Reference for the SEEO Rails API, authentication, provider selection, policy, lifecycle state, and ActionCable updates.
+last_modified_at: 2026-08-13
+og_type: article
 layout: default
 permalink: /api/
 ---
 
 # SEEO API Documentation
 
-The Rails backend exposes one lifecycle API for AWS, Azure, Google Cloud, OCI, and the safe mock mode used by the public demo.
+The Rails backend exposes one lifecycle API for AWS, Azure, Google Cloud, OCI, and the safe mock mode used by the public demo. The examples below show the normalized request and response shapes.
 
 ## Authentication
 

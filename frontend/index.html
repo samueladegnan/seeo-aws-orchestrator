@@ -3,51 +3,95 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="SEEO Dashboard lets you request, monitor, and terminate short-lived environments across AWS, Azure, Google Cloud, and OCI." />
+    <meta name="description" content="SEEO, a multi-cloud control-plane prototype for short-lived environments across AWS, Azure, Google Cloud, and OCI." />
     <meta name="author" content="Samuel Degnan" />
+    <meta name="application-name" content="SEEO Dashboard" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="theme-color" content="#0b3027" />
+    <meta name="color-scheme" content="light" />
+    <meta property="og:updated_time" content="2026-08-13T00:00:00Z" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="canonical" href="https://seeo-dashboard.vercel.app/" />
     <link rel="icon" type="image/svg+xml" href="https://samueladegnan.github.io/seeo-aws-orchestrator/assets/favicon.svg" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="SEEO" />
-    <meta property="og:title" content="SEEO Dashboard | Multi-cloud Ephemeral Environments" />
-    <meta property="og:description" content="Request, monitor, and terminate short-lived environments across AWS, Azure, Google Cloud, and OCI." />
+    <meta property="og:title" content="SEEO Dashboard | Multi-cloud Control-plane Prototype" />
+    <meta property="og:description" content="SEEO, a multi-cloud control-plane prototype for short-lived environments across AWS, Azure, Google Cloud, and OCI." />
     <meta property="og:url" content="https://seeo-dashboard.vercel.app/" />
     <meta property="og:image" content="https://samueladegnan.github.io/seeo-aws-orchestrator/assets/social-card.png" />
-    <meta property="og:image:alt" content="SEEO multi-cloud secure ephemeral environment platform" />
+    <meta property="og:image:secure_url" content="https://samueladegnan.github.io/seeo-aws-orchestrator/assets/social-card.png" />
+    <meta property="og:image:alt" content="SEEO multi-cloud control-plane prototype for short-lived environments" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="SEEO Dashboard | Multi-cloud Ephemeral Environments" />
-    <meta name="twitter:description" content="Request, monitor, and terminate short-lived environments across AWS, Azure, Google Cloud, and OCI." />
+    <meta name="twitter:title" content="SEEO Dashboard | Multi-cloud Control-plane Prototype" />
+    <meta name="twitter:description" content="SEEO, a multi-cloud control-plane prototype for short-lived environments across AWS, Azure, Google Cloud, and OCI." />
     <meta name="twitter:image" content="https://samueladegnan.github.io/seeo-aws-orchestrator/assets/social-card.png" />
-    <meta name="twitter:image:alt" content="SEEO multi-cloud secure ephemeral environment platform" />
+    <meta name="twitter:image:alt" content="SEEO multi-cloud control-plane prototype for short-lived environments" />
+    <meta name="twitter:label1" content="Project" />
+    <meta name="twitter:data1" content="Multi-cloud control-plane prototype" />
+    <meta name="twitter:label2" content="Built with" />
+    <meta name="twitter:data2" content="Rails, React, Terraform, and provider adapters" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "WebApplication",
-        "name": "SEEO Dashboard",
-        "url": "https://seeo-dashboard.vercel.app/",
-        "description": "Multi-cloud dashboard for requesting, monitoring, and terminating short-lived environments.",
-        "applicationCategory": "DeveloperApplication",
-        "operatingSystem": "Any",
-        "isPartOf": {
-          "@type": "WebSite",
-          "name": "SEEO",
-          "url": "https://samueladegnan.github.io/seeo-aws-orchestrator/"
-        },
-        "author": {
-          "@type": "Person",
-          "name": "Samuel Degnan",
-          "url": "https://samueladegnan.github.io/"
-        }
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://seeo-dashboard.vercel.app/#website",
+            "name": "SEEO Dashboard",
+            "url": "https://seeo-dashboard.vercel.app/",
+            "description": "SEEO, a multi-cloud control-plane prototype for short-lived environments.",
+            "inLanguage": "en",
+            "publisher": {
+              "@type": "Person",
+              "name": "Samuel Degnan",
+              "url": "https://samueladegnan.github.io/"
+            }
+          },
+          {
+            "@type": "WebApplication",
+            "@id": "https://seeo-dashboard.vercel.app/#application",
+            "name": "SEEO Dashboard",
+            "url": "https://seeo-dashboard.vercel.app/",
+            "description": "SEEO, a multi-cloud control-plane prototype for short-lived environments.",
+            "image": "https://samueladegnan.github.io/seeo-aws-orchestrator/assets/social-card.png",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "Any",
+            "browserRequirements": "Requires a modern browser with JavaScript enabled",
+            "isPartOf": { "@id": "https://seeo-dashboard.vercel.app/#website" },
+            "author": {
+              "@type": "Person",
+              "name": "Samuel Degnan",
+              "url": "https://samueladegnan.github.io/"
+            }
+          },
+          {
+            "@type": "WebPage",
+            "@id": "https://seeo-dashboard.vercel.app/#webpage",
+            "url": "https://seeo-dashboard.vercel.app/",
+            "name": "SEEO Dashboard | Multi-cloud Control-plane Prototype",
+            "description": "SEEO, a multi-cloud control-plane prototype for short-lived environments.",
+            "dateModified": "2026-08-13",
+            "isPartOf": { "@id": "https://seeo-dashboard.vercel.app/#website" },
+            "about": { "@id": "https://seeo-dashboard.vercel.app/#application" },
+            "inLanguage": "en"
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [{
+              "@type": "ListItem",
+              "position": 1,
+              "name": "SEEO Dashboard",
+              "item": "https://seeo-dashboard.vercel.app/"
+            }]
+          }
+        ]
       }
     </script>
-    <title>SEEO Dashboard | Multi-cloud Ephemeral Environments</title>
+    <title>SEEO Dashboard | Multi-cloud Control-plane Prototype</title>
   </head>
   <body>
     <div id="root"></div>

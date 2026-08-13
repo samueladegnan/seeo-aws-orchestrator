@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "slug": "seeo-aws-orchestrator",
+  "category": "Multi-cloud operations",
+  "title": "SEEO Multi-Cloud Orchestrator",
+  "summary": "SEEO, a multi-cloud control-plane prototype for short-lived environments across AWS, Azure, Google Cloud, and OCI.",
+  "notes": [
+    {
+      "label": "Build",
+      "text": "Rails and React coordinate provider adapters, normalized lifecycle state, tenant scope, OPA/Rego policy checks, and TTL cleanup."
+    },
+    {
+      "label": "Scope",
+      "text": "The public demo runs in mock mode. It does not create cloud resources or require provider credentials."
+    }
+  ],
+  "stack": [
+    "Ruby on Rails",
+    "React",
+    "AWS",
+    "Azure",
+    "Google Cloud",
+    "OCI",
+    "Terraform",
+    "OPA/Rego"
+  ],
+  "proofLabel": "Evidence",
+  "proof": "Provider adapter contract tests, persisted lifecycle state, tenant-scoped live updates, Terraform foundations, mock mode, and CI security artifacts."
+}

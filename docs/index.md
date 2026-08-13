@@ -1,83 +1,50 @@
 ---
-title: SEEO | Secure Ephemeral Environment Orchestrator
-description: Samuel Degnan's SEEO project: a multi-cloud control plane for requesting, observing, and expiring short-lived environments.
+title: SEEO | Multi-cloud Control-plane Prototype
+description: SEEO, a multi-cloud control-plane prototype for short-lived environments across AWS, Azure, Google Cloud, and OCI.
+last_modified_at: 2026-08-13
+og_type: website
 layout: default
 permalink: /
 ---
 
 <p class="project-badges">
-  <a href="https://github.com/samueladegnan/seeo-aws-orchestrator/actions/workflows/ci.yml"><img src="https://github.com/samueladegnan/seeo-aws-orchestrator/actions/workflows/ci.yml/badge.svg" alt="SEEO CI" /></a>
+  <a href="https://github.com/samueladegnan/seeo-aws-orchestrator/actions/workflows/ci.yml"><img src="https://github.com/samueladegnan/seeo-aws-orchestrator/actions/workflows/ci.yml/badge.svg" alt="CI workflow status" /></a>
   <a href="https://www.ruby-lang.org/"><img src="https://img.shields.io/badge/ruby-3.3-cc0000.svg" alt="Ruby 3.3" /></a>
-  <a href="https://github.com/samueladegnan/seeo-aws-orchestrator/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
+  <a href="https://github.com/samueladegnan/seeo-aws-orchestrator/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT license" /></a>
 </p>
 
-<h2>A practical multi-cloud platform for short-lived environments</h2>
+<h1>SEEO, a multi-cloud control-plane prototype for short-lived environments</h1>
 
-<p><strong>SEEO</strong> is my dashboard and API for requesting temporary environments across AWS, Azure, Google Cloud, and OCI. A provider-neutral adapter contract keeps the lifecycle consistent while each cloud maps the request to its own region, compute shape, storage class, and resource identifiers.</p>
+<p><strong>SEEO</strong> brings a Rails control plane, React dashboard, provider adapters, policy checks, lifecycle state, live updates, and cleanup into one focused system for temporary environments across AWS, Azure, Google Cloud, and OCI.</p>
 
-<hr>
+<div class="demo-cta">
+  <div>
+    <p class="demo-cta__eyebrow">Safe hosted demo</p>
+    <p class="demo-cta__copy">The public dashboard runs in mock mode. It does not require provider credentials or create cloud resources.</p>
+  </div>
+  <a class="btn" href="https://seeo-dashboard.vercel.app/" target="_blank" rel="noopener noreferrer">Open the dashboard</a>
+</div>
 
-<h2>What it does</h2>
+<h2>Implementation</h2>
 
 <ul>
-  <li><strong>Multi-cloud lifecycle:</strong> the same create, refresh, terminate, and expiry flow accepts AWS, Azure, Google Cloud, and OCI as first-class providers.</li>
-  <li><strong>Provider-neutral state:</strong> the control plane stores the selected provider, region, normalized tiers, ownership, expiry, and provider resource IDs without using one cloud as the system of record.</li>
-  <li><strong>Multi-tenancy and RBAC:</strong> team and owner identifiers keep one tenant from reading or changing another tenant's environments.</li>
-  <li><strong>Policy checks:</strong> OPA/Rego validates provider, region, TTL, resource tiers, storage, and capacity, with a built-in Ruby fallback.</li>
-  <li><strong>Cost estimates:</strong> the dashboard estimates compute and storage cost with provider-specific rates.</li>
-  <li><strong>Real-time updates:</strong> signed ActionCable tokens authorize the right team or browser-session stream.</li>
-  <li><strong>Safe demos:</strong> hosted and local mock mode supports all four providers without creating cloud resources.</li>
-  <li><strong>Infrastructure foundations:</strong> independent Terraform roots establish the network and identity boundary for every supported cloud.</li>
-  <li><strong>Security checks:</strong> Brakeman output is triaged by Guardrail in CI, with source reports preserved as build artifacts.</li>
+  <li>A provider-neutral lifecycle contract keeps cloud-specific behavior behind separate adapters.</li>
+  <li>Rails owns authentication, tenant scope, policy checks, normalized state, cost estimates, and TTL cleanup.</li>
+  <li>The React dashboard shows provider-aware environment requests, lifecycle state, costs, and authorized updates.</li>
 </ul>
 
-<hr>
+<h2>Engineering approach</h2>
 
-<h2>How it works</h2>
+<p>I kept the control plane independent from provider infrastructure state, made ownership part of every request path, and used the same adapter boundary for the hosted mock experience and the unverified credentialed CLI paths. That makes the public demo safe to evaluate while keeping the engineering boundary visible in the source.</p>
 
-<div class="steps" markdown="1">
-<div class="step" markdown="1">
-<h3>1. Request</h3>
-<p>A developer requests an environment through the React dashboard or Rails API, specifying a cloud provider, region, compute tier, storage tier, TTL, and optional idempotency key.</p>
-</div>
-<div class="step" markdown="1">
-<h3>2. Authorize and validate</h3>
-<p>SEEO verifies the JWT or scoped demo key, checks RBAC and ownership, validates the selected provider's region, and runs policy rules before any cloud call.</p>
-</div>
-<div class="step" markdown="1">
-<h3>3. Provision</h3>
-<p>The adapter factory selects the provider implementation. Each adapter maps normalized tiers to native VM and storage resources, then records the resulting provider IDs in the shared Rails control plane.</p>
-</div>
-<div class="step" markdown="1">
-<h3>4. Observe and expire</h3>
-<p>ActionCable streams authorized state changes while the TTL job scans every enabled provider and retries cleanup for expired environments.</p>
-</div>
-</div>
+<h2>The scope</h2>
 
-<hr>
+<p>The hosted demo exercises the control-plane lifecycle without cloud credentials or billable resources. Provider adapters, response fixtures, Terraform foundations, policy checks, and cleanup behavior are implemented and tested. Credentialed AWS, Azure, Google Cloud, and OCI provisioning remains unverified and is not presented as a live feature.</p>
 
-<h2>Engineering focus</h2>
+<h2>Explore the project</h2>
 
-<ul>
-  <li><strong>One lifecycle, four clouds:</strong> provider differences stay inside adapters rather than leaking into controllers, policies, or the dashboard.</li>
-  <li><strong>Failure-aware cleanup:</strong> provider resource identifiers are persisted as they are acquired so partial operations can be recovered.</li>
-  <li><strong>Provider-aware policy:</strong> regions and resource classes are validated against the selected cloud, not one global AWS-shaped list.</li>
-  <li><strong>Production discipline:</strong> the repository includes tenant-scoped WebSockets, policy enforcement, structured logs, Docker support, automated tests, and CI security review.</li>
-</ul>
+<p><a class="btn" href="https://seeo-dashboard.vercel.app/" target="_blank" rel="noopener noreferrer">Open the live demo</a> <a class="btn" href="{{ '/architecture/' | relative_url }}">Read the architecture</a></p>
 
-<h2>About the build</h2>
+<p>Run the <a href="{{ '/demo/' | relative_url }}">test instructions</a> or inspect the <a href="https://github.com/samueladegnan/seeo-aws-orchestrator">source repository</a>.</p>
 
-<p>I built and reviewed SEEO with AI assistance. I remain responsible for the architecture, engineering decisions, testing, security model, and final code.</p>
-
-<h2>Why this is a useful engineering sample</h2>
-
-<ul>
-  <li><strong>It is operable:</strong> lifecycle state is persisted, resources expire, cleanup retries, and health is visible.</li>
-  <li><strong>It is safe to evaluate:</strong> the public demo uses no provider credentials and cannot create billable resources.</li>
-  <li><strong>It is honest about scope:</strong> mock lifecycle behavior, adapter contracts, and Terraform foundations are demonstrated; credentialed cloud integration remains an explicit next step.</li>
-</ul>
-
-
-<h2>About the author</h2>
-
-<p>Built by <a href="https://samueladegnan.github.io/">Samuel Degnan</a> as a hands-on portfolio project focused on full-stack engineering, policy-as-code, and reliable multi-cloud orchestration.</p>
+<p class="ai-disclosure"><strong>Ownership:</strong> I own the architecture, implementation, testing, security model, documentation, and final review. AI tools supported parts of the build as a secondary development aid.</p>

@@ -1,13 +1,13 @@
 # SEEO Backend (Ruby on Rails)
 
-I built the Rails API as the control plane for short-lived environments across AWS, Azure, Google Cloud, and OCI. It authenticates tenants, checks each request against provider-aware policy, stores lifecycle state, delegates VM work to an adapter, streams updates, estimates cost, and cleans up expired resources.
+SEEO's Rails API is the control plane for short-lived environments across AWS, Azure, Google Cloud, and OCI. It authenticates tenants, checks requests against provider-aware policy, stores lifecycle state, delegates provider work to an adapter, streams updates, estimates cost, and scans expired resources for cleanup.
 
 ## Requirements
 
 - Ruby 3.3+
 - Bundler
 - Docker, or Ruby and the project dependencies installed locally
-- A selected provider CLI runner (`aws`, `az`, `gcloud`, or `oci`) and short-lived credentials/workload identity for adapters used outside mock mode
+- A selected provider CLI runner (`aws`, `az`, `gcloud`, or `oci`) and short-lived credentials or workload identity only for the unverified credentialed adapter path
 
 ## Setup
 
@@ -37,7 +37,7 @@ bin/rails server
 | `SEEO_AWS_SECURITY_GROUP_ID` | AWS security group used by the AWS CLI adapter | none in mock mode |
 | `SEEO_AZURE_RESOURCE_GROUP` | Azure resource group for VM operations | none in mock mode |
 | `SEEO_GCP_PROJECT` | Google Cloud project for VM operations | none in mock mode |
-| `SEEO_GCP_ZONE` | Explicit Google Cloud zone; regions do not imply a zone | none in mock mode |
+| `SEEO_GCP_ZONE` | Explicit Google Cloud zone. Regions do not imply a zone | none in mock mode |
 | `SEEO_OCI_COMPARTMENT_ID` | OCI compartment for compute operations | none in mock mode |
 | `SEEO_OCI_AVAILABILITY_DOMAIN` | OCI availability domain for instance launch | none in mock mode |
 | `SEEO_OCI_IMAGE_ID` | OCI image OCID for instance launch | none in mock mode |
@@ -76,7 +76,19 @@ docker build -t seeo-backend .
 docker run --rm -p 3000:3000 --env-file .env seeo-backend
 ```
 
-The default image is intended for the safe mock deployment. `Dockerfile.runner` provides a credential-free runner image with AWS CLI, Azure CLI, Google Cloud CLI, and OCI CLI installed. Authenticate that image only at runtime with workload identity, short-lived credentials, or mounted provider configuration. Never add credentials to the image or repository.
+The default image is intended for the safe mock deployment. `Dockerfile.runner` packages AWS CLI, Azure CLI, Google Cloud CLI, and OCI CLI without credentials. The credentialed CLI path is present but unverified. Authenticate only at runtime with workload identity, short-lived credentials, or mounted provider configuration. Never add credentials to the image or repository.
+
+## Implementation boundary
+
+| Capability | Status |
+| --- | --- |
+| Provider-neutral lifecycle contract | Implemented and covered by adapter contract specs |
+| Mock lifecycle across four providers | Implemented with synthetic in-memory records |
+| Credentialed provider execution | Adapter code exists but is not verified against cloud accounts |
+| Durable provider ID persistence | Implemented for the real CLI adapter path after the provider response is received |
+| Reconciliation before provider ID persistence | Not implemented |
+
+The hosted and local demos use the mock path. Real provider calls remain a separate deployment capability, not a demonstrated public behavior.
 
 ## Provider contract tests
 
@@ -95,4 +107,4 @@ bundle exec rubocop
 
 ## Background jobs
 
-`TtlMonitorJob` scans every enabled provider through the shared adapter contract. A provider that is not configured is logged and skipped; one failed cleanup does not prevent other expired environments from being processed.
+`TtlMonitorJob` scans every enabled provider through the shared adapter contract. A provider that is not configured is logged and skipped. One failed cleanup does not prevent other expired environments from being processed.

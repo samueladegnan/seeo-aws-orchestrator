@@ -1,15 +1,22 @@
 ---
 title: Security Report | SEEO
-description: Samuel Degnan's security report for the SEEO Rails backend, with Brakeman and Guardrail review notes.
+description: Security review notes for the SEEO Rails backend, including Brakeman scope and Guardrail CI results.
+last_modified_at: 2026-08-13
+og_type: article
 layout: default
 permalink: /security/
 security_report: true
 ---
 
 <div class="security-report-page">
-  <div class="report-status-label"><span class="status-dot status-dot--success" aria-hidden="true"></span> Guardrail passed <code>backend/</code></div>
-  <h1>Security report</h1>
-  <p class="security-report-intro">This is the security report for SEEO, a project built and maintained by Samuel Degnan. The referenced Guardrail workflow completed successfully with no blocking issues reported for the Rails backend. This page keeps the scan scope and review notes alongside the rest of the case study.</p>
+  <h1>Automated security triage</h1>
+  <p class="security-report-intro">This page records an automated review of the SEEO Rails backend. It is useful evidence for engineering review, not an independent security assessment.</p>
+
+  <div class="security-report-context">
+    <div class="report-status-label"><span class="status-dot status-dot--success" aria-hidden="true"></span> Guardrail passed <code>backend/</code></div>
+    <p class="security-report-lead">The referenced Guardrail workflow completed successfully with no blocking issues reported. I built and maintain this project, run the scan in GitHub Actions, and review the output myself.</p>
+    <div class="report-owner-note" role="note"><strong>Project owner:</strong> Samuel Degnan. This report is an automated review aid and does not replace engineering judgment.</div>
+  </div>
 
   <dl class="security-report-details">
     <div>

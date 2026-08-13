@@ -1,13 +1,16 @@
 ---
 title: Architecture | Rails, React, Terraform, and Multi-cloud Adapters
-description: How Samuel Degnan structured SEEO's Rails control plane, multi-cloud adapters, policy checks, and Terraform foundations.
+description: SEEO's Rails control plane, provider adapters, policy checks, lifecycle state, and Terraform foundation explained.
+last_modified_at: 2026-08-13
+og_type: article
+mermaid: true
 layout: default
 permalink: /architecture/
 ---
 
 # SEEO Architecture
 
-I designed SEEO so AWS, Azure, Google Cloud, and OCI share one lifecycle contract. Rails owns authentication, authorization, policy, environment state, audit events, cost estimates, live updates, and TTL cleanup. Provider adapters own only the cloud-specific resource calls.
+SEEO gives AWS, Azure, Google Cloud, and OCI one lifecycle contract. Rails owns authentication, authorization, policy, environment state, audit events, cost estimates, live updates, and TTL cleanup. Provider adapters own the cloud-specific resource calls.
 
 ## High-level flow
 
@@ -19,6 +22,70 @@ I designed SEEO so AWS, Azure, Google Cloud, and OCI share one lifecycle contrac
 6. ActionCable broadcasts state changes to the authorized team or browser-session stream.
 7. `TtlMonitorJob` scans every enabled provider and invokes the same cleanup contract for expired records.
 8. Terraform roots provide the provider network and identity foundations consumed by the matching adapter.
+
+## Lifecycle state and request pipeline
+
+The lifecycle diagram distinguishes request pipeline stages from persisted records. `active` maps to `ready` in the Rails model and `failed` maps to `error`.
+
+```mermaid
+flowchart LR
+  requested[requested] --> authorized[authorized]
+  authorized --> validated[validated]
+  validated --> provisioning[provisioning]
+  provisioning --> active[active<br/>ready]
+  provisioning --> failed[failed<br/>error]
+  active --> expired[expired]
+  expired --> cleanup[cleanup]
+  cleanup --> terminated[terminated]
+  cleanup --> retrying[retrying]
+  retrying --> cleanup
+  failed --> retrying
+```
+
+## Provider adapter architecture
+
+```mermaid
+flowchart TB
+  api[Rails API] --> control[Auth, ownership, policy, state]
+  control --> contract[CloudAdapter contract]
+  contract --> aws[AwsService]
+  contract --> azure[AzureService]
+  contract --> gcp[GcpService]
+  contract --> oci[OciService]
+  contract --> mock[MockCloudService]
+  aws --> awscli[AWS CLI argv]
+  azure --> azcli[Azure CLI argv]
+  gcp --> gcloud[Google Cloud CLI argv]
+  oci --> ocicli[OCI CLI argv]
+  mock --> memory[(In-memory mock store)]
+  awscli --> records[(EnvironmentRecord)]
+  azcli --> records
+  gcloud --> records
+  ocicli --> records
+  terraform[Terraform foundations] -. network and identity outputs .-> aws
+  terraform -. network and identity outputs .-> azure
+  terraform -. network and identity outputs .-> gcp
+  terraform -. network and identity outputs .-> oci
+```
+
+## Tenant and authorization model
+
+```mermaid
+flowchart LR
+  tenant[Tenant] --> team[Team]
+  team --> user[User and role]
+  user --> rbac[RBAC]
+  jwt[JWT tenant token] --> user
+  demo[Demo API key] --> session[Signed browser session]
+  session --> ownership[Session ownership]
+  user --> cable[Signed ActionCable token]
+  session --> cable
+  cable --> stream[Derived team or session stream]
+  team --> resource[EnvironmentRecord]
+  user --> resource
+  ownership --> resource
+  rbac --> resource
+```
 
 ## Component diagram
 
@@ -75,6 +142,28 @@ The diagram below follows the request from the browser to the provider boundary.
     </div>
   </div>
 </section>
+
+<details>
+<summary>Accessible text version</summary>
+<p>A developer or service account sends a provider, region, tier, storage, and TTL to the React dashboard or Rails API. Rails authenticates the requester, applies ownership and policy checks, then selects one provider adapter. The adapter creates or removes provider resources and writes normalized lifecycle state to Rails. ActionCable sends authorized updates to the owning team or browser session. Terraform roots provide network and identity outputs to the matching adapter.</p>
+</details>
+
+<pre><code>Developer or service account
+        |
+        v
+React dashboard or Rails API
+        |
+        v
+Auth, ownership, policy, adapter factory, Rails state
+        |
+        +--> AWS
+        +--> Azure
+        +--> Google Cloud
+        +--> OCI
+        +--> Mock adapter
+        ^
+        |
+Terraform network and identity outputs</code></pre>
 
 ## Provider contract
 

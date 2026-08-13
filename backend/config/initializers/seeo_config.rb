@@ -3,7 +3,7 @@
 module SeeoConfig
   class << self
     def app_name
-      ENV.fetch('SEEO_APP_NAME', 'SEEO - Secure Ephemeral Environment Orchestrator')
+      ENV.fetch('SEEO_APP_NAME', 'SEEO, a multi-cloud control-plane prototype for short-lived environments')
     end
 
     def api_key

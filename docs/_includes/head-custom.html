@@ -2,6 +2,8 @@
 {% assign page_title = page.title | default: site.name %}
 {% assign page_description = page.description | default: site.description %}
 {% assign social_image = '/assets/social-card.png' | absolute_url %}
+{% assign page_last_modified = page.last_modified_at | default: site.last_modified_at | default: '2026-08-13' %}
+{% assign page_og_type = page.og_type | default: 'website' %}
 
 <link rel="icon" type="image/svg+xml" href="{{ '/assets/favicon.svg' | relative_url }}">
 <link rel="mask-icon" href="{{ '/assets/favicon.svg' | relative_url }}" color="#166534">
@@ -10,15 +12,17 @@
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="theme-color" content="#0b3027">
 <meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="application-name" content="SEEO">
+<meta property="og:updated_time" content="{{ page_last_modified }}T00:00:00Z">
 
 <meta property="og:locale" content="en_US">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="SEEO">
+<meta property="og:type" content="{{ page_og_type }}">
+<meta property="og:site_name" content="Samuel Degnan Portfolio">
 <meta property="og:title" content="{{ page_title | escape }}">
 <meta property="og:description" content="{{ page_description | strip_html | strip_newlines | escape }}">
 <meta property="og:url" content="{{ canonical_url | escape }}">
 <meta property="og:image" content="{{ social_image | escape }}">
-<meta property="og:image:alt" content="SEEO multi-cloud secure ephemeral environment platform">
+<meta property="og:image:alt" content="SEEO multi-cloud control-plane prototype for short-lived environments">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -27,7 +31,12 @@
 <meta name="twitter:title" content="{{ page_title | escape }}">
 <meta name="twitter:description" content="{{ page_description | strip_html | strip_newlines | escape }}">
 <meta name="twitter:image" content="{{ social_image | escape }}">
-<meta name="twitter:image:alt" content="SEEO multi-cloud secure ephemeral environment platform">
+<meta name="twitter:url" content="{{ canonical_url | escape }}">
+<meta name="twitter:image:alt" content="SEEO multi-cloud control-plane prototype for short-lived environments">
+<meta name="twitter:label1" content="Project">
+<meta name="twitter:data1" content="Multi-cloud control-plane prototype">
+<meta name="twitter:label2" content="Built with">
+<meta name="twitter:data2" content="Rails, React, Terraform, and provider adapters">
 
 <script type="application/ld+json">
 {
@@ -39,15 +48,23 @@
       "name": {{ site.name | jsonify }},
       "url": "{{ site.url }}{{ site.baseurl }}/",
       "description": {{ site.description | jsonify }},
-      "inLanguage": "en"
+      "image": {{ social_image | jsonify }},
+      "inLanguage": "en",
+      "publisher": {
+        "@type": "Person",
+        "name": "Samuel Degnan",
+        "url": "https://samueladegnan.github.io/"
+      }
     },
     {
       "@type": "SoftwareSourceCode",
       "@id": "https://github.com/samueladegnan/seeo-aws-orchestrator#software",
-      "name": "SEEO - Secure Ephemeral Environment Orchestrator",
+      "name": "SEEO, a multi-cloud control-plane prototype for short-lived environments",
       "codeRepository": "https://github.com/samueladegnan/seeo-aws-orchestrator",
       "programmingLanguage": ["Ruby", "JavaScript", "HCL", "Rego"],
       "runtimePlatform": "Ruby on Rails, React, Terraform, AWS, Azure, Google Cloud, OCI",
+      "image": {{ social_image | jsonify }},
+      "license": "https://opensource.org/licenses/MIT",
       "author": {
         "@type": "Person",
         "name": "Samuel Degnan",
@@ -60,6 +77,8 @@
       "url": {{ canonical_url | jsonify }},
       "name": {{ page_title | jsonify }},
       "description": {{ page_description | strip_html | strip_newlines | jsonify }},
+      "dateModified": "{{ page_last_modified }}",
+      "primaryImageOfPage": { "@type": "ImageObject", "url": {{ social_image | jsonify }} },
       "isPartOf": { "@id": "{{ site.url }}{{ site.baseurl }}/#website" },
       "about": { "@id": "https://github.com/samueladegnan/seeo-aws-orchestrator#software" },
       "author": {
@@ -68,6 +87,23 @@
         "url": "https://samueladegnan.github.io/"
       },
       "inLanguage": "en"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "SEEO",
+          "item": "{{ site.url }}{{ site.baseurl }}/"
+        }{% unless page.url == '/' or page.url == '/index.html' %},
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": {{ page_title | jsonify }},
+          "item": {{ canonical_url | jsonify }}
+        }{% endunless %}
+      ]
     }
   ]
 }

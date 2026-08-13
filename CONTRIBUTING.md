@@ -1,6 +1,6 @@
 # Contributing to SEEO
 
-SEEO is a portfolio project, but it follows the same quality gates expected of a production service: small changes, automated checks, explicit security boundaries, and documentation that matches the code.
+SEEO is a portfolio project with disciplined engineering quality gates: small changes, automated checks, explicit security boundaries, and documentation that matches the code.
 
 ## Development setup
 
