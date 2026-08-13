@@ -1,6 +1,12 @@
 ---
 title: Security Report | SEEO
-description: Security review notes for the SEEO Rails backend, including Brakeman scope and Guardrail CI results.
+description: Security review notes for the SEEO Rails backend, including Brakeman scope, Guardrail CI results, policy checks, and review boundaries.
+keywords:
+  - Rails security review
+  - Brakeman SARIF
+  - Guardrail CI
+  - application security automation
+  - cloud control plane security
 last_modified_at: 2026-08-13
 og_type: article
 layout: default

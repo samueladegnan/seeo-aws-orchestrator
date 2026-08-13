@@ -1,6 +1,14 @@
 ---
 title: SEEO | Multi-cloud Control-plane Prototype
-description: SEEO, a multi-cloud control-plane prototype for short-lived environments across AWS, Azure, Google Cloud, and OCI.
+description: SEEO is a Rails and React multi-cloud control plane for safe, short-lived environments across AWS, Azure, Google Cloud, and OCI.
+keywords:
+  - multi-cloud control plane
+  - ephemeral environments
+  - cloud orchestration
+  - Ruby on Rails
+  - React
+  - Terraform
+  - OPA policy
 last_modified_at: 2026-08-13
 og_type: website
 layout: default

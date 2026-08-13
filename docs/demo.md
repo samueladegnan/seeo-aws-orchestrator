@@ -1,6 +1,11 @@
 ---
 title: Demo | SEEO Environment Dashboard
-description: Try the SEEO multi-cloud environment dashboard live, or run the safe mock demo locally with Rails and React.
+description: Try the SEEO multi-cloud environment dashboard in safe mock mode, or run the Rails and React demo locally without cloud credentials.
+keywords:
+  - multi-cloud dashboard demo
+  - ephemeral environments demo
+  - Rails React demo
+  - cloud orchestration demo
 last_modified_at: 2026-08-13
 og_type: website
 layout: demo

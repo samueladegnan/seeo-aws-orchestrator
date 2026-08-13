@@ -3,11 +3,11 @@
   "slug": "seeo-aws-orchestrator",
   "category": "Multi-cloud operations",
   "title": "SEEO Multi-Cloud Orchestrator",
-  "summary": "SEEO, a multi-cloud control-plane prototype for short-lived environments across AWS, Azure, Google Cloud, and OCI.",
+  "summary": "SEEO is a Rails and React multi-cloud control plane for safe, short-lived environments across AWS, Azure, Google Cloud, and OCI.",
   "notes": [
     {
       "label": "Build",
-      "text": "Rails and React coordinate provider adapters, normalized lifecycle state, tenant scope, OPA/Rego policy checks, and TTL cleanup."
+      "text": "Rails and React coordinate provider adapters, normalized lifecycle state, tenant scope, OPA/Rego policy checks, ActionCable updates, and TTL cleanup."
     },
     {
       "label": "Scope",

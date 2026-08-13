@@ -1,6 +1,12 @@
 ---
 title: API Documentation | SEEO Multi-cloud Environment Lifecycle
-description: Reference for the SEEO Rails API, authentication, provider selection, policy, lifecycle state, and ActionCable updates.
+description: Reference for the SEEO Rails API, authentication, tenant authorization, provider selection, lifecycle state, policy, and ActionCable updates.
+keywords:
+  - Rails API documentation
+  - multi-cloud lifecycle API
+  - tenant authorization
+  - ActionCable WebSocket API
+  - cloud environment API
 last_modified_at: 2026-08-13
 og_type: article
 layout: default

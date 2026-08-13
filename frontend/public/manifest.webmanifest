@@ -1,0 +1,19 @@
+{
+  "name": "SEEO Multi-Cloud Environment Dashboard",
+  "short_name": "SEEO",
+  "description": "A safe, browser-based dashboard for short-lived multi-cloud environments.",
+  "lang": "en",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0b3027",
+  "icons": [
+    {
+      "src": "https://samueladegnan.github.io/seeo-aws-orchestrator/assets/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ]
+}

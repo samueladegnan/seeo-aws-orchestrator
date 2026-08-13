@@ -1,0 +1,19 @@
+{
+  "name": "SEEO Multi-Cloud Orchestrator",
+  "short_name": "SEEO",
+  "description": "A multi-cloud control plane for safe, short-lived environments across AWS, Azure, Google Cloud, and OCI.",
+  "lang": "en",
+  "start_url": "/seeo-aws-orchestrator/",
+  "scope": "/seeo-aws-orchestrator/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0b3027",
+  "icons": [
+    {
+      "src": "/seeo-aws-orchestrator/assets/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ]
+}

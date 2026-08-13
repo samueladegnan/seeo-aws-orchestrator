@@ -1,6 +1,12 @@
 ---
 title: Architecture | Rails, React, Terraform, and Multi-cloud Adapters
-description: SEEO's Rails control plane, provider adapters, policy checks, lifecycle state, and Terraform foundation explained.
+description: Explore SEEO's Rails control plane, provider adapters, policy checks, lifecycle state, ActionCable updates, and Terraform foundations.
+keywords:
+  - cloud control plane architecture
+  - provider adapter pattern
+  - Rails ActionCable
+  - Terraform multi-cloud
+  - OPA policy
 last_modified_at: 2026-08-13
 og_type: article
 mermaid: true
